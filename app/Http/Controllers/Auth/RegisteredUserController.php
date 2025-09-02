@@ -38,13 +38,17 @@ class RegisteredUserController extends Controller
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
+            'phone' => $request->whatsapp,
+            'address' => $request->address,
             'password' => Hash::make($request->password),
         ]);
+
+        $user->assignRole('customer');
 
         event(new Registered($user));
 
         Auth::login($user);
 
-        return redirect(route('dashboard', absolute: false));
+        return redirect(route('homepage', absolute: false));
     }
 }
