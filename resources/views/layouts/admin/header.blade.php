@@ -20,21 +20,21 @@
     <!-- Menu Kanan -->
     <div class="flex items-center space-x-6 ml-auto">
       <!-- Notifikasi -->
-      <button class="relative text-gray-500 hover:text-primary">
+      <!-- <button class="relative text-gray-500 hover:text-primary">
         <i class="fas fa-bell text-xl"></i>
         <span class="absolute -top-1 -right-1 bg-danger text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">3</span>
-      </button>
+      </button> -->
 
       <!-- Pesan -->
-      <button class="relative text-gray-500 hover:text-primary">
+      <!-- <button class="relative text-gray-500 hover:text-primary">
         <i class="fas fa-envelope text-xl"></i>
         <span class="absolute -top-1 -right-1 bg-secondary text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">7</span>
-      </button>
+      </button> -->
 
       <!-- Dropdown Akun -->
       <div x-data="{ open: false }" class="relative">
         <button @click="open = !open" class="flex items-center space-x-2 focus:outline-none">
-          <span class="font-medium text-gray-700">John David</span>
+          <span class="font-medium text-gray-700">{{ Auth::user()->name }}</span>
           <i class="fas fa-chevron-down text-xs transition-transform duration-200" :class="{ 'transform rotate-180': open }"></i>
         </button>
 

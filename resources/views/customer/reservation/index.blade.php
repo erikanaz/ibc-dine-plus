@@ -189,7 +189,7 @@
                 <div class="flex items-center justify-between p-3 border rounded-md hover:shadow-xs transition">
                     <div class="flex items-center space-x-3">
                         <div class="w-12 h-12 rounded-sm overflow-hidden bg-gray-100 bg-cover bg-center"
-                            :style="'background-image: url(/images/' + (menu.image || 'menu-placeholder.jpg') + ')'">
+                            :style="'background-image: url(/images/menus/' + (menu.image || 'menu-placeholder.jpg') + ')'">
                         </div>
                         <div>
                             <h4 x-text="menu.name" class="text-sm font-medium text-gray-800"></h4>
@@ -284,34 +284,10 @@
                 </div>
             </template>
 
-            <!-- Metode Pembayaran -->
-            <div class="bg-gray-50 p-4 rounded-md border border-gray-200">
-                <h3 class="text-sm font-semibold mb-3 text-gray-700 border-b pb-2">Metode Pembayaran</h3>
-                <div class="space-y-3">
-                    <label class="flex items-center space-x-3 p-3 border rounded-md cursor-pointer hover:border-yellow-400 transition"
-                           :class="{'border-yellow-500 bg-yellow-50': reservasi.payment_method === 'qris'}">
-                        <input type="radio" x-model="reservasi.payment_method" value="qris" class="text-yellow-500 focus:ring-yellow-500">
-                        <div class="flex-1">
-                            <p class="text-sm font-medium text-gray-800">QRIS</p>
-                            <p class="text-xs text-gray-500">Bayar dengan QRIS melalui berbagai aplikasi e-wallet</p>
-                        </div>
-                        <img src="{{ asset('images/qris.png') }}" alt="QRIS" class="h-8">
-                    </label>
-
-                    <label class="flex items-center space-x-3 p-3 border rounded-md cursor-pointer hover:border-yellow-400 transition"
-                           :class="{'border-yellow-500 bg-yellow-50': reservasi.payment_method === 'bank_transfer'}">
-                        <input type="radio" x-model="reservasi.payment_method" value="bank_transfer" class="text-yellow-500 focus:ring-yellow-500">
-                        <div class="flex-1">
-                            <p class="text-sm font-medium text-gray-800">Transfer Bank</p>
-                            <p class="text-xs text-gray-500">Transfer ke rekening BCA 1234567890 a.n. IBC Batu Tulis</p>
-                        </div>
-                        <img src="{{ asset('images/bca.png') }}" alt="Bank Transfer" class="h-8">
-                    </label>
-                </div>
-            </div>
-
-            <!-- Total Pembayaran -->
+            <!-- Informasi Pembayaran -->
             <div class="bg-yellow-50 p-4 rounded-md border border-yellow-200">
+                <h3 class="text-sm font-semibold mb-3 text-gray-700">Informasi Pembayaran</h3>
+                
                 <template x-if="reservasi.pesan_menu && pesananMenu.length > 0">
                     <div class="mb-2">
                         <div class="flex justify-between text-sm">
@@ -335,15 +311,58 @@
                     </div>
                 </template>
                 <div class="flex justify-between items-center pt-2 border-t">
-                    <span class="text-sm font-bold text-gray-800">Total Pembayaran:</span>
+                    <span class="text-sm font-bold text-gray-800">Total DP:</span>
                     <span x-text="'Rp ' + hitungDP().toLocaleString('id-ID')" 
                           class="text-lg font-bold text-yellow-600"></span>
                 </div>
-                <template x-if="reservasi.payment_method === 'bank_transfer'">
-                    <p class="text-xs text-gray-500 mt-1">
-                        * Silakan transfer ke BCA 1234567890 a.n. Nama Restoran
+                
+                <div class="mt-3 p-3 bg-white rounded border">
+                    <p class="text-sm font-medium text-gray-800 mb-2">Transfer ke:</p>
+                    <div class="flex items-center space-x-3">
+                        <img src="{{ asset('images/bca.png') }}" alt="BCA" class="h-8">
+                        <div>
+                            <p class="text-sm font-bold">1234567890</p>
+                            <p class="text-xs text-gray-600">a.n. IBC Batu Tulis</p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">
+                        * Silakan transfer DP sebesar jumlah di atas dan upload bukti transfer
                     </p>
-                </template>
+                </div>
+            </div>
+
+            <!-- Upload Bukti Transfer -->
+            <div class="bg-gray-50 p-4 rounded-md border border-gray-200">
+                <h3 class="text-sm font-semibold mb-3 text-gray-700">Upload Bukti Transfer</h3>
+                
+                <div class="space-y-3">
+                    <div x-show="!reservasi.bukti_transfer" 
+                         class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-yellow-400 transition"
+                         @click="document.getElementById('buktiTransfer').click()">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        <p class="text-sm font-medium text-gray-600 mt-2">Klik untuk upload bukti transfer</p>
+                        <p class="text-xs text-gray-500">Format: JPG, PNG (Maks. 2MB)</p>
+                    </div>
+                    
+                    <div x-show="reservasi.bukti_transfer" class="text-center">
+                        <img :src="reservasi.bukti_transfer" alt="Bukti Transfer" class="max-w-full h-48 mx-auto rounded-md object-cover">
+                        <div class="mt-3 flex justify-center space-x-2">
+                            <button type="button" @click="document.getElementById('buktiTransfer').click()"
+                                    class="text-sm text-yellow-600 hover:text-yellow-700 font-medium">
+                                Ganti Foto
+                            </button>
+                            <button type="button" @click="reservasi.bukti_transfer = null"
+                                    class="text-sm text-red-600 hover:text-red-700 font-medium">
+                                Hapus
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <input type="file" id="buktiTransfer" accept="image/*" class="hidden" 
+                           @change="handleFileUpload($event)">
+                </div>
             </div>
         </div>
         
@@ -353,81 +372,17 @@
                 Kembali
             </button>
 
-            <button @click="prosesPembayaran()" 
-                    class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md font-medium transition shadow-sm flex items-center">
-                <span x-text="reservasi.payment_method === 'cash' ? 'Selesaikan Reservasi' : 'Bayar Sekarang'"></span>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" viewBox="0 0 20 20" fill="currentColor" x-show="reservasi.payment_method !== 'cash'">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clip-rule="evenodd" />
-                </svg>
+            <button @click="submitReservasiFinal()" 
+                    class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md font-medium transition shadow-sm flex items-center disabled:opacity-50"
+                    :disabled="!reservasi.bukti_transfer || isLoading">
+                <template x-if="isLoading">
+                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </template>
+                <span x-text="isLoading ? 'Memproses...' : 'Konfirmasi Reservasi'"></span>
             </button>
-        </div>
-
-        <!-- QRIS Modal -->
-        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" 
-             x-show="showQrisModal" x-transition>
-            <div class="bg-white rounded-lg p-6 max-w-sm w-full" @click.away="showQrisModal = false">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-bold text-gray-800">Pembayaran QRIS</h3>
-                    <button @click="showQrisModal = false" class="text-gray-500 hover:text-gray-700">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-                <div class="text-center">
-                    <div class="bg-white p-4 rounded-md border border-gray-200 inline-block mb-4">
-                        <img src="{{ asset('images/qris.png') }}" alt="QR Code" class="w-48 h-48 mx-auto">
-                    </div>
-                    <p class="text-sm text-gray-600 mb-2">Scan QR code di atas menggunakan aplikasi e-wallet Anda</p>
-                    <p class="text-sm font-medium text-gray-800 mb-4" 
-                       x-text="'Rp ' + hitungDP().toLocaleString('id-ID')"></p>
-                    <div class="flex space-x-2 justify-center">
-                        <button @click="showQrisModal = false" 
-                                class="border border-gray-300 text-gray-700 px-4 py-1.5 rounded-md hover:bg-gray-50 transition">
-                            Tutup
-                        </button>
-                        <button @click="konfirmasiPembayaran()" 
-                                class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-1.5 rounded-md font-medium transition">
-                            Saya Sudah Bayar
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Bank Transfer Modal -->
-        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" 
-             x-show="showBankTransferModal" x-transition>
-            <div class="bg-white rounded-lg p-6 max-w-sm w-full" @click.away="showBankTransferModal = false">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-bold text-gray-800">Pembayaran Transfer Bank</h3>
-                    <button @click="showBankTransferModal = false" class="text-gray-500 hover:text-gray-700">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-                <div class="text-center">
-                    <div class="bg-white p-4 rounded-md border border-gray-200 mb-4">
-                        <img src="{{ asset('images/bca.png') }}" alt="BCA" class="h-12 mx-auto mb-2">
-                        <p class="text-sm font-medium">1234567890</p>
-                        <p class="text-sm">a.n. IBC Batu Tulis</p>
-                    </div>
-                    <p class="text-sm text-gray-600 mb-2">Silakan transfer sesuai jumlah DP berikut:</p>
-                    <p class="text-sm font-medium text-gray-800 mb-4" 
-                       x-text="'Rp ' + hitungDP().toLocaleString('id-ID')"></p>
-                    <div class="flex space-x-2 justify-center">
-                        <button @click="showBankTransferModal = false" 
-                                class="border border-gray-300 text-gray-700 px-4 py-1.5 rounded-md hover:bg-gray-50 transition">
-                            Tutup
-                        </button>
-                        <button @click="konfirmasiPembayaran()" 
-                                class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-1.5 rounded-md font-medium transition">
-                            Saya Sudah Transfer
-                        </button>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </div>
@@ -447,14 +402,13 @@
                 telepon: '',
                 catatan: '',
                 pesan_menu: false,
-                payment_method: 'qris'
+                bukti_transfer: null,
+                bukti_file: null
             },
             mejaTersedia: @json($tables),
             daftarMenu: @json($menus),
             pesananMenu: JSON.parse(localStorage.getItem('pesananMenu')) || [],
             activeCategory: Object.keys(@json($menus))[0],
-            showQrisModal: false,
-            showBankTransferModal: false,
             isLoading: false,
 
             getFormattedCategoryName(category) {
@@ -470,7 +424,7 @@
 
             init() {
                 const savedReservasi = localStorage.getItem('reservasi_data');
-                if (savedReservasi) this.reservasi = JSON.parse(savedReservasi);
+                if (savedReservasi) this.reservasi = {...this.reservasi, ...JSON.parse(savedReservasi)};
                 
                 const savedPesanan = localStorage.getItem('pesananMenu');
                 if (savedPesanan) this.pesananMenu = JSON.parse(savedPesanan);
@@ -482,6 +436,7 @@
             
             goToStep(stepNum) {
                 if (stepNum < this.step) this.step = stepNum;
+                localStorage.setItem('reservasi_step', String(this.step));
             },
             
             cekKetersediaan() {
@@ -497,6 +452,7 @@
                 }));
 
                 this.step = 2;
+                localStorage.setItem('reservasi_step', '2');
             },
             
             pilihMeja(meja) {
@@ -512,6 +468,7 @@
             submitReservasi() {
                 localStorage.setItem('reservasi_data', JSON.stringify(this.reservasi));
                 this.step = this.reservasi.pesan_menu ? 4 : 5;
+                localStorage.setItem('reservasi_step', String(this.step));
                 if (!this.reservasi.pesan_menu) {
                     this.pesananMenu = [];
                     localStorage.removeItem('pesananMenu');
@@ -557,6 +514,7 @@
             
             simpanMenu() {
                 this.step = 5;
+                localStorage.setItem('reservasi_step', '5');
             },
             
             formatTanggal(tanggal) {
@@ -581,57 +539,88 @@
                 return 0;
             },
             
-            prosesPembayaran() {
-                // If payment method is QRIS or Bank Transfer, show payment instructions
-                if (this.reservasi.payment_method === 'qris') {
-                    this.showQrisModal = true;
-                } else if (this.reservasi.payment_method === 'bank_transfer') {
-                    this.showBankTransferModal = true;
-                } else {
-                    // For cash payment, proceed directly
-                    this.konfirmasiPembayaran();
+            handleFileUpload(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    // Validasi ukuran file (max 2MB)
+                    if (file.size > 2 * 1024 * 1024) {
+                        alert('Ukuran file maksimal 2MB');
+                        return;
+                    }
+                    
+                    // Validasi tipe file
+                    if (!file.type.match('image.*')) {
+                        alert('Hanya file gambar yang diizinkan');
+                        return;
+                    }
+                    
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        this.reservasi.bukti_transfer = e.target.result;
+                        this.reservasi.bukti_file = file;
+                    };
+                    reader.readAsDataURL(file);
                 }
             },
+            
+            async submitReservasiFinal() {
+                if (!this.reservasi.bukti_transfer) {
+                    alert('Silakan upload bukti transfer terlebih dahulu');
+                    return;
+                }
 
-            konfirmasiPembayaran() {
                 this.isLoading = true;
                 
-                // Format data sesuai dengan yang diharapkan backend
-                const formData = {
-                    name: this.reservasi.nama,
-                    email: this.reservasi.email,
-                    phone: this.reservasi.telepon,
-                    reservation_date: this.reservasi.tanggal,
-                    reservation_time: this.reservasi.waktu,
-                    guest_count: this.reservasi.jumlah_tamu,
-                    table_id: this.reservasi.meja_id,
-                    notes: this.reservasi.catatan || '',
-                    payment_method: this.reservasi.payment_method,
-                    with_preorder: this.reservasi.pesan_menu,
-                    down_payment: this.hitungDP(),
-                    menu_items: this.pesananMenu.map(item => ({
-                        menu_id: item.menu_id,
-                        jumlah: item.jumlah
-                    }))
-                };
+                // Normalisasi waktu ke HH:mm:ss
+                const waktu = this.reservasi.waktu?.length === 5 
+                    ? `${this.reservasi.waktu}:00` 
+                    : this.reservasi.waktu;
 
-                fetch('{{ route("reservation.store") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify(formData)
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.json().then(err => Promise.reject(err));
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.success) {
+                // Boolean as "1"/"0"
+                const withPreorder = (this.reservasi.pesan_menu && this.pesananMenu.length > 0) ? '1' : '0';
+                
+                // Siapkan FormData
+                const formData = new FormData();
+                formData.append('name', this.reservasi.nama);
+                formData.append('email', this.reservasi.email);
+                formData.append('phone', this.reservasi.telepon);
+                formData.append('reservation_date', this.reservasi.tanggal);
+                formData.append('reservation_time', waktu);
+                formData.append('guest_count', String(this.reservasi.jumlah_tamu));
+                formData.append('table_id', String(this.reservasi.meja_id));
+                formData.append('notes', this.reservasi.catatan || '');
+                formData.append('payment_method', 'bank_transfer');
+                formData.append('with_preorder', withPreorder);
+                formData.append('down_payment', String(this.hitungDP()));
+                
+                // Bukti transfer (file)
+                if (this.reservasi.bukti_file) {
+                    formData.append('bukti_transfer', this.reservasi.bukti_file);
+                }
+                
+                // KIRIM menu_items sebagai ARRAY bertingkat (BUKAN JSON)
+                if (withPreorder === '1') {
+                    this.pesananMenu.forEach((item, i) => {
+                        formData.append(`menu_items[${i}][menu_id]`, String(item.menu_id));
+                        formData.append(`menu_items[${i}][jumlah]`, String(item.jumlah));
+                    });
+                }
+
+                try {
+                    const response = await fetch('{{ route("reservation.store") }}', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        },
+                        body: formData
+                    });
+
+                    // Jika bukan 2xx, tetap coba ambil JSON error
+                    let data;
+                    try { data = await response.json(); } catch (_) { data = {}; }
+
+                    if (response.ok && data.success) {
                         // Bersihkan localStorage
                         localStorage.removeItem('reservasi_data');
                         localStorage.removeItem('pesananMenu');
@@ -640,29 +629,28 @@
                         // Redirect ke halaman sukses
                         window.location.href = '{{ route("reservation.success", "") }}/?id=' + data.reservation_id;
                     } else {
-                        alert('Gagal membuat reservasi: ' + (data.message || 'Terjadi kesalahan'));
+                        // Tampilkan pesan validasi yang jelas
+                        const errs = data.errors 
+                            ? Object.entries(data.errors)
+                                .map(([k,v]) => `• ${k}: ${Array.isArray(v) ? v.join(', ') : v}`)
+                                .join('\n')
+                            : (data.message || 'Terjadi kesalahan');
+                        alert('Gagal membuat reservasi:\n' + errs);
+                        console.warn('Validasi gagal:', data);
                     }
-                })
-                .catch(error => {
+                } catch (error) {
                     console.error('Error detail:', error);
-                    alert('Terjadi kesalahan: ' + 
-                          (error.message || 
-                           (error.errors ? JSON.stringify(error.errors) : 'Silakan coba lagi')));
-                })
-                .finally(() => {
+                    alert('Terjadi kesalahan jaringan/server. Silakan coba lagi.');
+                } finally {
                     this.isLoading = false;
-                    this.showQrisModal = false;
-                    this.showBankTransferModal = false;
-                });
+                }
             }
         }
     }
 </script>
 <style>
     [x-cloak] { display: none !important; }
-    .dot {
-        transition: all 0.2s ease-in-out;
-    }
+    .dot { transition: all 0.2s ease-in-out; }
 </style>
 @endpush
 @endsection

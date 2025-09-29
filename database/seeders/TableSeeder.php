@@ -5,44 +5,29 @@ namespace Database\Seeders;
 use App\Models\Table;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class TableSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        //
-        Table::insert([
-            [
-                'number' => 'A1',
-                'capacity' => 4,
-                'status' => 'available',
-                'created_at' => now(),
-                'updated_at' => now(),      
-            ],
-            [
-                'number' => 'A2',
-                'capacity' => 2,
-                'status' => 'available',
-                'created_at' => now(),
-                'updated_at' => now(),      
-            ],
-            [
-                'number' => 'B1',
-                'capacity' => 6,
-                'status' => 'unavailable',
-                'created_at' => now(),
-                'updated_at' => now(),      
-            ],
-            [
-                'number' => 'VIP1',
-                'capacity' => 8,
-                'status' => 'available',
-                'created_at' => now(),
-                'updated_at' => now(),      
-            ],
-        ]);
+        $tables = [
+            ['prefix' => 'A', 'capacity' => 4, 'count' => 7, 'location' => 'indoor'],
+            ['prefix' => 'B', 'capacity' => 5, 'count' => 3, 'location' => 'indoor'],
+            ['prefix' => 'C', 'capacity' => 6, 'count' => 17, 'location' => 'indoor'],
+        ];
+
+        foreach ($tables as $table) {
+            for ($i = 1; $i <= $table['count']; $i++) {
+                DB::table('tables')->insert([
+                    'number' => $table['prefix'] . $i, // contoh: A1, A2, B1, C1, dst
+                    'capacity' => $table['capacity'],
+                    'status' => 'available',
+                    'location' => $table['location'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
     }
 }

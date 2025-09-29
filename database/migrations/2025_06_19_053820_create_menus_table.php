@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->text('description')->nullable();
-            $table->integer('price');
+            $table->decimal('price', 10, 2);
             $table->string('image')->nullable(); // simpan nama file, bukan path penuh
             $table->string('category'); // e.g., 'signatures', 'vegetables'
             $table->boolean('is_available')->default(true); // untuk menandai apakah menu tersedia

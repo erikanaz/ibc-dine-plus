@@ -4,7 +4,7 @@
 @section('content')
 <div x-data="orderListHandler()" x-init="init()" class="relative">
     <!-- Tombol Pesanan -->
-    <button @click="showOrderList = true"
+    <!-- <button @click="showOrderList = true"
         class="fixed bottom-6 right-6 gold-bg text-white text-2xl text-center p-4 rounded-full shadow-lg z-40">
         🍽️
         <span x-show="orderList.length > 0"
@@ -12,7 +12,7 @@
             class="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-xs font-bold rounded-full px-2 py-1"
             x-cloak>
         </span>
-    </button>
+    </button> -->
 
     <!-- Overlay -->
     <div x-show="showOrderList"
@@ -138,8 +138,11 @@
                 @foreach ($items as $item)
                     <div class="relative group bg-gray-50 rounded-lg overflow-hidden shadow-md menu-card transition duration-300 flex flex-col h-full">
                         {{-- Gambar --}}
+                        <!-- <div class="{{ $category === 'drinks' ? 'h-96' : 'h-60' }} bg-cover bg-center" 
+                            style="background-image: url('/images/menus/{{ $item->image }}')">
+                        </div> -->
                         <div class="{{ $category === 'drinks' ? 'h-96' : 'h-60' }} bg-cover bg-center" 
-                            style="background-image: url('/images/{{ $item->image }}')">
+                            style="background-image: url('{{ $item->image_url }}')">
                         </div>
 
                         {{-- Overlay jika tidak tersedia --}}
@@ -156,7 +159,7 @@
                             <div class="flex justify-between items-center mt-auto">
                                 <span class="font-bold gold-text">Rp {{ number_format($item->price, 0, ',', '.') }}</span>
 
-                                @if($item->is_available)
+                                <!-- @if($item->is_available)
                                     <button 
                                         @click="addToOrderList({ id: {{ $item->id }}, name: '{{ $item->name }}', price: {{ $item->price }} })" 
                                         class="flex items-center gap-2 gold-bg hover:bg-opacity-100 text-white px-4 py-2 rounded-md text-sm transition duration-300 shadow-md hover:scale-105">
@@ -174,7 +177,7 @@
                                         </svg>
                                         Pesan
                                     </button>
-                                @endif
+                                @endif -->
                             </div>
                         </div>
                     </div>

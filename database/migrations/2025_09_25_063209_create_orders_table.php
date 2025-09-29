@@ -14,9 +14,9 @@ return new class extends Migration
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade')->onUpdate('cascade');
-            $table->foreignId('reservation_id')->nullable()->constrained('reservations')->onDelete('set null')->onUpdate('cascade'); // ID reservasi jika ada
-            $table->integer('total_price'); // Total harga dari semua item dalam pesanan
-            $table->enum('status', ['pending', 'confirmed', 'preparing', 'ready', 'completed', 'cancelled'])->default('pending');
+            $table->foreignId('reservation_id')->constrained('reservations')->onDelete('cascade')->onUpdate('cascade'); // ID reservasi jika ada
+            $table->decimal('total_price', 10, 2); // Total harga dari semua item dalam pesanan
+            $table->text('notes')->nullable(); // Catatan tambahan untuk pesanan
             $table->timestamps();
         });
     }

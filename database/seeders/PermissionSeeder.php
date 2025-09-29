@@ -8,6 +8,7 @@ use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
+//BELUM DI SEED
 class PermissionSeeder extends Seeder
 {
     /**
@@ -29,9 +30,9 @@ class PermissionSeeder extends Seeder
             'view reports',
 
             //cashier
-            'process payments',
-            'print receipts',
-            'view transactions',
+            // 'process payments',
+            // 'print receipts',
+            // 'view transactions',
 
             //customer
             'create reservations',
@@ -48,8 +49,8 @@ class PermissionSeeder extends Seeder
 
         // ambil roles
         $admin = Role::where('name', 'admin')->first();
-        $cashier = Role::where('name', 'cashier')->first();
-        $customer = Role::where('name', 'customer')->first();  
+        // $cashier = Role::where('name', 'cashier')->first();
+        $member = Role::where('name', 'member')->first();  
         
         // assign permissions to roles
         $admin->syncPermissions([
@@ -64,15 +65,15 @@ class PermissionSeeder extends Seeder
             'view reports',
         ]);
 
-        $cashier->syncPermissions([
-            'view reservations',
-            'view orders',
-            'process payments',
-            'print receipts',
-            'view transactions',
-        ]);
+        // $cashier->syncPermissions([
+        //     'view reservations',
+        //     'view orders',
+        //     'process payments',
+        //     'print receipts',
+        //     'view transactions',
+        // ]);
 
-        $customer->syncPermissions([
+        $member->syncPermissions([
             'create reservations',
             'cancel reservations',
             'view own reservations',

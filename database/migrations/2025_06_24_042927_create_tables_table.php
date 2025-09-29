@@ -15,7 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('number')->unique(); // Nomor meja, harus unik
             $table->integer('capacity'); // Kapasitas meja
-            $table->enum('status', ['available', 'unavailable'])->default('available'); // Status meja
+            $table->enum('status', ['available', 'occupied', 'reserved', 'maintenance'])->default('available'); // Status meja
+            $table->enum('location', ['indoor', 'outdoor'])->default('indoor');
             $table->timestamps();
         });
     }

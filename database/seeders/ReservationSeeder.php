@@ -15,28 +15,26 @@ class ReservationSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1 contoh reservasi
-        $reservation = Reservation::create([
-            'user_id' => 1,
-            'name' => 'Erika Nazwa',
-            'email' => 'erika@example.com',
-            'phone' => '08123456789',
-            'reservation_date' => now()->addDays(1)->toDateString(),
-            'reservation_time' => '18:00:00',
-            'guest_count' => 4,
-            'table_id' => 1,
-            'notes' => 'Minta dekat jendela',
-            'status' => 'confirmed',
-            'created_at' => now(),
-            'updated_at' => now(),  
-        ]);
+            // 1 contoh reservasi
+            $reservation = Reservation::create([
+                'user_id' => 1,
+                'table_id' => 1,
+                'reservation_date' => now()->addDays(1)->toDateString(),
+                'reservation_time' => '20:00:00',
+                'guest_count' => 4,
+                'notes' => 'Minta dekat jendela',
+                'total_DP' => 20000,
+                'status' => 'confirmed',
+                'created_at' => now(),
+                'updated_at' => now(),  
+            ]);
 
-        // ambil menu id 1 dan 3
-        $menuIds = [1, 3];
+        // // ambil menu id 1 dan 3
+        // $menuIds = [1, 3];
 
-        foreach ($menuIds as $menuId) {
-            $reservation->menus()->attach($menuId, ['quantity' => 2]);
-        }
+        // foreach ($menuIds as $menuId) {
+        //     $reservation->menus()->attach($menuId, ['quantity' => 2]);
+        // }
         
     }
 }

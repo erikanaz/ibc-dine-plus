@@ -11,11 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('menu_reservation', function (Blueprint $table) {
+        Schema::create('order_items', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('order_id')->constrained('orders')->onDelete('cascade')->onUpdate('cascade');
             $table->foreignId('menu_id')->constrained('menus')->onDelete('cascade')->onUpdate('cascade');
-            $table->foreignId('reservation_id')->constrained('reservations')->onDelete('cascade')->onUpdate('cascade');
-            $table->unsignedInteger('quantity');
+            $table->integer('qty'); // Jumlah item yang dipesan
+            $table->integer('price'); // Harga per item pada saat pemesanan
             $table->timestamps();
         });
     }
@@ -25,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('menu_reservation');
+        Schema::dropIfExists('order_items');
     }
 };

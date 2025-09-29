@@ -24,26 +24,26 @@ class UserSeeder extends Seeder
         );
         $admin->assignRole('admin');
 
-        //cashier
-        $cashier = User::firstOrCreate(
-            ['email' => 'cashier123@gmail.com'],
-            [
-                'name' => 'Cashier',
-                'password' => Hash::make('cashier123')
-            ]
-        );
-        $cashier->assignRole('cashier');
+        // //cashier
+        // $cashier = User::firstOrCreate(
+        //     ['email' => 'cashier123@gmail.com'],
+        //     [
+        //         'name' => 'Cashier',
+        //         'password' => Hash::make('cashier123')
+        //     ]
+        // );
+        // $cashier->assignRole('cashier');
 
         //customer
         $customer = User::firstOrCreate(
-            ['email' => 'customer1@gmail.com'],
+            ['email' => 'member1@gmail.com'],
             [
-                'name' => 'Customer1',
-                'password' => Hash::make('customer1'),
+                'name' => 'Member1',
+                'password' => Hash::make('member1'),
                 'phone' => '081234567890',
-                'address' => 'Jl. Batu Tulis No. 1, Jakarta'
+                // 'address' => 'Jl. Batu Tulis No. 1, Jakarta'
             ]
         );
-        $customer->assignRole('customer');
+        $customer->assignRole('member');
     }
 }

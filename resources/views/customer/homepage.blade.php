@@ -35,7 +35,7 @@
                 <!-- Menu 1 -->
                 <div class="bg-gray-50 rounded-lg overflow-hidden shadow-md menu-card transition duration-300">
                     <div class="h-60 bg-cover bg-center" 
-                            style="background-image: url('/images/gurame_bakar.avif')">
+                            style="background-image: url('/images/menus/gurame_bakar.avif')">
                     </div>
                     <div class="p-6">
                         <h3 class="font-bold text-xl mb-2">Gurame Bakar</h3>
@@ -52,7 +52,7 @@
                 <!-- Menu 2 -->
                 <div class="bg-gray-50 rounded-lg overflow-hidden shadow-md menu-card transition duration-300">
                     <div class="h-60 bg-cover bg-center" 
-                            style="background-image: url('/images/gurame_asam_manis.avif')">
+                            style="background-image: url('/images/menus/gurame_asam_manis.avif')">
                     </div>
                     <div class="p-6">
                         <h3 class="font-bold text-xl mb-2">Gurame Asam Manis</h3>
@@ -68,7 +68,7 @@
                 
                 <!-- Menu 3 -->
                 <div class="bg-gray-50 rounded-lg overflow-hidden shadow-md menu-card transition duration-300 flex flex-col h-full">
-                    <div class="h-60 bg-cover bg-center" style="background-image: url('/images/gurame_goreng.avif')"></div>
+                    <div class="h-60 bg-cover bg-center" style="background-image: url('/images/menus/gurame_goreng.avif')"></div>
                     <div class="p-6 flex flex-col flex-grow">
                         <h3 class="font-bold text-xl mb-2">Gurame Goreng</h3>
                         <p class="text-gray-600 mb-4">Dengan bumbu khas racikan spesial IBC</p>
@@ -93,12 +93,12 @@
     <!-- Promo Section -->
     <section class="py-16 bg-gray-100">
         <div class="container mx-auto px-4">
-            {{-- <div class="text-center mb-12">
+            <div class="text-center mb-12">
                 <h2 class="text-3xl font-bold mb-4">PROMO SPESIAL</h2>
                 <div class="w-20 h-1 gold-bg mx-auto"></div>
-            </div> --}}
+            </div>
             
-            {{-- <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
                 <!-- Promo 1 -->
                 <div class="bg-white rounded-lg overflow-hidden shadow-lg">
                     <div class="h-48 gold-bg flex items-center justify-center">
@@ -122,7 +122,7 @@
                         <a href="#" class="gold-text font-medium hover:underline">Syarat & Ketentuan</a>
                     </div>
                 </div>
-            </div> --}}
+            </div>
         </div>
     </section>
 @endsection

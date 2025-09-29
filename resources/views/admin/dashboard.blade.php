@@ -15,16 +15,16 @@
             <div class="flex justify-between items-start">
                 <div>
                     <p class="text-gray-500">Total Reservasi</p>
-                    <p class="text-3xl font-bold mt-2">142</p>
+                    <p class="text-3xl font-bold mt-2">{{ $totalReservations }}</p>
                 </div>
                 <div class="bg-primary/10 p-3 rounded-lg">
                     <i class="fas fa-calendar-check text-primary text-2xl"></i>
                 </div>
             </div>
-            <div class="mt-4 flex items-center text-success text-sm">
+            <!-- <div class="mt-4 flex items-center text-success text-sm">
                 <i class="fas fa-arrow-up mr-1"></i>
                 <span>12% dari bulan lalu</span>
-            </div>
+            </div> -->
         </div>
         
         <!-- Today's Reservations Card -->
@@ -32,16 +32,16 @@
             <div class="flex justify-between items-start">
                 <div>
                     <p class="text-gray-500">Reservasi Hari Ini</p>
-                    <p class="text-3xl font-bold mt-2">18</p>
+                    <p class="text-3xl font-bold mt-2">{{ $todayReservations }}</p>
                 </div>
                 <div class="bg-secondary/10 p-3 rounded-lg">
                     <i class="fas fa-calendar-day text-secondary text-2xl"></i>
                 </div>
             </div>
-            <div class="mt-4 flex items-center text-danger text-sm">
+            <!-- <div class="mt-4 flex items-center text-danger text-sm">
                 <i class="fas fa-arrow-down mr-1"></i>
                 <span>3% dari kemarin</span>
-            </div>
+            </div> -->
         </div>
         
         <!-- Monthly Revenue Card -->
@@ -49,16 +49,16 @@
             <div class="flex justify-between items-start">
                 <div>
                     <p class="text-gray-500">Pendapatan Bulan Ini</p>
-                    <p class="text-3xl font-bold mt-2">Rp 42.8jt</p>
+                    <p class="text-3xl font-bold mt-2">Rp {{ number_format($monthlyRevenue, 0, ',', '.') }}</p>
                 </div>
                 <div class="bg-success/10 p-3 rounded-lg">
                     <i class="fas fa-wallet text-success text-2xl"></i>
                 </div>
             </div>
-            <div class="mt-4 flex items-center text-success text-sm">
+            <!-- <div class="mt-4 flex items-center text-success text-sm">
                 <i class="fas fa-arrow-up mr-1"></i>
                 <span>18% dari bulan lalu</span>
-            </div>
+            </div> -->
         </div>
         
         <!-- Available Tables Card -->
@@ -66,16 +66,16 @@
             <div class="flex justify-between items-start">
                 <div>
                     <p class="text-gray-500">Meja Tersedia</p>
-                    <p class="text-3xl font-bold mt-2">12/24</p>
+                    <p class="text-3xl font-bold mt-2">{{ $availableTables }}/{{ $totalTables }}</p>
                 </div>
                 <div class="bg-warning/10 p-3 rounded-lg">
                     <i class="fas fa-chair text-warning text-2xl"></i>
                 </div>
             </div>
-            <div class="mt-4 flex items-center text-gray-500 text-sm">
+            <!-- <div class="mt-4 flex items-center text-gray-500 text-sm">
                 <i class="fas fa-info-circle mr-1"></i>
                 <span>Kapasitas 50%</span>
-            </div>
+            </div> -->
         </div>
     </div>
 
