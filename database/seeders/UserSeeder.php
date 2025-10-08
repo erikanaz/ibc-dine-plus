@@ -15,14 +15,14 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         //admin
-        $admin = User::firstOrCreate(
-            ['email' => 'admin123@gmail.com'], 
-            [
-                'name' => 'Admin',
-                'password' => Hash::make('admin123')
-            ]
-        );
-        $admin->assignRole('admin');
+        // $admin = User::firstOrCreate(
+        //     ['email' => 'admin123@gmail.com'], 
+        //     [
+        //         'name' => 'Admin',
+        //         'password' => Hash::make('admin123')
+        //     ]
+        // );
+        // $admin->assignRole('admin');
 
         // //cashier
         // $cashier = User::firstOrCreate(
@@ -36,14 +36,14 @@ class UserSeeder extends Seeder
 
         //customer
         $customer = User::firstOrCreate(
-            ['email' => 'member1@gmail.com'],
+            ['email' => 'customer@gmail.com'],
             [
-                'name' => 'Member1',
-                'password' => Hash::make('member1'),
+                'name' => 'customer',
+                'password' => Hash::make('customer'),
                 'phone' => '081234567890',
                 // 'address' => 'Jl. Batu Tulis No. 1, Jakarta'
             ]
         );
-        $customer->assignRole('member');
+        $customer->assignRole('customer');
     }
 }

@@ -7,8 +7,9 @@
     <!-- Dashboard Cards -->
     <div class="mb-6">
         <h2 class="text-3xl font-bold text-gray-800 mb-1">Dashboard</h2>
-        <p class="text-gray-600 text-base">Selamat datang kembali, Admin!</p>
+        <p class="text-gray-600 text-base">Selamat datang kembali, {{ Auth::user()->name }}!</p>
     </div>
+    
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <!-- Total Reservations Card -->
         <div class="dashboard-card bg-white rounded-xl shadow p-6 border-l-4 border-primary transition-all">
@@ -21,10 +22,6 @@
                     <i class="fas fa-calendar-check text-primary text-2xl"></i>
                 </div>
             </div>
-            <!-- <div class="mt-4 flex items-center text-success text-sm">
-                <i class="fas fa-arrow-up mr-1"></i>
-                <span>12% dari bulan lalu</span>
-            </div> -->
         </div>
         
         <!-- Today's Reservations Card -->
@@ -38,10 +35,6 @@
                     <i class="fas fa-calendar-day text-secondary text-2xl"></i>
                 </div>
             </div>
-            <!-- <div class="mt-4 flex items-center text-danger text-sm">
-                <i class="fas fa-arrow-down mr-1"></i>
-                <span>3% dari kemarin</span>
-            </div> -->
         </div>
         
         <!-- Monthly Revenue Card -->
@@ -55,10 +48,6 @@
                     <i class="fas fa-wallet text-success text-2xl"></i>
                 </div>
             </div>
-            <!-- <div class="mt-4 flex items-center text-success text-sm">
-                <i class="fas fa-arrow-up mr-1"></i>
-                <span>18% dari bulan lalu</span>
-            </div> -->
         </div>
         
         <!-- Available Tables Card -->
@@ -72,10 +61,6 @@
                     <i class="fas fa-chair text-warning text-2xl"></i>
                 </div>
             </div>
-            <!-- <div class="mt-4 flex items-center text-gray-500 text-sm">
-                <i class="fas fa-info-circle mr-1"></i>
-                <span>Kapasitas 50%</span>
-            </div> -->
         </div>
     </div>
 
@@ -99,102 +84,60 @@
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Waktu</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Meja</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DP</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
-                            <!-- Reservation 1 -->
+                            @forelse($todaysReservationsList as $reservation)
                             <tr>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div class="flex-shrink-0 h-10 w-10">
-                                            <img class="h-10 w-10 rounded-full" src="https://randomuser.me/api/portraits/women/32.jpg" alt="">
+                                            <img class="h-10 w-10 rounded-full" src="https://ui-avatars.com/api/?name={{ urlencode($reservation->user->name) }}&background=random" alt="{{ $reservation->user->name }}">
                                         </div>
                                         <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900">Diana Putri</div>
-                                            <div class="text-sm text-gray-500">4 Orang</div>
+                                            <div class="text-sm font-medium text-gray-900">{{ $reservation->user->name }}</div>
+                                            <div class="text-sm text-gray-500">{{ $reservation->guest_count }} Orang</div>
                                         </div>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-900">18:00 - 20:00</div>
-                                    <div class="text-sm text-gray-500">11 Jul 2023</div>
+                                    <div class="text-sm text-gray-900">{{ $reservation->formatted_time }}</div>
+                                    <div class="text-sm text-gray-500">{{ $reservation->reservation_date->format('d M Y') }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    Meja 12
+                                    {{ $reservation->table->name ?? 'N/A' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="status-badge bg-success/10 text-success">Konfirmasi</span>
+                                    <span class="status-badge bg-{{ $reservation->status_color }}/10 text-{{ $reservation->status_color }} px-2 py-1 rounded-full text-xs">
+                                        {{ $reservation->status_label }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    Rp {{ number_format($reservation->total_DP, 0, ',', '.') }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <a href="#" class="text-primary hover:text-primary/80 mr-3"><i class="fas fa-eye"></i></a>
-                                    <a href="#" class="text-warning hover:text-warning/80"><i class="fas fa-edit"></i></a>
+                                    <a href="{{ route('admin.reservations.show', $reservation->id) }}" class="text-primary hover:text-primary/80 mr-3" title="Lihat">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ route('admin.reservations.edit', $reservation->id) }}" class="text-warning hover:text-warning/80" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
                                 </td>
                             </tr>
-                            
-                            <!-- Reservation 2 -->
+                            @empty
                             <tr>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <div class="flex-shrink-0 h-10 w-10">
-                                            <img class="h-10 w-10 rounded-full" src="https://randomuser.me/api/portraits/men/41.jpg" alt="">
-                                        </div>
-                                        <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900">Budi Santoso</div>
-                                            <div class="text-sm text-gray-500">6 Orang</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-900">19:30 - 21:30</div>
-                                    <div class="text-sm text-gray-500">11 Jul 2023</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    Meja 5
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="status-badge bg-warning/10 text-warning">Menunggu</span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <a href="#" class="text-primary hover:text-primary/80 mr-3"><i class="fas fa-eye"></i></a>
-                                    <a href="#" class="text-warning hover:text-warning/80"><i class="fas fa-edit"></i></a>
+                                <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                                    Tidak ada reservasi hari ini
                                 </td>
                             </tr>
-                            <!-- Reservation 3 -->
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <div class="flex-shrink-0 h-10 w-10">
-                                            <img class="h-10 w-10 rounded-full" src="https://randomuser.me/api/portraits/women/68.jpg" alt="">
-                                        </div>
-                                        <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900">Siti Rahayu</div>
-                                            <div class="text-sm text-gray-500">2 Orang</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-900">20:00 - 22:00</div>
-                                    <div class="text-sm text-gray-500">11 Jul 2023</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    Meja 8
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="status-badge bg-danger/10 text-danger">Batal</span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <a href="#" class="text-primary hover:text-primary/80 mr-3"><i class="fas fa-eye"></i></a>
-                                    <a href="#" class="text-warning hover:text-warning/80"><i class="fas fa-edit"></i></a>
-                                </td>
-                            </tr>
-                            
-                            <!-- Add more reservation rows as needed -->
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
                 <div class="px-6 py-4 border-t text-center">
-                    <a href="#" class="text-primary hover:underline">Lihat semua reservasi</a>
+                    <a href="{{ route('admin.reservations.index') }}" class="text-primary hover:underline">Lihat semua reservasi</a>
                 </div>
             </div>
 
@@ -203,24 +146,40 @@
                 <div class="px-6 py-4 border-b">
                     <h3 class="font-bold text-lg flex items-center">
                         <i class="fas fa-chart-line text-primary mr-2"></i>
-                        Pendapatan 7 Hari Terakhir
+                        Pendapatan 7 Hari Terakhir (DP Reservasi)
                     </h3>
                 </div>
                 <div class="p-6">
-                    <div class="flex items-end h-64">
-                        <!-- Chart bars would go here -->
-                        <!-- Replace with actual chart library like Chart.js in production -->
-                        <div class="flex-1 flex flex-col items-center justify-end">
-                            <div class="bg-primary w-10 rounded-t-lg" style="height: 70%;"></div>
-                            <p class="mt-2 text-sm text-gray-600">Sen</p>
-                        </div>
-                        <!-- Add more days as needed -->
+                    <div class="flex items-end h-64 space-x-2 justify-center">
+                        @php
+                            $maxRevenue = $revenueData->max('revenue') ?: 1;
+                            $days = [];
+                            for ($i = 6; $i >= 0; $i--) {
+                                $days[] = now()->subDays($i)->format('Y-m-d');
+                            }
+                        @endphp
+                        
+                        @foreach($days as $day)
+                            @php
+                                $revenue = $revenueData->firstWhere('date', $day);
+                                $amount = $revenue ? $revenue->revenue : 0;
+                                $height = ($amount / $maxRevenue) * 80;
+                                $dayName = \Carbon\Carbon::parse($day)->translatedFormat('D');
+                                $dayDate = \Carbon\Carbon::parse($day)->format('d/m');
+                            @endphp
+                            <div class="flex-1 flex flex-col items-center justify-end">
+                                <div 
+                                    class="bg-primary w-8 rounded-t-lg transition-all duration-300 hover:bg-primary-dark cursor-pointer" 
+                                    style="height: {{ max($height, 10) }}%"
+                                    title="Rp {{ number_format($amount, 0, ',', '.') }}"
+                                ></div>
+                                <p class="mt-2 text-sm text-gray-600">{{ $dayName }}</p>
+                                <p class="text-xs text-gray-500 mt-1">{{ $dayDate }}</p>
+                            </div>
+                        @endforeach
                     </div>
-                    <div class="flex justify-center mt-8">
-                        <div class="flex items-center mr-6">
-                            <div class="w-4 h-4 bg-primary rounded mr-2"></div>
-                            <span class="text-sm text-gray-600">Pendapatan (juta)</span>
-                        </div>
+                    <div class="mt-4 text-center text-sm text-gray-600">
+                        Total: Rp {{ number_format($revenueData->sum('revenue'), 0, ',', '.') }}
                     </div>
                 </div>
             </div>
@@ -233,47 +192,54 @@
                 <div class="px-6 py-4 border-b">
                     <h3 class="font-bold text-lg flex items-center">
                         <i class="fas fa-calendar-alt text-warning mr-2"></i>
-                        Reservasi Mendatang
+                        Reservasi Mendatang (3 Hari)
                     </h3>
                 </div>
                 <div class="p-4 space-y-4">
-                    <!-- Reservation Card 1 -->
-                    <div class="reservation-card p-4 border border-gray-200 rounded-lg">
+                    @forelse($upcomingReservations as $reservation)
+                    <div class="reservation-card p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
                         <div class="flex justify-between items-start">
                             <div>
-                                <p class="font-bold">Dewi Anggraini</p>
-                                <p class="text-sm text-gray-600">12 Jul 2023 • 19:00</p>
+                                <p class="font-bold text-gray-900">{{ $reservation->user->name }}</p>
+                                <p class="text-sm text-gray-600">
+                                    {{ $reservation->reservation_date->format('d M Y') }} • {{ $reservation->formatted_time }}
+                                </p>
                             </div>
-                            <span class="status-badge bg-warning/10 text-warning">Menunggu</span>
+                            <span class="status-badge bg-{{ $reservation->status_color }}/10 text-{{ $reservation->status_color }} px-2 py-1 rounded-full text-xs">
+                                {{ $reservation->status_label }}
+                            </span>
                         </div>
-                        <div class="mt-3 flex items-center text-sm">
-                            <i class="fas fa-users text-gray-500 mr-2"></i>
-                            <span>4 Orang • Meja 7</span>
+                        <div class="mt-3 flex items-center text-sm text-gray-600">
+                            <i class="fas fa-users mr-2"></i>
+                            <span class="mr-4">{{ $reservation->guest_count }} Orang</span>
+                            <i class="fas fa-chair mr-2"></i>
+                            <span>{{ $reservation->table->name ?? 'N/A' }}</span>
                         </div>
-                        <div class="mt-3 flex">
-                            <button class="text-sm bg-primary text-white px-3 py-1 rounded mr-2">Konfirmasi</button>
-                            <button class="text-sm bg-gray-200 text-gray-700 px-3 py-1 rounded">Detail</button>
+                        <div class="mt-3 flex items-center text-sm text-gray-600">
+                            <i class="fas fa-money-bill-wave mr-2"></i>
+                            <span>DP: Rp {{ number_format($reservation->total_DP, 0, ',', '.') }}</span>
+                        </div>
+                        <div class="mt-3 flex space-x-2">
+                            @if($reservation->status === 'pending')
+                            <form action="{{ route('admin.reservations.update-status', $reservation->id) }}" method="POST" class="inline">
+                                @csrf
+                                @method('PATCH')
+                                <input type="hidden" name="status" value="confirmed">
+                                <button type="submit" class="text-xs bg-primary text-white px-3 py-2 rounded hover:bg-primary-dark transition-colors">
+                                    Konfirmasi
+                                </button>
+                            </form>
+                            @endif
+                            <a href="{{ route('admin.reservations.show', $reservation->id) }}" class="text-xs bg-gray-200 text-gray-700 px-3 py-2 rounded hover:bg-gray-300 transition-colors">
+                                Detail
+                            </a>
                         </div>
                     </div>
-                    
-                    <!-- Reservation Card 2 -->
-                    <div class="reservation-card p-4 border border-gray-200 rounded-lg">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="font-bold">Rudi Hartono</p>
-                                <p class="text-sm text-gray-600">13 Jul 2023 • 20:30</p>
-                            </div>
-                            <span class="status-badge bg-success/10 text-success">Konfirmasi</span>
-                        </div>
-                        <div class="mt-3 flex items-center text-sm">
-                            <i class="fas fa-users text-gray-500 mr-2"></i>
-                            <span>6 Orang • Meja 10</span>
-                        </div>
-                        <div class="mt-3 flex">
-                            <button class="text-sm bg-gray-200 text-gray-700 px-3 py-1 rounded">Detail</button>
-                        </div>
+                    @empty
+                    <div class="text-center text-gray-500 py-4">
+                        Tidak ada reservasi mendatang
                     </div>
-                    <!-- Add more reservation cards as needed -->
+                    @endforelse
                 </div>
             </div>
 
@@ -286,44 +252,47 @@
                     </h3>
                 </div>
                 <div class="p-4">
-                    <div class="grid grid-cols-4 gap-3">
-                        <div class="bg-success/10 border border-success rounded-lg p-3 text-center">
-                            <div class="text-2xl font-bold">1-6</div>
-                            <div class="text-sm text-success">Tersedia</div>
-                        </div>
-                        <div class="bg-warning/10 border border-warning rounded-lg p-3 text-center">
-                            <div class="text-2xl font-bold">7-8</div>
-                            <div class="text-sm text-warning">Reservasi</div>
-                        </div>
-                        <div class="bg-primary/10 border border-primary rounded-lg p-3 text-center">
-                            <div class="text-2xl font-bold">9-12</div>
-                            <div class="text-sm text-primary">Terisi</div>
-                        </div>
-                        <div class="bg-gray-100 border border-gray-300 rounded-lg p-3 text-center">
-                            <div class="text-2xl font-bold">13-14</div>
-                            <div class="text-sm text-gray-500">Perbaikan</div>
-                        </div>
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        @php
+                            $statusColors = [
+                                'available' => ['bg' => 'success', 'text' => 'success', 'label' => 'Tersedia'],
+                                'occupied' => ['bg' => 'primary', 'text' => 'primary', 'label' => 'Terisi'],
+                                'reserved' => ['bg' => 'warning', 'text' => 'warning', 'label' => 'Reservasi'],
+                                'maintenance' => ['bg' => 'gray-400', 'text' => 'gray-500', 'label' => 'Perbaikan']
+                            ];
+                        @endphp
+                        
+                        @foreach($tableStatus as $status)
+                            @php
+                                $colorConfig = $statusColors[$status->status] ?? ['bg' => 'gray', 'text' => 'gray', 'label' => $status->status];
+                            @endphp
+                            <div class="bg-{{ $colorConfig['bg'] }}/10 border border-{{ $colorConfig['bg'] }} rounded-lg p-3 text-center">
+                                <div class="text-2xl font-bold text-{{ $colorConfig['text'] }}">{{ $status->count }}</div>
+                                <div class="text-sm text-{{ $colorConfig['text'] }}">{{ $colorConfig['label'] }}</div>
+                            </div>
+                        @endforeach
                     </div>
                     
                     <div class="mt-6">
-                        <h4 class="font-medium mb-3">Legenda Status</h4>
+                        <h4 class="font-medium mb-3 text-gray-800">Legenda Status</h4>
                         <div class="space-y-2">
+                            @foreach($statusColors as $status => $color)
                             <div class="flex items-center">
-                                <div class="w-4 h-4 bg-success rounded-full mr-2"></div>
-                                <span class="text-sm">Tersedia</span>
+                                <div class="w-4 h-4 bg-{{ $color['bg'] }} rounded-full mr-2"></div>
+                                <span class="text-sm text-gray-700">{{ $color['label'] }}</span>
                             </div>
-                            <div class="flex items-center">
-                                <div class="w-4 h-4 bg-warning rounded-full mr-2"></div>
-                                <span class="text-sm">Reservasi</span>
-                            </div>
-                            <div class="flex items-center">
-                                <div class="w-4 h-4 bg-primary rounded-full mr-2"></div>
-                                <span class="text-sm">Terisi</span>
-                            </div>
-                            <div class="flex items-center">
-                                <div class="w-4 h-4 bg-gray-400 rounded-full mr-2"></div>
-                                <span class="text-sm">Tidak Tersedia</span>
-                            </div>
+                            @endforeach
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 pt-4 border-t">
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-gray-600">Total Meja:</span>
+                            <span class="font-bold text-gray-800">{{ $totalTables }}</span>
+                        </div>
+                        <div class="flex justify-between items-center text-sm mt-1">
+                            <span class="text-gray-600">Tersedia:</span>
+                            <span class="font-bold text-success">{{ $availableTables }}</span>
                         </div>
                     </div>
                 </div>
@@ -331,3 +300,18 @@
         </div>
     </div>
 @endsection
+
+@push('styles')
+<style>
+.status-badge {
+    @apply px-2 py-1 rounded-full text-xs font-medium;
+}
+.dashboard-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+.reservation-card:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+</style>
+@endpush

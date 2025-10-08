@@ -17,12 +17,13 @@ class ReservationSeeder extends Seeder
     {
             // 1 contoh reservasi
             $reservation = Reservation::create([
-                'user_id' => 1,
-                'table_id' => 1,
+                'user_id' => 2,
+                'table_id' => 5,
                 'reservation_date' => now()->addDays(1)->toDateString(),
                 'reservation_time' => '20:00:00',
                 'guest_count' => 4,
                 'notes' => 'Minta dekat jendela',
+                'promo_id' => null,
                 'total_DP' => 20000,
                 'status' => 'confirmed',
                 'created_at' => now(),

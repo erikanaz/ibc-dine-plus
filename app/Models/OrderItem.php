@@ -9,10 +9,15 @@ class OrderItem extends Model
     protected $fillable = [
         'order_id', // ID pesanan
         'menu_id', // ID menu yang dipesan
-        'name', // Nama item yang dipesan
+        // 'name', // Nama item yang dipesan
         'qty', // Jumlah item yang dipesan
         'price', // Harga per item pada saat pemesanan
-        'notes', // Catatan khusus untuk item, misalnya permintaan khusus dari pelanggan
+        // 'notes', // Catatan khusus untuk item, misalnya permintaan khusus dari pelanggan
+    ];
+
+    protected $casts = [
+        'price' => 'integer',
+        'qty' => 'integer',
     ];
 
     // relasi ke Order
@@ -25,5 +30,11 @@ class OrderItem extends Model
     public function menu()
     {
         return $this->belongsTo(Menu::class);
+    }
+
+    // Hitung subtotal
+    public function getSubtotalAttribute()
+    {
+        return $this->price * $this->qty;
     }
 }

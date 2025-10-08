@@ -10,13 +10,13 @@
             <div class="flex justify-between items-center">
                 <div>
                     <h2 class="text-3xl font-bold text-gray-800 mb-1">Edit Meja {{ $table->number }}</h2>
-                    <p class="text-gray-600 text-base">Edit informasi meja di sistem restoran</p>
+                    <!-- <p class="text-gray-600 text-base">Edit informasi meja di sistem restoran</p> -->
                 </div>
                 <div>
-                    <a href="{{ route('admin.tables.index', ['selected_table' => $table->id]) }}" class="btn-secondary flex items-center">
+                    <!-- <a href="{{ route('admin.tables.index', ['selected_table' => $table->id]) }}" class="btn-secondary flex items-center">
                         <i class="fas fa-arrow-left mr-2"></i>
                         Kembali
-                    </a>
+                    </a> -->
                 </div>
             </div>
         </div>
@@ -119,59 +119,6 @@
                         </div>
                     </div>
 
-                    <!-- Status Visualization -->
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                            <i class="fas fa-palette text-primary mr-2"></i>
-                            Preview Status
-                        </h3>
-                        
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="statusPreview">
-                            @foreach($statuses as $value => $label)
-                                <div class="status-preview-card 
-                                    @if(old('status', $table->status) == $value) selected @endif
-                                    " data-status="{{ $value }}">
-                                    <div class="text-center p-4 rounded-lg border-2 transition-all">
-                                        <div class="mb-2">
-                                            @if($value == 'available')
-                                                <i class="fas fa-check-circle text-success text-xl"></i>
-                                            @elseif($value == 'occupied')
-                                                <i class="fas fa-users text-warning text-xl"></i>
-                                            @elseif($value == 'reserved')
-                                                <i class="fas fa-calendar-check text-secondary text-xl"></i>
-                                            @else
-                                                <i class="fas fa-tools text-gray-500 text-xl"></i>
-                                            @endif
-                                        </div>
-                                        <div class="font-medium">{{ $label }}</div>
-                                        <div class="text-xs text-gray-500 mt-1">Klik untuk memilih</div>
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
-                        <input type="hidden" name="status" id="selectedStatus" value="{{ old('status', $table->status) }}">
-                    </div>
-
-                    <!-- Additional Information -->
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                            <i class="fas fa-sticky-note text-primary mr-2"></i>
-                            Informasi Tambahan
-                        </h3>
-                        
-                        <div>
-                            <label for="notes" class="form-label">Catatan</label>
-                            <textarea name="notes" 
-                                      id="notes" 
-                                      rows="3"
-                                      class="form-input @error('notes') border-red-500 @enderror"
-                                      placeholder="Catatan tambahan tentang meja (opsional)">{{ old('notes', $table->notes) }}</textarea>
-                            @error('notes')
-                                <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                            @enderror
-                            <p class="text-gray-500 text-xs mt-1">Catatan khusus tentang meja ini</p>
-                        </div>
-                    </div>
 
                     <!-- Timestamps -->
                     <div class="bg-gray-50 rounded-lg p-4">
@@ -182,7 +129,7 @@
                                 <span class="font-medium">{{ $table->created_at->format('d M Y H:i') }}</span>
                             </div>
                             <div>
-                                <span class="text-gray-600">Diupdate pada:</span>
+                                <span class="text-gray-600">Diubah pada:</span>
                                 <span class="font-medium">{{ $table->updated_at->format('d M Y H:i') }}</span>
                             </div>
                         </div>
@@ -195,11 +142,11 @@
                         <a href="{{ route('admin.tables.index', ['selected_table' => $table->id]) }}" class="btn-secondary">
                             <i class="fas fa-times mr-2"></i>Batal
                         </a>
-                        <button type="button" 
+                        <!-- <button type="button" 
                                 onclick="confirmDelete()" 
                                 class="btn-danger flex items-center">
                             <i class="fas fa-trash mr-2"></i>Hapus Meja
-                        </button>
+                        </button> -->
                     </div>
                     <div class="flex space-x-3">
                         <button type="submit" class="btn-primary">

@@ -1,20 +1,20 @@
 <header class="bg-white border-b shadow-md">
-  <div class="flex items-center px-6 py-4">
+  <div class="flex items-center px-6 py-6">
     <div class="flex items-center flex-1">
       <!-- Tombol Toggle -->
-      <button @click="sidebarOpen = !sidebarOpen" class="mr-6 text-gray-500 hover:text-primary focus:outline-none">
+      <!-- <button @click="sidebarOpen = !sidebarOpen" class="mr-6 text-gray-500 hover:text-primary focus:outline-none">
         <i class="fas fa-bars text-xl"></i>
-      </button>
+      </button> -->
 
       <!-- Search Bar -->
-      <div class="relative w-full max-w-md">
+      <!-- <div class="relative w-full max-w-md">
         <input 
           type="text" 
           placeholder="Cari..." 
           class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
         >
         <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
-      </div>
+      </div> -->
     </div>
 
     <!-- Menu Kanan -->

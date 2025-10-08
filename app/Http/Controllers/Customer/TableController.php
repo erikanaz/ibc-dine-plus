@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Customer;
 
+use App\Http\Controllers\Controller;
 use App\Models\Table;
 use Illuminate\Http\Request;
 
@@ -9,7 +10,7 @@ class TableController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Table::query()->where('is_visible', true);
+        $query = Table::query();
 
         // Filter by capacity if provided
         if ($request->has('capacity') && $request->capacity !== 'all') {
@@ -25,6 +26,9 @@ class TableController extends Controller
         if ($request->has('search')) {
             $query->where('number', 'like', '%' . $request->search . '%');
         }
+
+        // Only show available tables for customers
+        $query->where('status', 'available');
 
         $tables = $query->orderBy('capacity')->orderBy('number')->paginate(12);
 

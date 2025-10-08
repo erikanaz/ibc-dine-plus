@@ -50,7 +50,7 @@ class PermissionSeeder extends Seeder
         // ambil roles
         $admin = Role::where('name', 'admin')->first();
         // $cashier = Role::where('name', 'cashier')->first();
-        $member = Role::where('name', 'member')->first();  
+        $customer = Role::where('name', 'customer')->first();  
         
         // assign permissions to roles
         $admin->syncPermissions([
@@ -73,7 +73,7 @@ class PermissionSeeder extends Seeder
         //     'view transactions',
         // ]);
 
-        $member->syncPermissions([
+        $customer->syncPermissions([
             'create reservations',
             'cancel reservations',
             'view own reservations',

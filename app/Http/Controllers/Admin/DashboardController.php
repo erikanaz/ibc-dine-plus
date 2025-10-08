@@ -3,42 +3,75 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Order;
 use App\Models\Reservation;
 use App\Models\Table;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
-    //
     public function index()
     {
+        // Total Reservations
         $totalReservations = Reservation::count();
-        $todayReservations = Reservation::whereDate('reservation_time', now())->count();
-        $monthlyRevenue = Order::whereMonth('created_at', now()->month)->sum('total_price');
-        $availableTables = Table::where('status', 'available')->count();
+        
+        // Today's Reservations
+        $todayReservations = Reservation::whereDate('reservation_date', today())->count();
+        
+        // Monthly Revenue (dari total_DP reservations yang confirmed/completed)
+        $monthlyRevenue = Reservation::whereMonth('reservation_date', now()->month)
+            ->whereYear('reservation_date', now()->year)
+            ->whereIn('status', ['confirmed', 'completed'])
+            ->sum('total_DP');
+        
+        // Table Availability
         $totalTables = Table::count();
-
-        $todayReservationList = Reservation::whereDate('reservation_time', now())
-            ->with('user', 'table')
+        $availableTables = Table::where('status', 'available')->count();
+        
+        // Today's Reservations with details
+        $todaysReservationsList = Reservation::with(['user', 'table'])
+            ->whereDate('reservation_date', today())
+            ->orderBy('reservation_time', 'asc')
+            ->limit(5)
             ->get();
-
-        $upcomingReservations = Reservation::whereDate('reservation_time', '>=', now())
-            ->orderBy('reservation_time')
-            ->with('user', 'table')
-            ->take(5)
+        
+        // Upcoming Reservations (next 3 days)
+        $upcomingReservations = Reservation::with(['user', 'table'])
+            ->where('reservation_date', '>=', today())
+            ->where('reservation_date', '<=', today()->addDays(3))
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->orderBy('reservation_date', 'asc')
+            ->orderBy('reservation_time', 'asc')
+            ->limit(5)
             ->get();
-
-        $tableStatus = Table::all();
-
+        
+        // Revenue Chart Data (Last 7 days dari total_DP)
+        $revenueData = Reservation::where('reservation_date', '>=', now()->subDays(7))
+            ->whereIn('status', ['confirmed', 'completed'])
+            ->select(
+                DB::raw('DATE(reservation_date) as date'),
+                DB::raw('SUM(total_DP) as revenue')
+            )
+            ->groupBy('date')
+            ->orderBy('date', 'asc')
+            ->get();
+        
+        // Table Status Summary
+        $tableStatus = Table::select('status', DB::raw('count(*) as count'))
+            ->groupBy('status')
+            ->get();
+        
         return view('admin.dashboard', compact(
             'totalReservations',
             'todayReservations',
             'monthlyRevenue',
-            'availableTables',
             'totalTables',
-            'todayReservationList',
+            'availableTables',
+            'todaysReservationsList',
             'upcomingReservations',
+            'revenueData',
             'tableStatus'
         ));
     }

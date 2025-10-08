@@ -16,6 +16,8 @@
                 @auth
                     <a href="/homepage" class="font-medium {{ Request::is('homepage*') ? 'text-yellow-500' : 'hover:text-yellow-500' }} focus:outline-none focus:underline">Beranda</a>
                     <a href="/reservation" class="font-medium {{ Request::is('reservation*') ? 'text-yellow-500' : 'hover:text-yellow-500' }} focus:outline-none focus:underline">Reservasi</a>
+                    <!-- Tambahan Meja -->
+                    <a href="/tables" class="font-medium {{ Request::is('tables*') ? 'text-yellow-500' : 'hover:text-yellow-500' }} focus:outline-none focus:underline">Meja</a>
                     <a href="/order" class="font-medium {{ Request::is('order*') ? 'text-yellow-500' : 'hover:text-yellow-500' }} focus:outline-none focus:underline">Menu</a>
                     
                     <!-- Account Dropdown -->
@@ -120,7 +122,8 @@
             @auth
                 <a href="/homepage" class="block font-medium {{ Request::is('homepage*') ? 'text-yellow-500' : 'hover:text-yellow-500' }} px-4 py-2 rounded hover:bg-gray-50 focus:bg-gray-50">Beranda</a>
                 <a href="/reservation" class="block font-medium {{ Request::is('reservation*') ? 'text-yellow-500' : 'hover:text-yellow-500' }} px-4 py-2 rounded hover:bg-gray-50 focus:bg-gray-50">Reservasi</a>
-                <a href="/order" class="block font-medium {{ Request::is('order*') ? 'text-yellow-500' : 'hover:text-yellow-500' }} px-4 py-2 rounded hover:bg-gray-50 focus:bg-gray-50">Menu</a>
+                <a href="/order" class="block font-medium {{ Request::is('order*') ? 'text-yellow-500' : 'hover:text-yellow-500' }} px-4 py-2 rounded hover:bg-gray-50 focus:bg-gray-50">Menu.</a>
+                <a href="/tables" class="block font-medium {{ Request::is('tables*') ? 'text-yellow-500' : 'hover:text-yellow-500' }} px-4 py-2 rounded hover:bg-gray-50 focus:bg-gray-50">Meja</a>
                 <div class="border-t border-gray-200 pt-2">
                     <p class="text-sm font-semibold text-gray-500 px-4 py-1">Akun Saya</p>
                     <a href="/profile" class="block px-4 py-2 text-gray-700 hover:text-yellow-500 hover:bg-gray-50 rounded focus:bg-gray-50">Profil</a>

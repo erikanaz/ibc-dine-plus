@@ -9,7 +9,7 @@
         <div class="flex justify-between items-center">
             <div>
                 <h2 class="text-3xl font-bold text-gray-800 mb-1">Manajemen Menu</h2>
-                <p class="text-gray-600 text-base">Kelola menu restoran Anda</p>
+                <!-- <p class="text-gray-600 text-base">Kelola menu restoran Anda</p> -->
             </div>
             <!-- <a href="{{ route('admin.menus.create') }}" class="btn-primary flex items-center">
                 <i class="fas fa-plus mr-2"></i>
@@ -48,48 +48,6 @@
                 </form>
             </div>
         </div>
-
-        <!-- Additional Filters -->
-        <!-- <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4"> -->
-            <!-- Category Filter -->
-            <!-- <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
-                <select name="category" onchange="this.form.submit()" 
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary">
-                    <option value="">Semua Kategori</option>
-                    <option value="signatures" {{ request('category') == 'signatures' ? 'selected' : '' }}>Signature</option>
-                    <option value="vegetables" {{ request('category') == 'vegetables' ? 'selected' : '' }}>Sayuran</option>
-                    <option value="tempoe-doeloe" {{ request('category') == 'tempoe-doeloe' ? 'selected' : '' }}>Tempo Doeloe</option>
-                    <option value="mie-ayam h&w" {{ request('category') == 'mie-ayam h&w' ? 'selected' : '' }}>Mie Ayam H&W</option>
-                    <option value="drinks" {{ request('category') == 'drinks' ? 'selected' : '' }}>Minuman</option>
-                </select>
-            </div> -->
-
-            <!-- Status Filter -->
-            <!-- <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <select name="status" onchange="this.form.submit()" 
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary">
-                    <option value="">Semua Status</option>
-                    <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Aktif</option>
-                    <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Tidak Aktif</option>
-                </select>
-            </div> -->
-
-            <!-- Sort Filter -->
-            <!-- <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Sortir</label>
-                <select name="sort" onchange="this.form.submit()" 
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary">
-                    <option value="newest" {{ request('sort') == 'newest' ? 'selected' : '' }}>Terbaru</option>
-                    <option value="oldest" {{ request('sort') == 'oldest' ? 'selected' : '' }}>Terlama</option>
-                    <option value="name_asc" {{ request('sort') == 'name_asc' ? 'selected' : '' }}>Nama A-Z</option>
-                    <option value="name_desc" {{ request('sort') == 'name_desc' ? 'selected' : '' }}>Nama Z-A</option>
-                    <option value="price_high" {{ request('sort') == 'price_high' ? 'selected' : '' }}>Harga Tertinggi</option>
-                    <option value="price_low" {{ request('sort') == 'price_low' ? 'selected' : '' }}>Harga Terendah</option>
-                </select>
-            </div> -->
-        <!-- </div> -->
         </form>
     </div>
 

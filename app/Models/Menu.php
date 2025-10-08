@@ -133,4 +133,16 @@ class Menu extends Model
 
         return $fallbackImages[$this->category] ?? 'https://images.unsplash.com/photo-1563379926898-05f4575a45d8?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60';
     }
+
+    //untuk homepage
+    public function scopeAvailable($query)
+    {
+        return $query->where('is_available', true);
+    }
+
+    public function scopeFeatured($query)
+    {
+        return $query->where('category', 'signatures')
+                    ->where('is_available', true);
+    }
 }

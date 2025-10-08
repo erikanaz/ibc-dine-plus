@@ -9,17 +9,17 @@
         <div class="flex justify-between items-center">
             <div>
                 <h2 class="text-3xl font-bold text-gray-800 mb-1">Manajemen Meja</h2>
-                <p class="text-gray-600 text-base">Kelola meja restoran Anda</p>
+                <!-- <p class="text-gray-600 text-base">Kelola meja restoran Anda</p> -->
             </div>
             <div class="flex space-x-3">
-                <button class="btn-secondary flex items-center">
+                <!-- <button class="btn-secondary flex items-center">
                     <i class="fas fa-print mr-2"></i>
                     Cetak Layout
-                </button>
-                <a href="{{ route('admin.tables.create') }}" class="btn-primary flex items-center">
+                </button> -->
+                <!-- <a href="{{ route('admin.tables.create') }}" class="btn-primary flex items-center">
                     <i class="fas fa-plus mr-2"></i>
                     Tambah Meja
-                </a>
+                </a> -->
             </div>
         </div>
     </div>
@@ -215,6 +215,13 @@
 
         <!-- Right Column - Table Details and Actions -->
         <div class="space-y-6">
+            <!-- Tombol Tambah Meja -->
+            <div class="bg-white rounded-xl shadow p-4">
+                <a href="{{ route('admin.tables.create') }}" 
+                class="w-full bg-primary text-white py-2 rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center justify-center">
+                    <i class="fas fa-plus mr-2"></i> Tambah Meja
+                </a>
+            </div>
             @if($selectedTable)
                 <!-- Selected Table Details -->
                 <div class="bg-white rounded-xl shadow">
@@ -258,10 +265,10 @@
                                     {{ $selectedTable->status_label }}
                                 </span>
                             </div>
-                            <div class="flex justify-between">
+                            <!-- <div class="flex justify-between">
                                 <span class="text-gray-600">Catatan:</span>
                                 <span class="font-medium">{{ $selectedTable->notes ?? '-' }}</span>
-                            </div>
+                            </div> -->
                         </div>
 
                         <div class="mt-6 space-y-3">
@@ -271,9 +278,9 @@
                             <button class="w-full bg-warning text-white py-2 rounded-lg font-medium hover:bg-warning/90 transition-colors flex items-center justify-center">
                                 <i class="fas fa-calendar-plus mr-2"></i>Buat Reservasi
                             </button>
-                            <button class="w-full bg-gray-100 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors flex items-center justify-center">
+                            <!-- <button class="w-full bg-gray-100 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors flex items-center justify-center">
                                 <i class="fas fa-history mr-2"></i>Riwayat Penggunaan
-                            </button>
+                            </button> -->
                         </div>
                     </div>
                 </div>
@@ -287,6 +294,17 @@
                         </h3>
                     </div>
                     <div class="p-4 space-y-3">
+                        <!-- Hapus Meja -->
+                        <form action="{{ route('admin.tables.destroy', $selectedTable->id) }}" method="POST" class="inline-block w-full"
+                            onsubmit="return confirm('Yakin ingin menghapus meja ini? Data tidak bisa dikembalikan.')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" 
+                                class="w-full flex items-center justify-center bg-red-100 text-red-600 py-3 rounded-lg font-medium hover:bg-red-200 transition-colors">
+                                <i class="fas fa-trash mr-2"></i>Hapus Meja
+                            </button>
+                        </form>
+
                         <form action="{{ route('admin.tables.update-status', $selectedTable->id) }}" method="POST" class="inline-block w-full">
                             @csrf
                             @method('PATCH')
@@ -360,8 +378,9 @@
                 </div>
             @endif
 
+
             <!-- Recent Table Activities -->
-            <div class="bg-white rounded-xl shadow">
+            <!-- <div class="bg-white rounded-xl shadow">
                 <div class="px-6 py-4 border-b">
                     <h3 class="font-bold text-lg flex items-center">
                         <i class="fas fa-history text-secondary mr-2"></i>
@@ -400,7 +419,7 @@
                         </div>
                     @endforeach
                 </div>
-            </div>
+            </div> -->
         </div>
     </div>
 @endsection

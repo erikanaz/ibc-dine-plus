@@ -37,25 +37,33 @@
             Menu
         </a>
         
-        <a href="#" class="sidebar-item flex items-center px-6 py-3 text-slate-300 hover:text-white">
+        <a href="{{ route('admin.reservations.index') }}" 
+            class="sidebar-item flex items-center px-6 py-3 
+                    {{ request()->routeIs('admin.reservations.index') 
+                        ? 'text-white bg-slate-800 border-l-4 border-primary' 
+                        : 'text-slate-300 hover:text-white' }}">
             <i class="fas fa-calendar-check mr-3"></i>
             Reservasi
         </a>
         
-        <a href="#" class="sidebar-item flex items-center px-6 py-3 text-slate-300 hover:text-white">
+        <!-- <a href="#" class="sidebar-item flex items-center px-6 py-3 text-slate-300 hover:text-white">
             <i class="fas fa-receipt mr-3"></i>
             Pesanan
-        </a>
+        </a> -->
         
-        <a href="{{ route('admin.promos.index') }}" class="sidebar-item flex items-center px-6 py-3 text-slate-300 hover:text-white">
+        <a href="{{ route('admin.promos.index') }}" 
+            class="sidebar-item flex items-center px-6 py-3 
+                    {{ request()->routeIs('admin.promos.index') 
+                        ? 'text-white bg-slate-800 border-l-4 border-primary' 
+                        : 'text-slate-300 hover:text-white' }}">
             <i class="fas fa-tags mr-3"></i>
             Promo
         </a>
         
-        <a href="#" class="sidebar-item flex items-center px-6 py-3 text-slate-300 hover:text-white">
+        <!-- <a href="#" class="sidebar-item flex items-center px-6 py-3 text-slate-300 hover:text-white">
             <i class="fas fa-chart-bar mr-3"></i>
             Laporan
-        </a>
+        </a> -->
 
         
         {{-- <div class="absolute bottom-0 w-full p-4 border-t border-slate-700">

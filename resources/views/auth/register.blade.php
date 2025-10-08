@@ -64,15 +64,7 @@
                         @enderror
                     </div>
 
-                    <!-- Address -->
-                    <div>
-                        <label for="address" class="block text-sm font-medium text-gray-700">Alamat Lengkap</label>
-                        <textarea id="address" name="address" rows="3" required 
-                                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-400">{{ old('address') }}</textarea>
-                        @error('address')
-                            <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
+                    
 
                     <!-- Password -->
                     <div>

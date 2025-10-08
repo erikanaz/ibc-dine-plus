@@ -3,11 +3,14 @@
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\MenuController;
 use App\Http\Controllers\Admin\PromoController;
+use App\Http\Controllers\Admin\ReservationController as AdminReservationController;
 use App\Http\Controllers\Admin\TableController;
+use App\Http\Controllers\Customer\TableController as CustomerTableController;
 use App\Http\Controllers\HomepageController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReservationController;
+use App\Http\Controllers\TableController as ControllersTableController;
 use Illuminate\Support\Facades\Route;
 use App\Models\Menu;
 
@@ -27,16 +30,22 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'role:admin']], func
     Route::patch('/tables/{table}/update-status', [TableController::class, 'updateStatus'])->name('admin.tables.update-status');
     
     // Reservation
-    Route::get('/reservations', [ReservationController::class, 'index'])->name('admin.reservations.index');
-    Route::get('/reservations/{id}', [ReservationController::class, 'show'])->name('admin.reservations.show');
-    Route::post('/reservations/update-status', [ReservationController::class, 'updateStatus'])->name('admin.reservations.updateStatus');
+    Route::resource('/reservations', AdminReservationController::class, ['as' => 'admin']);
+    // Tambahkan route khusus untuk reservasi
+    Route::post('/reservations/{reservation}/add-menu', [AdminReservationController::class, 'addMenu'])->name('admin.reservations.add-menu');
+    Route::put('/reservations/{reservation}/menu/{orderItem}', [AdminReservationController::class, 'updateMenu'])->name('admin.reservations.update-menu');
+    Route::delete('/reservations/{reservation}/menu/{orderItem}', [AdminReservationController::class, 'removeMenu'])->name('admin.reservations.remove-menu');
+    Route::get('/reservations/{reservation}/invoice', [AdminReservationController::class, 'printInvoice'])->name('admin.reservations.invoice');
+    
+    Route::patch('/reservations/{reservation}/status', [AdminReservationController::class, 'updateStatus'])->name('admin.reservations.update-status');
+
+    // Order
+    // Route::resource('orders', OrderController::class);
+    // Route::get('/orders/{order}/print', [OrderController::class, 'printInvoice'])->name('orders.print');    
 
     // Promo
     Route::resource('/promos', PromoController::class, ['as' => 'admin']);
 
-    // Route::get('/reservations', [AdminReservationController::class, 'index'])->name('admin.reservations.index');
-    // Route::get('/reservations/{id}', [AdminReservationController::class, 'show'])->name('admin.reservations.show');
-    // Route::post('/reservations/update-status', [AdminReservationController::class, 'updateStatus'])->name('admin.reservations.updateStatus');
 });
 
 // Route::get('/admin/dashboard', function () {
@@ -60,7 +69,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-Route::group(['middleware' => ['auth', 'role:member']], function () {
+Route::group(['middleware' => ['auth', 'role:customer']], function () {
     Route::get('/reservation', [ReservationController::class, 'index'])->name('reservation.index');
     Route::post('/reservation/store', [ReservationController::class, 'store'])->name('reservation.store');
     // Route::post('/reservation/pilih-meja', [ReservationController::class, 'pilihMeja'])->name('reservation.pilihMeja');
@@ -77,7 +86,12 @@ Route::group(['middleware' => ['auth', 'role:member']], function () {
     Route::post('/pay', [OrderController::class, 'pay'])->name('order.pay');
     Route::get('/order/{order}/success', [OrderController::class, 'success'])->name('order.success');
     Route::get('/order/{order}/pending', [OrderController::class, 'pending'])->name('order.pending');
+
+    Route::get('/tables', [CustomerTableController::class, 'index'])->name('customer.tables.index');
+    Route::post('/reservations', [ReservationController::class, 'store'])->name('customer.reservations.store');
 });
+
+
 
 // Route::post('/pay', [\App\Http\Controllers\PaymentController::class, 'pay']);
 // Route::post('/pay', [OrderController::class, 'pay'])->name('order.pay');
