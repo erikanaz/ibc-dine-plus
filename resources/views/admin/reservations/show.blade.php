@@ -16,7 +16,16 @@
                         </div>
                         <div class="flex items-center">
                             <i class="fas fa-user text-green-500 mr-2"></i>
-                            <span>{{ $reservation->user->name }}</span>
+                            <span>{{ $reservation->customer_name }}</span>
+                            @if($reservation->user_id)
+                                <span class="text-xs text-green-600 ml-2">
+                                    <i class="fas fa-user-check"></i> Member
+                                </span>
+                            @else
+                                <span class="text-xs text-gray-500 ml-2">
+                                    <i class="fas fa-user"></i> Guest
+                                </span>
+                            @endif
                         </div>
                         <span class="status-badge 
                             @if($reservation->status === 'pending') bg-warning/10 text-warning
@@ -28,7 +37,6 @@
                         </span>
                     </div>
                 </div>
-                <!-- Di header section - ganti tombol Edit -->
                 <div class="flex space-x-3">
                     @if(!in_array($reservation->status, ['completed', 'cancelled', 'expired']))
                         <a href="{{ route('admin.reservations.edit', $reservation->id) }}" 
@@ -75,14 +83,23 @@
                                 <div class="flex items-center space-x-3">
                                     <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
                                         <span class="text-white font-bold text-sm">
-                                            {{ substr($reservation->user->name, 0, 1) }}
+                                            {{ substr($reservation->customer_name, 0, 1) }}
                                         </span>
                                     </div>
                                     <div>
-                                        <p class="font-medium text-gray-900">{{ $reservation->user->name }}</p>
-                                        <p class="text-sm text-gray-500">{{ $reservation->user->email }}</p>
-                                        @if($reservation->user->phone)
-                                            <p class="text-sm text-gray-500">{{ $reservation->user->phone }}</p>
+                                        <p class="font-medium text-gray-900">{{ $reservation->customer_name }}</p>
+                                        <p class="text-sm text-gray-500">{{ $reservation->customer_email }}</p>
+                                        @if($reservation->customer_phone)
+                                            <p class="text-sm text-gray-500">{{ $reservation->customer_phone }}</p>
+                                        @endif
+                                        @if($reservation->user_id)
+                                            <p class="text-xs text-green-600">
+                                                <i class="fas fa-user-check"></i> Customer Terdaftar
+                                            </p>
+                                        @else
+                                            <p class="text-xs text-gray-500">
+                                                <i class="fas fa-user"></i> Guest Customer
+                                            </p>
                                         @endif
                                     </div>
                                 </div>
@@ -158,7 +175,6 @@
 
                 <!-- Pesanan Menu -->
                 <div class="bg-white rounded-xl shadow p-6">
-                    <!-- Di section Pesanan Menu - update tombol Tambah Menu -->
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-bold flex items-center text-gray-800">
                             <i class="fas fa-utensils text-orange-500 mr-2"></i>
@@ -205,23 +221,25 @@
                                         </div>
                                         
                                         <div class="flex space-x-2">
-                                            <button type="button" 
-                                                    onclick="openEditMenuModal({{ $item->id }}, {{ $item->qty }})"
-                                                    class="text-primary hover:text-primary/80 transition-colors p-2 rounded-lg hover:bg-blue-50"
-                                                    title="Edit Jumlah">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <form action="{{ route('admin.reservations.remove-menu', [$reservation->id, $item->id]) }}" 
-                                                  method="POST"
-                                                  onsubmit="return confirm('Hapus {{ $item->menu->name }} dari pesanan?')">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" 
-                                                        class="text-red-600 hover:text-red-800 transition-colors p-2 rounded-lg hover:bg-red-50"
-                                                        title="Hapus Menu">
-                                                    <i class="fas fa-trash"></i>
+                                            @if(!in_array($reservation->status, ['completed', 'cancelled', 'expired']))
+                                                <button type="button" 
+                                                        onclick="openEditMenuModal({{ $item->id }}, {{ $item->qty }})"
+                                                        class="text-primary hover:text-primary/80 transition-colors p-2 rounded-lg hover:bg-blue-50"
+                                                        title="Edit Jumlah">
+                                                    <i class="fas fa-edit"></i>
                                                 </button>
-                                            </form>
+                                                <form action="{{ route('admin.reservations.remove-menu', [$reservation->id, $item->id]) }}" 
+                                                      method="POST"
+                                                      onsubmit="return confirm('Hapus {{ $item->menu->name }} dari pesanan?')">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" 
+                                                            class="text-red-600 hover:text-red-800 transition-colors p-2 rounded-lg hover:bg-red-50"
+                                                            title="Hapus Menu">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
@@ -241,11 +259,6 @@
                         <div class="text-center py-8 text-gray-500">
                             <i class="fas fa-shopping-cart text-4xl mb-3 text-gray-300"></i>
                             <p class="text-gray-400">Belum ada pesanan menu</p>
-                            <!-- <button type="button" 
-                                    onclick="openAddMenuModal()"
-                                    class="text-primary hover:underline mt-2 inline-flex items-center">
-                                <i class="fas fa-plus mr-1"></i> Tambah menu pertama
-                            </button> -->
                         </div>
                     @endif
                 </div>

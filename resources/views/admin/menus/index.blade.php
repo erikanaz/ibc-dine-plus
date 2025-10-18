@@ -42,7 +42,7 @@
                     </button>
                     @if(request('search') || request('category') || request('status') || request('sort'))
                     <a href="{{ route('admin.menus.index') }}" class="btn-secondary px-4">
-                        <i class="fas fa-times mr-2"></i>Reset
+                        <i class="fas fa-times mr-2 mt-3"></i>Reset
                     </a>
                     @endif
                 </form>
@@ -63,9 +63,6 @@
                 </span>
                 @endif
             </h3>
-            <!-- <div class="text-sm text-gray-600">
-                Total: {{ $menus->total() }} menu
-            </div> -->
             <div class="flex items-center space-x-4">
                 <div class="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-lg">
                     Total: <span class="font-semibold">{{ $menus->total() }}</span> menu
@@ -156,45 +153,10 @@
             </table>
         </div>
         
-        <!-- Pagination -->
+        <!-- Pagination - Updated to match promo style -->
         @if($menus->hasPages())
-        <div class="px-6 py-4 border-t flex justify-between items-center">
-            <div class="text-sm text-gray-600">
-                Menampilkan {{ $menus->firstItem() }}-{{ $menus->lastItem() }} dari {{ $menus->total() }} menu
-            </div>
-            
-            <div class="flex space-x-2">
-                {{-- Previous Page Link --}}
-                @if($menus->onFirstPage())
-                    <span class="pagination-btn disabled">
-                        <i class="fas fa-chevron-left"></i>
-                    </span>
-                @else
-                    <a href="{{ $menus->appends(request()->query())->previousPageUrl() }}" class="pagination-btn">
-                        <i class="fas fa-chevron-left"></i>
-                    </a>
-                @endif
-
-                {{-- Pagination Elements --}}
-                @foreach($menus->getUrlRange(1, $menus->lastPage()) as $page => $url)
-                    @if($page == $menus->currentPage())
-                        <span class="pagination-btn active">{{ $page }}</span>
-                    @else
-                        <a href="{{ $menus->appends(request()->query())->url($page) }}" class="pagination-btn">{{ $page }}</a>
-                    @endif
-                @endforeach
-
-                {{-- Next Page Link --}}
-                @if($menus->hasMorePages())
-                    <a href="{{ $menus->appends(request()->query())->nextPageUrl() }}" class="pagination-btn">
-                        <i class="fas fa-chevron-right"></i>
-                    </a>
-                @else
-                    <span class="pagination-btn disabled">
-                        <i class="fas fa-chevron-right"></i>
-                    </span>
-                @endif
-            </div>
+        <div class="px-6 py-4 border-t">
+            {{ $menus->links() }}
         </div>
         @endif
     </div>
@@ -248,31 +210,98 @@
         font-weight: 500;
         display: inline-block;
     }
-    
-    .pagination-btn {
+
+    /* Pagination Styles - Matching promo style */
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    .pagination .flex {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .pagination .flex-1 {
+        display: none;
+    }
+
+    .pagination span[aria-hidden="true"] > span {
+        display: none;
+    }
+
+    .pagination .relative {
+        display: none;
+    }
+
+    .pagination a,
+    .pagination span {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 2.5rem;
+        height: 2.5rem;
         padding: 0.5rem 0.75rem;
+        border: 1px solid #d1d5db;
         border-radius: 0.375rem;
         font-size: 0.875rem;
         font-weight: 500;
-        background-color: #f3f4f6;
-        color: #6b7280;
-        transition: all 0.2s;
         text-decoration: none;
-        display: inline-block;
+        transition: all 0.2s;
     }
-    
-    .pagination-btn:hover:not(.disabled):not(.active) {
-        background-color: #e5e7eb;
+
+    .pagination a {
+        background-color: white;
+        color: #374151;
+        border-color: #d1d5db;
     }
-    
-    .pagination-btn.active {
+
+    .pagination a:hover {
+        background-color: #f3f4f6;
+        border-color: #9ca3af;
+    }
+
+    .pagination span[aria-current="page"] span {
         background-color: #3b82f6;
         color: white;
+        border-color: #3b82f6;
     }
-    
-    .pagination-btn.disabled {
-        opacity: 0.5;
+
+    .pagination .text-gray-500 {
+        background-color: #f9fafb;
+        color: #6b7280;
+        border-color: #d1d5db;
         cursor: not-allowed;
+    }
+
+    /* Ensure the pagination links are properly styled */
+    .pagination .px-4 {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .pagination .py-2 {
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 640px) {
+        .pagination {
+            flex-wrap: wrap;
+            gap: 0.25rem;
+        }
+        
+        .pagination a,
+        .pagination span {
+            min-width: 2.25rem;
+            height: 2.25rem;
+            padding: 0.375rem 0.5rem;
+            font-size: 0.75rem;
+        }
     }
 </style>
 @endsection

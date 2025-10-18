@@ -61,7 +61,7 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Jumlah Tamu</label>
-                    <input type="number" x-model.number="reservasi.jumlah_tamu" min="1" required
+                    <input type="number" x-model.number="reservasi.jumlah_tamu" min="1" max="20" required
                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500">
                 </div>
             </div>
@@ -109,7 +109,7 @@
         </div>
     </div>
     
-    <!-- Step 3: Detail Reservasi -->
+    <!-- Step 3: Detail Reservasi & Promo -->
     <div class="bg-white rounded-lg shadow-sm p-6 mb-6 border border-gray-100" x-show="step === 3" x-transition>
         <h2 class="text-xl font-bold mb-4 text-gray-800">3. Detail Reservasi</h2>
         
@@ -132,6 +132,44 @@
                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500">
                     </div>
                 </div>
+                
+                <!-- Promo Code Section -->
+                <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-sm font-medium text-gray-700">Kode Promo</label>
+                        <button type="button" @click="applyPromo()" 
+                                class="text-sm bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded transition"
+                                :disabled="!reservasi.kode_promo">
+                            Terapkan
+                        </button>
+                    </div>
+                    <div class="flex space-x-2">
+                        <input type="text" x-model="reservasi.kode_promo" placeholder="Masukkan kode promo"
+                               class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500">
+                    </div>
+                    
+                    <template x-if="reservasi.promo_terpakai">
+                        <div class="mt-3 p-3 bg-green-50 border border-green-200 rounded-md">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <span class="text-green-800 font-medium" x-text="reservasi.promo_terpakai.nama"></span>
+                                    <p class="text-sm text-green-600" x-text="reservasi.promo_terpakai.deskripsi"></p>
+                                </div>
+                                <button type="button" @click="hapusPromo()" class="text-red-500 hover:text-red-700">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <p class="text-xs text-green-600 mt-1" x-text="'Diskon: ' + reservasi.promo_terpakai.diskon_text"></p>
+                        </div>
+                    </template>
+                    
+                    <template x-if="promoError">
+                        <div class="mt-3 p-3 bg-red-50 border border-red-200 rounded-md">
+                            <p class="text-red-800 text-sm" x-text="promoError"></p>
+                        </div>
+                    </template>
+                </div>
+
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Catatan Khusus (opsional)</label>
                     <textarea x-model="reservasi.catatan" rows="2"
@@ -275,6 +313,24 @@
                                       class="text-sm font-medium text-gray-700"></span>
                             </div>
                         </template>
+                        
+                        <!-- Subtotal Pesanan -->
+                        <div class="flex justify-between pt-2">
+                            <span class="text-sm text-gray-600">Subtotal:</span>
+                            <span x-text="'Rp ' + hitungSubtotalPesanan().toLocaleString('id-ID')" 
+                                  class="text-sm font-medium text-gray-700"></span>
+                        </div>
+                        
+                        <!-- Diskon Promo -->
+                        <template x-if="reservasi.promo_terpakai">
+                            <div class="flex justify-between text-green-600">
+                                <span class="text-sm" x-text="'Diskon (' + reservasi.promo_terpakai.nama + '):'"></span>
+                                <span x-text="'-Rp ' + hitungDiskonPromo().toLocaleString('id-ID')" 
+                                      class="text-sm font-medium"></span>
+                            </div>
+                        </template>
+                        
+                        <!-- Total Pesanan -->
                         <div class="flex justify-between pt-3 mt-1 border-t">
                             <span class="text-sm font-bold">Total Pesanan:</span>
                             <span x-text="'Rp ' + hitungTotalPesanan().toLocaleString('id-ID')" 
@@ -310,9 +366,18 @@
                         </div>
                     </div>
                 </template>
+                
+                <!-- Diskon Promo di DP -->
+                <template x-if="reservasi.promo_terpakai && !reservasi.pesan_menu">
+                    <div class="flex justify-between text-sm text-green-600">
+                        <span x-text="'Diskon (' + reservasi.promo_terpakai.nama + '):'"></span>
+                        <span x-text="'-Rp ' + hitungDiskonDP().toLocaleString('id-ID')"></span>
+                    </div>
+                </template>
+                
                 <div class="flex justify-between items-center pt-2 border-t">
                     <span class="text-sm font-bold text-gray-800">Total DP:</span>
-                    <span x-text="'Rp ' + hitungDP().toLocaleString('id-ID')" 
+                    <span x-text="'Rp ' + hitungTotalDP().toLocaleString('id-ID')" 
                           class="text-lg font-bold text-yellow-600"></span>
                 </div>
                 
@@ -402,13 +467,17 @@
                 telepon: '',
                 catatan: '',
                 pesan_menu: false,
+                kode_promo: '',
+                promo_terpakai: null,
                 bukti_transfer: null,
                 bukti_file: null
             },
             mejaTersedia: @json($tables),
             daftarMenu: @json($menus),
+            daftarPromo: @json($promos), // Pastikan variable $promos dikirim dari controller
             pesananMenu: JSON.parse(localStorage.getItem('pesananMenu')) || [],
             activeCategory: Object.keys(@json($menus))[0],
+            promoError: null,
             isLoading: false,
 
             getFormattedCategoryName(category) {
@@ -475,6 +544,66 @@
                 }
             },
             
+            // Fungsi Promo
+            // Di bagian applyPromo() - ganti validasi status
+            applyPromo() {
+                this.promoError = null;
+                const kode = this.reservasi.kode_promo.trim().toUpperCase();
+                
+                if (!kode) {
+                    this.promoError = 'Masukkan kode promo';
+                    return;
+                }
+
+                const promo = this.daftarPromo.find(p => 
+                    p.promo_code.toUpperCase() === kode
+                    // Hapus validasi status karena kolom tidak ada
+                );
+
+                if (!promo) {
+                    this.promoError = 'Kode promo tidak valid';
+                    return;
+                }
+
+                // Validasi tanggal promo saja
+                const today = new Date();
+                if (promo.start_date && new Date(promo.start_date) > today) {
+                    this.promoError = 'Promo belum berlaku';
+                    return;
+                }
+
+                if (promo.end_date && new Date(promo.end_date) < today) {
+                    this.promoError = 'Promo sudah kadaluarsa';
+                    return;
+                }
+
+                // Validasi usage_limit jika ada
+                if (promo.usage_limit !== null && promo.usage_limit <= 0) {
+                    this.promoError = 'Promo sudah habis kuota';
+                    return;
+                }
+
+                this.reservasi.promo_terpakai = {
+                    id: promo.id,
+                    nama: promo.promo_code,
+                    deskripsi: promo.description,
+                    type: promo.type,
+                    discount: promo.discount,
+                    diskon_text: promo.type === 'percent' ? 
+                        `${promo.discount}%` : 
+                        `Rp ${promo.discount.toLocaleString('id-ID')}`
+                };
+
+                localStorage.setItem('reservasi_data', JSON.stringify(this.reservasi));
+            },  
+
+            hapusPromo() {
+                this.reservasi.promo_terpakai = null;
+                this.reservasi.kode_promo = '';
+                localStorage.setItem('reservasi_data', JSON.stringify(this.reservasi));
+            },
+
+            // Fungsi Menu
             tambahJumlah(menuId) {
                 const existing = this.pesananMenu.find(item => item.menu_id == menuId);
                 if (existing) existing.jumlah++;
@@ -523,32 +652,65 @@
                 return new Date(tanggal).toLocaleDateString('id-ID', options);
             },
             
-            hitungTotalPesanan() {
+            // Kalkulasi Harga
+            hitungSubtotalPesanan() {
                 return this.pesananMenu.reduce((total, item) => {
                     return total + (item.jumlah * this.getHargaMenu(item.menu_id));
                 }, 0);
+            },
+
+            hitungDiskonPromo() {
+                if (!this.reservasi.promo_terpakai || !this.reservasi.pesan_menu) return 0;
+                
+                const subtotal = this.hitungSubtotalPesanan();
+                if (this.reservasi.promo_terpakai.type === 'percent') {
+                    return Math.round(subtotal * (this.reservasi.promo_terpakai.discount / 100));
+                } else {
+                    return this.reservasi.promo_terpakai.discount;
+                }
+            },
+
+            hitungTotalPesanan() {
+                const subtotal = this.hitungSubtotalPesanan();
+                const diskon = this.hitungDiskonPromo();
+                return Math.max(0, subtotal - diskon);
+            },
+
+            hitungDiskonDP() {
+                if (!this.reservasi.promo_terpakai || this.reservasi.pesan_menu) return 0;
+                
+                const dpBase = 300000; // DP fixed untuk reservasi tanpa makanan
+                if (this.reservasi.promo_terpakai.type === 'percent') {
+                    return Math.round(dpBase * (this.reservasi.promo_terpakai.discount / 100));
+                } else {
+                    return Math.min(this.reservasi.promo_terpakai.discount, dpBase);
+                }
             },
 
             hitungDP() {
                 if (!this.reservasi.pesan_menu) {
                     return 300000; // DP fixed amount when not ordering food
                 } else if (this.pesananMenu.length > 0) {
-                    // 30% of total food order
+                    // 30% of total food order setelah diskon
                     return Math.round(this.hitungTotalPesanan() * 0.3);
                 }
                 return 0;
+            },
+
+            hitungTotalDP() {
+                const dp = this.hitungDP();
+                const diskonDP = this.hitungDiskonDP();
+                return Math.max(0, dp - diskonDP);
             },
             
             handleFileUpload(event) {
                 const file = event.target.files[0];
                 if (file) {
-                    // Validasi ukuran file (max 2MB)
                     if (file.size > 2 * 1024 * 1024) {
                         alert('Ukuran file maksimal 2MB');
                         return;
                     }
                     
-                    // Validasi tipe file
                     if (!file.type.match('image.*')) {
                         alert('Hanya file gambar yang diizinkan');
                         return;
@@ -571,15 +733,12 @@
 
                 this.isLoading = true;
                 
-                // Normalisasi waktu ke HH:mm:ss
                 const waktu = this.reservasi.waktu?.length === 5 
                     ? `${this.reservasi.waktu}:00` 
                     : this.reservasi.waktu;
 
-                // Boolean as "1"/"0"
                 const withPreorder = (this.reservasi.pesan_menu && this.pesananMenu.length > 0) ? '1' : '0';
                 
-                // Siapkan FormData
                 const formData = new FormData();
                 formData.append('name', this.reservasi.nama);
                 formData.append('email', this.reservasi.email);
@@ -591,14 +750,13 @@
                 formData.append('notes', this.reservasi.catatan || '');
                 formData.append('payment_method', 'bank_transfer');
                 formData.append('with_preorder', withPreorder);
-                formData.append('down_payment', String(this.hitungDP()));
+                formData.append('down_payment', String(this.hitungTotalDP()));
+                formData.append('promo_id', this.reservasi.promo_terpakai ? String(this.reservasi.promo_terpakai.id) : '');
                 
-                // Bukti transfer (file)
                 if (this.reservasi.bukti_file) {
                     formData.append('bukti_transfer', this.reservasi.bukti_file);
                 }
                 
-                // KIRIM menu_items sebagai ARRAY bertingkat (BUKAN JSON)
                 if (withPreorder === '1') {
                     this.pesananMenu.forEach((item, i) => {
                         formData.append(`menu_items[${i}][menu_id]`, String(item.menu_id));
@@ -616,20 +774,16 @@
                         body: formData
                     });
 
-                    // Jika bukan 2xx, tetap coba ambil JSON error
                     let data;
                     try { data = await response.json(); } catch (_) { data = {}; }
 
                     if (response.ok && data.success) {
-                        // Bersihkan localStorage
                         localStorage.removeItem('reservasi_data');
                         localStorage.removeItem('pesananMenu');
                         localStorage.removeItem('reservasi_step');
                         
-                        // Redirect ke halaman sukses
                         window.location.href = '{{ route("reservation.success", "") }}/?id=' + data.reservation_id;
                     } else {
-                        // Tampilkan pesan validasi yang jelas
                         const errs = data.errors 
                             ? Object.entries(data.errors)
                                 .map(([k,v]) => `• ${k}: ${Array.isArray(v) ? v.join(', ') : v}`)

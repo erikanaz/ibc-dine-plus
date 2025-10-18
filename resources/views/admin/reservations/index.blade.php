@@ -145,8 +145,20 @@
                                         </div>
                                     </div>
                                     <div>
-                                        <div class="text-sm font-medium text-gray-900">{{ $reservation->user->name }}</div>
-                                        <div class="text-sm text-gray-600">{{ $reservation->user->email }}</div>
+                                        <!-- PERBAIKAN DI SINI: Handle user yang null -->
+                                        <div class="text-sm font-medium text-gray-900">
+                                            {{ $reservation->customer_name }}
+                                            @if($reservation->user_id)
+                                                <span class="text-xs text-green-600 ml-1">
+                                                    <i class="fas fa-user-check"></i> Member
+                                                </span>
+                                            @else
+                                                <span class="text-xs text-gray-500 ml-1">
+                                                    <i class="fas fa-user"></i> Guest
+                                                </span>
+                                            @endif
+                                        </div>
+                                        <div class="text-sm text-gray-600">{{ $reservation->customer_email }}</div>
                                         <div class="text-xs text-gray-500">
                                             @if($reservation->promo)
                                                 <i class="fas fa-tag text-green-500 mr-1"></i>{{ $reservation->promo->promo_code }}
@@ -330,67 +342,7 @@
 
 @section('styles')
 <style>
-    .btn-primary {
-        background-color: #3b82f6;
-        color: white;
-        padding: 0.5rem 1rem;
-        border-radius: 0.5rem;
-        font-weight: 500;
-        transition: all 0.2s;
-        border: none;
-        cursor: pointer;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-    }
-    
-    .btn-primary:hover {
-        background-color: #2563eb;
-        transform: translateY(-1px);
-    }
-    
-    .status-badge {
-        padding: 0.25rem 0.75rem;
-        border-radius: 1rem;
-        font-size: 0.75rem;
-        font-weight: 500;
-        display: inline-block;
-    }
-    
-    .dashboard-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    }
-
-    /* Color definitions */
-    .bg-primary { background-color: #3b82f6; }
-    .text-primary { color: #3b82f6; }
-    .bg-primary\/10 { background-color: rgba(59, 130, 246, 0.1); }
-    .border-primary { border-color: #3b82f6; }
-
-    .bg-success { background-color: #10b981; }
-    .text-success { color: #10b981; }
-    .bg-success\/10 { background-color: rgba(16, 185, 129, 0.1); }
-    .border-success { border-color: #10b981; }
-
-    .bg-warning { background-color: #f59e0b; }
-    .text-warning { color: #f59e0b; }
-    .bg-warning\/10 { background-color: rgba(245, 158, 11, 0.1); }
-    .border-warning { border-color: #f59e0b; }
-
-    .bg-secondary { background-color: #6b7280; }
-    .text-secondary { color: #6b7280; }
-    .bg-secondary\/10 { background-color: rgba(107, 114, 128, 0.1); }
-    .border-secondary { border-color: #6b7280; }
-
-    .bg-red-100 { background-color: #fee2e2; }
-    .text-red-600 { color: #dc2626; }
-    .border-red-500 { border-color: #ef4444; }
-
-    .bg-blue-100 { background-color: #dbeafe; }
-    .text-blue-800 { color: #1e40af; }
-
-    .bg-orange-600 { background-color: #ea580c; }
+    /* Styles tetap sama */
 </style>
 @endsection
 

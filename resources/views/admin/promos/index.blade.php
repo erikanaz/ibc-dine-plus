@@ -11,12 +11,12 @@
                 <h2 class="text-3xl font-bold text-gray-800 mb-1">Manajemen Promo</h2>
                 <p class="text-gray-600 text-base">Kelola semua promo dan diskon restoran</p>
             </div>
-            <div class="flex space-x-3">
+            {{-- <div class="flex space-x-3">
                 <a href="{{ route('admin.promos.create') }}" class="btn-primary flex items-center">
                     <i class="fas fa-plus mr-2"></i>
                     Tambah Promo
                 </a>
-            </div>
+            </div> --}}
         </div>
     </div>
 
@@ -80,25 +80,49 @@
         <div class="flex flex-col md:flex-row gap-4">
             <!-- Search Input -->
             <div class="flex-1">
-                <form action="{{ route('admin.menus.index') }}" method="GET" class="flex gap-2">
+                <form action="{{ route('admin.promos.index') }}" method="GET" class="flex gap-2">
                     <div class="flex-1 relative">
                         <input type="text" name="search" value="{{ request('search') }}" 
-                               placeholder="Cari menu atau kategori..." 
-                               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary">
+                            placeholder="Cari kode promo atau deskripsi..." 
+                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary">
                         <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                     </div>
                     <button type="submit" class="btn-primary px-4">
                         <i class="fas fa-search mr-2"></i>Cari
                     </button>
-                    @if(request('search') || request('category') || request('status') || request('sort'))
-                    <a href="{{ route('admin.menus.index') }}" class="btn-secondary px-4">
+                    
+                    @if(request('search') || request('status') || request('type'))
+                    <a href="{{ route('admin.promos.index') }}" class="btn-secondary px-4 py-2 flex items-center">
                         <i class="fas fa-times mr-2"></i>Reset
                     </a>
                     @endif
                 </form>
             </div>
+            
+            <!-- Additional Filters -->
+            <div class="flex flex-col sm:flex-row gap-4">
+                <!-- Status Filter -->
+                <div class="flex items-center space-x-2">
+                    <label class="text-sm text-gray-600 whitespace-nowrap">Status:</label>
+                    <select name="status" class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary" onchange="this.form.submit()">
+                        <option value="">Semua Status</option>
+                        <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Aktif</option>
+                        <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Tidak Aktif</option>
+                        <option value="expired" {{ request('status') == 'expired' ? 'selected' : '' }}>Kadaluarsa</option>
+                    </select>
+                </div>
+                
+                <!-- Type Filter -->
+                {{-- <div class="flex items-center space-x-2">
+                    <label class="text-sm text-gray-600 whitespace-nowrap">Tipe:</label>
+                    <select name="type" class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary" onchange="this.form.submit()">
+                        <option value="">Semua Tipe</option>
+                        <option value="percent" {{ request('type') == 'percent' ? 'selected' : '' }}>Persentase</option>
+                        <option value="fixed" {{ request('type') == 'fixed' ? 'selected' : '' }}>Nominal</option>
+                    </select>
+                </div> --}}
+            </div>
         </div>
-        </form>
     </div>
 
     <!-- Promos Table -->
@@ -108,7 +132,13 @@
                 <i class="fas fa-list text-primary mr-2"></i>
                 Daftar Promo
             </h3>
-            <div class="flex items-center space-x-2">
+             <div class="flex items-center space-x-4 px-2">
+                <a href="{{ route('admin.promos.create') }}" class="btn-primary flex items-center">
+                    <i class="fas fa-plus mr-2"></i>
+                    Tambah Promo
+                </a>
+            </div>
+            {{-- <div class="flex items-center space-x-2"> --}}
                 <!-- <div class="relative">
                     <input type="text" id="searchInput" placeholder="Cari promo..." 
                            class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
@@ -120,7 +150,7 @@
                     <option value="kadaluarsa">Kadaluarsa</option>
                     <option value="akan datang">Akan Datang</option>
                 </select> -->
-            </div>
+            {{-- </div> --}}
         </div>
         <div class="overflow-x-auto">
             <table class="w-full">
@@ -281,7 +311,8 @@
         <!-- Pagination -->
         @if($promos->hasPages())
             <div class="px-6 py-4 border-t">
-                {{ $promos->links() }}
+                {{-- {{ $promos->links() }} --}}
+                {{ $promos->appends(request()->query())->links() }}
             </div>
         @endif
     </div>

@@ -43,9 +43,9 @@
                         <p class="text-gray-600 mb-4">Gurame bakar berbumbu manis gurih khas Jawa</p>
                         <div class="flex justify-between items-center">
                             <span class="font-bold gold-text">Rp 65.000</span>
-                            <button class="gold-bg text-white px-4 py-2 rounded-md text-sm hover:bg-opacity-90 cursor-not-allowed opacity-50">
+                            {{-- <button class="gold-bg text-white px-4 py-2 rounded-md text-sm hover:bg-opacity-90 cursor-not-allowed opacity-50">
                                 + Pesan
-                            </button>
+                            </button> --}}
                         </div>
                     </div>
                 </div>
@@ -60,9 +60,9 @@
                         <p class="text-gray-600 mb-4">Gurame goreng renyah disiram saus asam manis segar</p>
                         <div class="flex justify-between items-center">
                             <span class="font-bold gold-text">Rp 75.000</span>
-                            <button class="gold-bg text-white px-4 py-2 rounded-md text-sm hover:bg-opacity-90 cursor-not-allowed opacity-50">
+                            {{-- <button class="gold-bg text-white px-4 py-2 rounded-md text-sm hover:bg-opacity-90 cursor-not-allowed opacity-50">
                                 + Pesan
-                            </button>
+                            </button> --}}
                         </div>
                     </div>
                 </div>
@@ -77,9 +77,9 @@
                         <p class="text-gray-600 mb-4">Dengan bumbu khas racikan spesial IBC</p>
                         <div class="flex justify-between items-center mt-auto">
                             <span class="font-bold gold-text">Rp 55.000</span>
-                            <button class="gold-bg text-white px-4 py-2 rounded-md text-sm hover:bg-opacity-90 cursor-not-allowed opacity-50">
+                            {{-- <button class="gold-bg text-white px-4 py-2 rounded-md text-sm hover:bg-opacity-90 cursor-not-allowed opacity-50">
                                 + Pesan
-                            </button>
+                            </button> --}}
                         </div>
                     </div>
                 </div>

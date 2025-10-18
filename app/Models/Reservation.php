@@ -13,6 +13,9 @@ class Reservation extends Model
 
     protected $fillable = [
         'user_id',
+        'customer_name',
+        'customer_phone',
+        'customer_email',
         'table_id',
         'reservation_date',
         'reservation_time',
@@ -142,6 +145,17 @@ class Reservation extends Model
     {
         return $query->where('reservation_date', '>=', today())
                     ->whereIn('status', ['pending', 'confirmed']);
+    }
+
+    // Di model Reservation
+    public function getCustomerTypeAttribute()
+    {
+        return $this->user_id ? 'member' : 'guest';
+    }
+
+    public function getCustomerTypeLabelAttribute()
+    {
+        return $this->user_id ? 'Member' : 'Guest';
     }
 
 }

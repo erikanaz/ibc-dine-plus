@@ -37,7 +37,7 @@
             </div>
         </div>
         
-        <!-- Monthly Revenue Card -->
+        {{-- <!-- Monthly Revenue Card -->
         <div class="dashboard-card bg-white rounded-xl shadow p-6 border-l-4 border-success transition-all">
             <div class="flex justify-between items-start">
                 <div>
@@ -47,6 +47,25 @@
                 <div class="bg-success/10 p-3 rounded-lg">
                     <i class="fas fa-wallet text-success text-2xl"></i>
                 </div>
+            </div>
+        </div> --}}
+
+        <!-- Reservasi Bulan Ini Card -->
+        <div class="bg-white rounded-xl shadow p-6 border-l-4 border-purple-500">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-gray-500 text-sm font-medium">Reservasi Bulan Ini</p>
+                    <p class="text-3xl font-bold mt-2 text-gray-800">{{ $monthlyReservations }}</p>
+                </div>
+                <div class="p-3 bg-purple-50 rounded-lg">
+                    <i class="fas fa-calendar-alt text-purple-600 text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center text-sm">
+                <span class="text-green-600 font-medium">
+                    <i class="fas fa-arrow-up mr-1"></i>+12%
+                </span>
+                <span class="text-gray-500 ml-2">dari bulan lalu</span>
             </div>
         </div>
         
@@ -80,7 +99,7 @@
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Waktu</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Meja</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -94,11 +113,20 @@
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div class="flex-shrink-0 h-10 w-10">
-                                            <img class="h-10 w-10 rounded-full" src="https://ui-avatars.com/api/?name={{ urlencode($reservation->user->name) }}&background=random" alt="{{ $reservation->user->name }}">
+                                            <img class="h-10 w-10 rounded-full" src="https://ui-avatars.com/api/?name={{ urlencode($reservation->customer_name) }}&background=random" alt="{{ $reservation->customer_name }}">
                                         </div>
                                         <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900">{{ $reservation->user->name }}</div>
+                                            <div class="text-sm font-medium text-gray-900">{{ $reservation->customer_name }}</div>
                                             <div class="text-sm text-gray-500">{{ $reservation->guest_count }} Orang</div>
+                                            @if($reservation->user_id)
+                                                <div class="text-xs text-green-600">
+                                                    <i class="fas fa-user-check"></i> Member
+                                                </div>
+                                            @else
+                                                <div class="text-xs text-gray-500">
+                                                    <i class="fas fa-user"></i> Guest
+                                                </div>
+                                            @endif
                                         </div>
                                     </div>
                                 </td>
@@ -107,10 +135,14 @@
                                     <div class="text-sm text-gray-500">{{ $reservation->reservation_date->format('d M Y') }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ $reservation->table->name ?? 'N/A' }}
+                                    Meja {{ $reservation->table->number }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="status-badge bg-{{ $reservation->status_color }}/10 text-{{ $reservation->status_color }} px-2 py-1 rounded-full text-xs">
+                                    <span class="status-badge 
+                                        @if($reservation->status === 'pending') bg-warning/10 text-warning
+                                        @elseif($reservation->status === 'confirmed') bg-success/10 text-success
+                                        @elseif($reservation->status === 'completed') bg-secondary/10 text-secondary
+                                        @elseif(in_array($reservation->status, ['cancelled', 'expired'])) bg-red-100 text-red-600 @endif px-2 py-1 rounded-full text-xs">
                                         {{ $reservation->status_label }}
                                     </span>
                                 </td>
@@ -200,12 +232,25 @@
                     <div class="reservation-card p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
                         <div class="flex justify-between items-start">
                             <div>
-                                <p class="font-bold text-gray-900">{{ $reservation->user->name }}</p>
+                                <p class="font-bold text-gray-900">{{ $reservation->customer_name }}</p>
                                 <p class="text-sm text-gray-600">
                                     {{ $reservation->reservation_date->format('d M Y') }} • {{ $reservation->formatted_time }}
                                 </p>
+                                @if($reservation->user_id)
+                                    <p class="text-xs text-green-600">
+                                        <i class="fas fa-user-check"></i> Member
+                                    </p>
+                                @else
+                                    <p class="text-xs text-gray-500">
+                                        <i class="fas fa-user"></i> Guest
+                                    </p>
+                                @endif
                             </div>
-                            <span class="status-badge bg-{{ $reservation->status_color }}/10 text-{{ $reservation->status_color }} px-2 py-1 rounded-full text-xs">
+                            <span class="status-badge 
+                                @if($reservation->status === 'pending') bg-warning/10 text-warning
+                                @elseif($reservation->status === 'confirmed') bg-success/10 text-success
+                                @elseif($reservation->status === 'completed') bg-secondary/10 text-secondary
+                                @elseif(in_array($reservation->status, ['cancelled', 'expired'])) bg-red-100 text-red-600 @endif px-2 py-1 rounded-full text-xs">
                                 {{ $reservation->status_label }}
                             </span>
                         </div>
@@ -213,7 +258,7 @@
                             <i class="fas fa-users mr-2"></i>
                             <span class="mr-4">{{ $reservation->guest_count }} Orang</span>
                             <i class="fas fa-chair mr-2"></i>
-                            <span>{{ $reservation->table->name ?? 'N/A' }}</span>
+                            <span>Meja {{ $reservation->table->number }}</span>
                         </div>
                         <div class="mt-3 flex items-center text-sm text-gray-600">
                             <i class="fas fa-money-bill-wave mr-2"></i>
@@ -313,5 +358,29 @@
 .reservation-card:hover {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
+
+/* Color definitions */
+.bg-primary { background-color: #3b82f6; }
+.text-primary { color: #3b82f6; }
+.bg-primary\/10 { background-color: rgba(59, 130, 246, 0.1); }
+.border-primary { border-color: #3b82f6; }
+
+.bg-success { background-color: #10b981; }
+.text-success { color: #10b981; }
+.bg-success\/10 { background-color: rgba(16, 185, 129, 0.1); }
+.border-success { border-color: #10b981; }
+
+.bg-warning { background-color: #f59e0b; }
+.text-warning { color: #f59e0b; }
+.bg-warning\/10 { background-color: rgba(245, 158, 11, 0.1); }
+.border-warning { border-color: #f59e0b; }
+
+.bg-secondary { background-color: #6b7280; }
+.text-secondary { color: #6b7280; }
+.bg-secondary\/10 { background-color: rgba(107, 114, 128, 0.1); }
+.border-secondary { border-color: #6b7280; }
+
+.bg-red-100 { background-color: #fee2e2; }
+.text-red-600 { color: #dc2626; }
 </style>
 @endpush

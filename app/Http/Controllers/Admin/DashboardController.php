@@ -25,6 +25,17 @@ class DashboardController extends Controller
             ->whereYear('reservation_date', now()->year)
             ->whereIn('status', ['confirmed', 'completed'])
             ->sum('total_DP');
+
+        // Monthly Reservations Count
+        $monthlyReservations = Reservation::whereYear('created_at', now()->year)
+        ->whereMonth('created_at', now()->month)
+        ->count();
+
+        // atau dengan status tertentu
+        $monthlyConfirmedReservations = Reservation::whereYear('created_at', now()->year)
+        ->whereMonth('created_at', now()->month)
+        ->where('status', 'confirmed')
+        ->count();
         
         // Table Availability
         $totalTables = Table::count();
@@ -72,7 +83,9 @@ class DashboardController extends Controller
             'todaysReservationsList',
             'upcomingReservations',
             'revenueData',
-            'tableStatus'
+            'tableStatus',
+            'monthlyReservations',
+            'monthlyConfirmedReservations'
         ));
     }
 }

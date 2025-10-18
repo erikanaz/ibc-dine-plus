@@ -17,7 +17,7 @@ class ReservationController extends Controller
 {
     public function index()
     {
-        $reservations = Reservation::with(['user', 'table', 'promo', 'order.orderItems.menu'])
+        $reservations = Reservation::with(['table', 'promo', 'order.orderItems.menu'])
             ->orderBy('reservation_date', 'desc')
             ->orderBy('reservation_time', 'desc')
             ->paginate(10);
@@ -34,201 +34,127 @@ class ReservationController extends Controller
     }
 
     public function create()
-    {
-        // $users = User::where('role', 'customer')->get();
-
-         // HAPUS filter role, ambil semua user
-        $users = User::all(); // Ganti dari where('role', 'customer')
-
-        $tables = Table::where('status', 'available')->get();
-        $menus = Menu::where('is_available', true)->get();
-        // Di controller, ganti dengan logika berdasarkan tanggal
-        $promos = Promo::where(function($query) {
-            $query->where('start_date', '<=', now())
-                ->orWhereNull('start_date');
-        })->where(function($query) {
-            $query->where('end_date', '>=', now())
-                ->orWhereNull('end_date');
-        })->get();
-        
-        return view('admin.reservations.create', compact('users', 'tables', 'menus', 'promos'));
-    }
-
-    // public function store(Request $request)
-    // {
-    //     $validated = $request->validate([
-    //         'user_id' => 'required|exists:users,id',
-    //         'table_id' => 'required|exists:tables,id',
-    //         'reservation_date' => 'required|date',
-    //         'reservation_time' => 'required',
-    //         'guest_count' => 'required|integer|min:1',
-    //         'notes' => 'nullable|string',
-    //         'promo_id' => 'nullable|exists:promos,id',
-    //         'total_DP' => 'required|numeric|min:0',
-    //         'menus' => 'required|array|min:1',
-    //         'menus.*.menu_id' => 'required|exists:menus,id',
-    //         'menus.*.quantity' => 'required|integer|min:1',
-    //     ]);
-
-    //     DB::transaction(function () use ($validated) {
-    //         // Create reservation
-    //         $reservation = Reservation::create([
-    //             'user_id' => $validated['user_id'],
-    //             'table_id' => $validated['table_id'],
-    //             'reservation_date' => $validated['reservation_date'],
-    //             'reservation_time' => $validated['reservation_time'],
-    //             'guest_count' => $validated['guest_count'],
-    //             'notes' => $validated['notes'],
-    //             'promo_id' => $validated['promo_id'],
-    //             'total_DP' => $validated['total_DP'],
-    //             'status' => 'confirmed',
-    //         ]);
-
-    //         // Calculate total price from menus
-    //         $totalPrice = 0;
-    //         foreach ($validated['menus'] as $menuItem) {
-    //             $menu = Menu::find($menuItem['menu_id']);
-    //             $totalPrice += $menu->price * $menuItem['quantity'];
-    //         }
-
-    //         // Apply promo discount if exists
-    //         if ($validated['promo_id']) {
-    //             $promo = Promo::find($validated['promo_id']);
-    //             // Implement your promo logic here
-    //             // For example: $totalPrice = $totalPrice - ($totalPrice * $promo->discount_percentage / 100);
-    //         }
-
-    //         // Create order
-    //         $order = Order::create([
-    //             'user_id' => $validated['user_id'],
-    //             'reservation_id' => $reservation->id,
-    //             'total_price' => $totalPrice,
-    //             'notes' => $validated['notes'],
-    //         ]);
-
-    //         // Create order items
-    //         foreach ($validated['menus'] as $menuItem) {
-    //             $menu = Menu::find($menuItem['menu_id']);
-                
-    //             OrderItem::create([
-    //                 'order_id' => $order->id,
-    //                 'menu_id' => $menuItem['menu_id'],
-    //                 'qty' => $menuItem['quantity'],
-    //                 'price' => $menu->price,
-    //             ]);
-    //         }
-
-    //         // Update table status
-    //         Table::where('id', $validated['table_id'])->update(['status' => 'reserved']);
-    //     });
-
-    //     return redirect()->route('admin.reservations.index')
-    //         ->with('success', 'Reservasi berhasil dibuat.');
-    // }
+{
+    // HAPUS users karena tidak perlu pilih customer
+    $tables = Table::where('status', 'available')->get();
+    $menus = Menu::where('is_available', true)->get();
     
+    $promos = Promo::where(function($query) {
+        $query->where('start_date', '<=', now())
+            ->orWhereNull('start_date');
+    })->where(function($query) {
+        $query->where('end_date', '>=', now())
+            ->orWhereNull('end_date');
+    })->get();
+    
+    return view('admin.reservations.create', compact('tables', 'menus', 'promos'));
+}
+
+public function store(Request $request)
+{
+    $validated = $request->validate([
+        'customer_name' => 'required|string|max:255',
+        'customer_phone' => 'required|string|max:20',
+        'customer_email' => 'required|email|max:255',
+        'table_id' => 'required|exists:tables,id',
+        'reservation_date' => 'required|date',
+        'reservation_time' => 'required',
+        'guest_count' => 'required|integer|min:1',
+        'notes' => 'nullable|string',
+        'promo_id' => 'nullable|exists:promos,id',
+        'total_DP' => 'required|numeric|min:0',
+        'status' => 'required|in:pending,confirmed,cancelled,completed',
+        'menus' => 'required|array|min:1',
+        'menus.*.menu_id' => 'required|exists:menus,id',
+        'menus.*.quantity' => 'required|integer|min:1',
+    ]);
+
+    DB::transaction(function () use ($validated) {
+        // 1. CREATE RESERVASI - user_id NULL karena admin yang buat untuk guest
+        $reservation = Reservation::create([
+            'customer_name' => $validated['customer_name'],
+            'customer_phone' => $validated['customer_phone'],
+            'customer_email' => $validated['customer_email'],
+            'table_id' => $validated['table_id'],
+            'reservation_date' => $validated['reservation_date'],
+            'reservation_time' => $validated['reservation_time'],
+            'guest_count' => $validated['guest_count'],
+            'notes' => $validated['notes'],
+            'promo_id' => $validated['promo_id'],
+            'total_DP' => $validated['total_DP'],
+            'status' => $validated['status'],
+            'user_id' => null, // NULL karena guest
+        ]);
+
+        // 2. HITUNG TOTAL HARGA DARI MENU
+        $totalPrice = 0;
+        foreach ($validated['menus'] as $menuItem) {
+            $menu = Menu::find($menuItem['menu_id']);
+            $totalPrice += $menu->price * $menuItem['quantity'];
+        }
+
+        // 3. APPLY PROMO JIKA ADA
+        $finalTotal = $totalPrice;
+        if ($validated['promo_id']) {
+            $promo = Promo::find($validated['promo_id']);
+            if ($promo) {
+                if ($promo->type == 'percent') {
+                    $discount = $totalPrice * ($promo->discount / 100);
+                    $finalTotal = $totalPrice - $discount;
+                } else {
+                    $finalTotal = $totalPrice - $promo->discount;
+                }
+            }
+        }
+
+        // 4. CREATE ORDER - user_id juga NULL
+        $order = Order::create([
+            'reservation_id' => $reservation->id,
+            'user_id' => null, // NULL karena guest
+            'total_price' => $finalTotal,
+            'notes' => $validated['notes'],
+        ]);
+
+        // 5. CREATE ORDER ITEMS
+        foreach ($validated['menus'] as $menuItem) {
+            $menu = Menu::find($menuItem['menu_id']);
+            
+            OrderItem::create([
+                'order_id' => $order->id,
+                'menu_id' => $menuItem['menu_id'],
+                'qty' => $menuItem['quantity'],
+                'price' => $menu->price,
+            ]);
+        }
+
+        // 6. UPDATE TABLE STATUS JIKA RESERVASI CONFIRMED
+        if ($validated['status'] == 'confirmed') {
+            Table::where('id', $validated['table_id'])->update(['status' => 'reserved']);
+        }
+    });
+
+    return redirect()->route('admin.reservations.index')
+        ->with('success', 'Reservasi beserta pesanan berhasil dibuat.');
+}
+
     public function show(Reservation $reservation)
     {
-        // Load semua relasi yang diperlukan
         $reservation->load([
-            'user', 
             'table', 
             'promo', 
             'order.orderItems.menu'
         ]);
 
-        // Get menus untuk form tambah menu
         $menus = Menu::where('is_available', true)->get();
 
         return view('admin.reservations.show', compact('reservation', 'menus'));
     }
 
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'table_id' => 'required|exists:tables,id',
-            'reservation_date' => 'required|date',
-            'reservation_time' => 'required',
-            'guest_count' => 'required|integer|min:1',
-            'notes' => 'nullable|string',
-            'promo_id' => 'nullable|exists:promos,id',
-            'total_DP' => 'required|numeric|min:0',
-            'menus' => 'required|array|min:1', // Menu dipilih saat reservasi
-            'menus.*.menu_id' => 'required|exists:menus,id',
-            'menus.*.quantity' => 'required|integer|min:1',
-        ]);
-
-        DB::transaction(function () use ($validated) {
-            // 1. CREATE RESERVASI
-            $reservation = Reservation::create([
-                'user_id' => $validated['user_id'],
-                'table_id' => $validated['table_id'],
-                'reservation_date' => $validated['reservation_date'],
-                'reservation_time' => $validated['reservation_time'],
-                'guest_count' => $validated['guest_count'],
-                'notes' => $validated['notes'],
-                'promo_id' => $validated['promo_id'],
-                'total_DP' => $validated['total_DP'],
-                'status' => 'confirmed',
-            ]);
-
-            // 2. HITUNG TOTAL HARGA
-            $totalPrice = 0;
-            foreach ($validated['menus'] as $menuItem) {
-                $menu = Menu::find($menuItem['menu_id']);
-                $totalPrice += $menu->price * $menuItem['quantity'];
-            }
-
-            // 3. APPLY PROMO JIKA ADA
-            if ($validated['promo_id']) {
-                $promo = Promo::find($validated['promo_id']);
-                if ($promo) {
-                    if ($promo->type == 'percent') {
-                        $discount = $totalPrice * ($promo->discount / 100);
-                        $totalPrice -= $discount;
-                    } else {
-                        $totalPrice -= $promo->discount;
-                    }
-                }
-            }
-
-            // 4. CREATE ORDER (OTOMATIS)
-            $order = Order::create([
-                'user_id' => $validated['user_id'],
-                'reservation_id' => $reservation->id, // Link ke reservasi
-                'total_price' => $totalPrice,
-                'notes' => $validated['notes'],
-            ]);
-
-            // 5. CREATE ORDER ITEMS
-            foreach ($validated['menus'] as $menuItem) {
-                $menu = Menu::find($menuItem['menu_id']);
-                
-                OrderItem::create([
-                    'order_id' => $order->id,
-                    'menu_id' => $menuItem['menu_id'],
-                    'qty' => $menuItem['quantity'],
-                    'price' => $menu->price,
-                ]);
-            }
-
-            // 6. UPDATE TABLE STATUS
-            Table::where('id', $validated['table_id'])->update(['status' => 'reserved']);
-        });
-
-        return redirect()->route('admin.reservations.index')
-            ->with('success', 'Reservasi beserta pesanan berhasil dibuat.');
-    }
-
     public function edit(Reservation $reservation)
     {
-        // HAPUS filter role, ambil semua user
-        $users = User::all(); // Ganti dari where('role', 'customer')
-
         $tables = Table::whereIn('status', ['available', 'reserved'])->get();
         $menus = Menu::where('is_available', true)->get();
-        // $promos = Promo::where('is_active', true)->get();
-        // Di controller, ganti dengan logika berdasarkan tanggal
+        
         $promos = Promo::where(function($query) {
             $query->where('start_date', '<=', now())
                 ->orWhereNull('start_date');
@@ -237,15 +163,17 @@ class ReservationController extends Controller
                 ->orWhereNull('end_date');
         })->get();
         
-        $reservation->load(['user', 'table', 'promo', 'order.orderItems.menu']);
+        $reservation->load(['table', 'promo', 'order.orderItems.menu']);
         
-        return view('admin.reservations.edit', compact('reservation', 'users', 'tables', 'menus', 'promos'));
+        return view('admin.reservations.edit', compact('reservation', 'tables', 'menus', 'promos'));
     }
 
     public function update(Request $request, Reservation $reservation)
     {
         $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
+            'customer_name' => 'required|string|max:255',
+            'customer_phone' => 'required|string|max:20',
+            'customer_email' => 'required|email|max:255',
             'table_id' => 'required|exists:tables,id',
             'reservation_date' => 'required|date',
             'reservation_time' => 'required',
@@ -256,27 +184,37 @@ class ReservationController extends Controller
             'status' => 'required|in:pending,confirmed,cancelled,completed,expired',
         ]);
 
-        // If table is changed, update table statuses
-        if ($reservation->table_id != $validated['table_id']) {
-            // Free the old table
-            Table::where('id', $reservation->table_id)->update(['status' => 'available']);
-            // Reserve the new table
-            Table::where('id', $validated['table_id'])->update(['status' => 'reserved']);
-        }
+        DB::transaction(function () use ($validated, $reservation) {
+            $oldTableId = $reservation->table_id;
+            $oldStatus = $reservation->status;
+            $newTableId = $validated['table_id'];
+            $newStatus = $validated['status'];
 
-        // If status changed to cancelled or completed, free the table
-        if (in_array($validated['status'], ['cancelled', 'completed', 'expired']) && 
-            !in_array($reservation->status, ['cancelled', 'completed', 'expired'])) {
-            Table::where('id', $validated['table_id'])->update(['status' => 'available']);
-        }
+            // Handle table changes
+            if ($oldTableId != $newTableId) {
+                // Free the old table
+                Table::where('id', $oldTableId)->update(['status' => 'available']);
+                // Reserve the new table if status is confirmed
+                if ($newStatus == 'confirmed') {
+                    Table::where('id', $newTableId)->update(['status' => 'reserved']);
+                }
+            }
 
-        // If status changed from cancelled/completed to active, reserve the table
-        if (in_array($reservation->status, ['cancelled', 'completed', 'expired']) && 
-            in_array($validated['status'], ['pending', 'confirmed'])) {
-            Table::where('id', $validated['table_id'])->update(['status' => 'reserved']);
-        }
+            // Handle status changes
+            if ($oldStatus != $newStatus) {
+                // If changing to confirmed, reserve the table
+                if ($newStatus == 'confirmed') {
+                    Table::where('id', $newTableId)->update(['status' => 'reserved']);
+                }
+                // If changing from confirmed to other status, free the table
+                elseif ($oldStatus == 'confirmed' && in_array($newStatus, ['cancelled', 'completed', 'expired'])) {
+                    Table::where('id', $newTableId)->update(['status' => 'available']);
+                }
+            }
 
-        $reservation->update($validated);
+            // Update reservation
+            $reservation->update($validated);
+        });
 
         return redirect()->route('admin.reservations.index')
             ->with('success', 'Reservasi berhasil diperbarui.');
@@ -310,16 +248,18 @@ class ReservationController extends Controller
 
         $menu = Menu::find($validated['menu_id']);
 
-        // Create new order item
-        OrderItem::create([
-            'order_id' => $reservation->order->id,
-            'menu_id' => $validated['menu_id'],
-            'qty' => $validated['quantity'],
-            'price' => $menu->price,
-        ]);
+        DB::transaction(function () use ($reservation, $validated, $menu) {
+            // Create new order item
+            OrderItem::create([
+                'order_id' => $reservation->order->id,
+                'menu_id' => $validated['menu_id'],
+                'qty' => $validated['quantity'],
+                'price' => $menu->price,
+            ]);
 
-        // Update order total
-        $this->updateOrderTotal($reservation->order);
+            // Update order total
+            $this->updateOrderTotal($reservation->order);
+        });
 
         return redirect()->back()->with('success', 'Menu berhasil ditambahkan.');
     }
@@ -330,22 +270,26 @@ class ReservationController extends Controller
             'quantity' => 'required|integer|min:1',
         ]);
 
-        $orderItem->update([
-            'qty' => $validated['quantity'],
-        ]);
+        DB::transaction(function () use ($orderItem, $validated, $reservation) {
+            $orderItem->update([
+                'qty' => $validated['quantity'],
+            ]);
 
-        // Update order total
-        $this->updateOrderTotal($reservation->order);
+            // Update order total
+            $this->updateOrderTotal($reservation->order);
+        });
 
         return redirect()->back()->with('success', 'Menu berhasil diperbarui.');
     }
 
     public function removeMenu(Reservation $reservation, OrderItem $orderItem)
     {
-        $orderItem->delete();
+        DB::transaction(function () use ($orderItem, $reservation) {
+            $orderItem->delete();
 
-        // Update order total
-        $this->updateOrderTotal($reservation->order);
+            // Update order total
+            $this->updateOrderTotal($reservation->order);
+        });
 
         return redirect()->back()->with('success', 'Menu berhasil dihapus.');
     }
@@ -359,7 +303,6 @@ class ReservationController extends Controller
         $order->update(['total_price' => $total]);
     }
 
-    // Quick status update
     public function updateStatus(Request $request, Reservation $reservation)
     {
         $validated = $request->validate([
@@ -369,27 +312,29 @@ class ReservationController extends Controller
         $oldStatus = $reservation->status;
         $newStatus = $validated['status'];
 
-        // Handle table status changes
-        if (in_array($newStatus, ['cancelled', 'completed', 'expired']) && 
-            !in_array($oldStatus, ['cancelled', 'completed', 'expired'])) {
-            // Free the table
-            Table::where('id', $reservation->table_id)->update(['status' => 'available']);
-        }
+        DB::transaction(function () use ($reservation, $oldStatus, $newStatus) {
+            // Handle table status changes
+            if (in_array($newStatus, ['cancelled', 'completed', 'expired']) && 
+                !in_array($oldStatus, ['cancelled', 'completed', 'expired'])) {
+                // Free the table
+                Table::where('id', $reservation->table_id)->update(['status' => 'available']);
+            }
 
-        if (in_array($oldStatus, ['cancelled', 'completed', 'expired']) && 
-            in_array($newStatus, ['pending', 'confirmed'])) {
-            // Reserve the table again
-            Table::where('id', $reservation->table_id)->update(['status' => 'reserved']);
-        }
+            if (in_array($oldStatus, ['cancelled', 'completed', 'expired']) && 
+                in_array($newStatus, ['pending', 'confirmed'])) {
+                // Reserve the table again
+                Table::where('id', $reservation->table_id)->update(['status' => 'reserved']);
+            }
 
-        $reservation->update(['status' => $newStatus]);
+            $reservation->update(['status' => $newStatus]);
+        });
 
         return redirect()->back()->with('success', 'Status reservasi berhasil diperbarui.');
     }
 
     public function printInvoice(Reservation $reservation)
     {
-        $reservation->load(['user', 'table', 'promo', 'order.orderItems.menu']);
+        $reservation->load(['table', 'promo', 'order.orderItems.menu']);
         
         return view('admin.reservations.invoice', compact('reservation'));
     }

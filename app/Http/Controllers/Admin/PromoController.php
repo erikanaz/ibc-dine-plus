@@ -9,28 +9,48 @@ use Illuminate\Support\Carbon;
 
 class PromoController extends Controller
 {
-    public function index()
-    {
-        $promos = Promo::orderBy('created_at', 'desc')->paginate(10); // Ganti get() dengan paginate()
-        
-        // Hitung statistik dari semua data (bukan hanya yang dipaginasi)
-        $allPromos = Promo::all();
-        
-        $activePromosCount = $allPromos->filter(function($promo) {
-            return $promo->status === 'active';
-        })->count();
-        
-        $percentPromosCount = $allPromos->where('type', 'percent')->count();
-        $fixedPromosCount = $allPromos->where('type', 'fixed')->count();
+    public function index(Request $request)
+{
+    $query = Promo::query()->orderBy('created_at', 'desc');
 
-        return view('admin.promos.index', compact(
-            'promos', 
-            'activePromosCount',
-            'percentPromosCount', 
-            'fixedPromosCount'
-        ));
+    // Apply search filter
+    if ($request->has('search') && $request->search != '') {
+        $search = $request->search;
+        $query->where(function($q) use ($search) {
+            $q->where('promo_code', 'like', "%{$search}%")
+              ->orWhere('description', 'like', "%{$search}%");
+        });
     }
 
+    // Apply status filter jika ada
+    if ($request->has('status') && $request->status != '') {
+        $query->where('status', $request->status);
+    }
+
+    // Apply type filter jika ada
+    if ($request->has('type') && $request->type != '') {
+        $query->where('type', $request->type);
+    }
+
+    $promos = $query->paginate(10);
+
+    // Hitung statistik dari semua data (bukan hanya yang dipaginasi)
+    $allPromos = Promo::all();
+    
+    $activePromosCount = $allPromos->filter(function($promo) {
+        return $promo->status === 'active';
+    })->count();
+    
+    $percentPromosCount = $allPromos->where('type', 'percent')->count();
+    $fixedPromosCount = $allPromos->where('type', 'fixed')->count();
+
+    return view('admin.promos.index', compact(
+        'promos', 
+        'activePromosCount',
+        'percentPromosCount', 
+        'fixedPromosCount'
+    ));
+}
     // Method lainnya tetap sama...
     public function create()
     {

@@ -14,34 +14,63 @@
             @csrf
             
             <div class="bg-white rounded-xl shadow p-6">
-                <!-- Informasi Customer & Reservasi -->
+                <!-- Informasi Customer -->
                 <div class="mb-8">
                     <h3 class="text-lg font-bold mb-4 flex items-center text-gray-800">
                         <i class="fas fa-user text-primary mr-2"></i>
-                        Informasi Customer & Reservasi
+                        Informasi Customer
                     </h3>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Customer -->
-                        <div class="md:col-span-2">
+                        <!-- Nama Customer -->
+                        <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Pilih Customer <span class="text-red-500">*</span>
+                                Nama Customer <span class="text-red-500">*</span>
                             </label>
-                            <select name="user_id" 
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                                    required>
-                                <option value="">Pilih Customer</option>
-                                @foreach($users as $user)
-                                    <option value="{{ $user->id }}" {{ old('user_id') == $user->id ? 'selected' : '' }}>
-                                        {{ $user->name }} - {{ $user->email }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('user_id')
+                            <input type="text" name="customer_name" value="{{ old('customer_name') }}" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                   placeholder="Masukkan nama customer" required>
+                            @error('customer_name')
                                 <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                             @enderror
                         </div>
 
+                        <!-- Telepon Customer -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Telepon Customer <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" name="customer_phone" value="{{ old('customer_phone') }}" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                   placeholder="Contoh: 081234567890" required>
+                            @error('customer_phone')
+                                <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Email Customer -->
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Email Customer <span class="text-red-500">*</span>
+                            </label>
+                            <input type="email" name="customer_email" value="{{ old('customer_email') }}" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                   placeholder="email@example.com" required>
+                            @error('customer_email')
+                                <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Informasi Reservasi -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-bold mb-4 flex items-center text-gray-800">
+                        <i class="fas fa-calendar text-blue-500 mr-2"></i>
+                        Informasi Reservasi
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Meja -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -210,6 +239,24 @@
                                 <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                             @enderror
                             <p class="text-xs text-gray-500 mt-1">Masukkan 0 jika tidak ada DP</p>
+                        </div>
+
+                        <!-- Status -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Status Reservasi <span class="text-red-500">*</span>
+                            </label>
+                            <select name="status" 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                    required>
+                                <option value="pending" {{ old('status', 'pending') == 'pending' ? 'selected' : '' }}>Pending</option>
+                                <option value="confirmed" {{ old('status') == 'confirmed' ? 'selected' : '' }}>Confirmed</option>
+                                <option value="cancelled" {{ old('status') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                                <option value="completed" {{ old('status') == 'completed' ? 'selected' : '' }}>Completed</option>
+                            </select>
+                            @error('status')
+                                <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <!-- Catatan -->

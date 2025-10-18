@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Menu;
+use App\Models\Promo;
 use App\Models\Reservation;
 use App\Models\Table;
 use Illuminate\Http\Request;
@@ -21,56 +22,70 @@ class ReservationController extends Controller
                 ->get()
                 ->groupBy('category'); // <--- Group by kategori
 
-        return view('customer.reservation.index', compact('tables', 'menus'));
+        // Update query promo - tanpa filter status karena kolom tidak ada
+        $promos = Promo::where(function($query) {
+                $query->where('start_date', '<=', now())
+                    ->orWhereNull('start_date');
+            })
+            ->where(function($query) {
+                $query->where('end_date', '>=', now())
+                    ->orWhereNull('end_date');
+            })
+            ->get();
+
+        return view('customer.reservation.index', compact('tables', 'menus', 'promos'));
     }
 
     public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:100',
-            'email' => 'required|email',
-            'phone' => 'required|string|max:20',
-            'reservation_date' => 'required|date',
-            'reservation_time' => 'required',
-            'guest_count' => 'required|integer|min:1',
-            'table_id' => 'required|exists:tables,id',
-            'notes' => 'nullable|string',
-            'payment_method' => 'required|in:qris,bank_transfer',
-            'with_preorder' => 'required|boolean',
-            'menu_items' => 'nullable|array',
-            'menu_items.*.menu_id' => 'required_with:menu_items|exists:menus,id',
-            'menu_items.*.jumlah' => 'required_with:menu_items|integer|min:1',
-        ]);
+{
+    $validated = $request->validate([
+        'name' => 'required|string|max:100',
+        'email' => 'required|email',
+        'phone' => 'required|string|max:20',
+        'reservation_date' => 'required|date',
+        'reservation_time' => 'required',
+        'guest_count' => 'required|integer|min:1',
+        'table_id' => 'required|exists:tables,id',
+        'notes' => 'nullable|string',
+        'payment_method' => 'required|in:qris,bank_transfer',
+        'with_preorder' => 'required|boolean',
+        'menu_items' => 'nullable|array',
+        'menu_items.*.menu_id' => 'required_with:menu_items|exists:menus,id',
+        'menu_items.*.jumlah' => 'required_with:menu_items|integer|min:1',
+    ]);
 
-        $reservation = Reservation::create([
-            'user_id' => Auth::id(),
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'phone' => $validated['phone'],
-            'reservation_date' => $validated['reservation_date'],
-            'reservation_time' => $validated['reservation_time'],
-            'guest_count' => $validated['guest_count'],
-            'table_id' => $validated['table_id'],
-            'notes' => $validated['notes'] ?? null,
-            'status' => 'pending',
-            'payment_method' => $validated['payment_method'],
-            'with_preorder' => $validated['with_preorder'],
-        ]);
+    $reservation = Reservation::create([
+        'user_id' => Auth::id(),
+        'customer_name' => $validated['name'], // <-- Sesuaikan dengan database
+        'customer_email' => $validated['email'], // <-- Sesuaikan dengan database
+        'customer_phone' => $validated['phone'], // <-- Sesuaikan dengan database
+        'reservation_date' => $validated['reservation_date'],
+        'reservation_time' => $validated['reservation_time'],
+        'guest_count' => $validated['guest_count'],
+        'table_id' => $validated['table_id'],
+        'notes' => $validated['notes'] ?? null,
+        'status' => 'pending',
+        'payment_method' => $validated['payment_method'],
+        'with_preorder' => $validated['with_preorder'],
+        // Tambahkan default value untuk field yang tidak ada di form
+        'total_DP' => 0, // atau nilai default lainnya
+        'promo_id' => null, // jika tidak digunakan
+    ]);
 
-        // Simpan menu jika ada preorder
-        if ($reservation->with_preorder && isset($validated['menu_items'])) {
-            foreach ($validated['menu_items'] as $item) {
-                $reservation->menus()->attach($item['menu_id'], [
-                    'quantity' => $item['jumlah']
-                ]);
-            }
+    // Simpan menu jika ada preorder
+    if ($reservation->with_preorder && isset($validated['menu_items'])) {
+        foreach ($validated['menu_items'] as $item) {
+            $reservation->menus()->attach($item['menu_id'], [
+                'quantity' => $item['jumlah']
+            ]);
         }
-
-        return response()->json([
-            'success' => true,
-            'reservation_id' => $reservation->id
-        ]);
     }
+
+    return response()->json([
+        'success' => true,
+        'reservation_id' => $reservation->id
+    ]);
+}
 
     public function success(Request $request)
     {
