@@ -17,7 +17,7 @@ class ReservationController extends Controller
 {
     public function index()
     {
-        $reservations = Reservation::with(['table', 'promo', 'order.orderItems.menu'])
+        $reservations = Reservation::with(['table', 'promo', 'orders.orderItems.menu'])
             ->orderBy('reservation_date', 'desc')
             ->orderBy('reservation_time', 'desc')
             ->paginate(10);
@@ -142,7 +142,7 @@ public function store(Request $request)
         $reservation->load([
             'table', 
             'promo', 
-            'order.orderItems.menu'
+            'orders.orderItems.menu'
         ]);
 
         $menus = Menu::where('is_available', true)->get();
@@ -163,7 +163,7 @@ public function store(Request $request)
                 ->orWhereNull('end_date');
         })->get();
         
-        $reservation->load(['table', 'promo', 'order.orderItems.menu']);
+        $reservation->load(['table', 'promo', 'orders.orderItems.menu']);
         
         return view('admin.reservations.edit', compact('reservation', 'tables', 'menus', 'promos'));
     }
@@ -334,7 +334,7 @@ public function store(Request $request)
 
     public function printInvoice(Reservation $reservation)
     {
-        $reservation->load(['table', 'promo', 'order.orderItems.menu']);
+        $reservation->load(['table', 'promo', 'orders.orderItems.menu']);
         
         return view('admin.reservations.invoice', compact('reservation'));
     }

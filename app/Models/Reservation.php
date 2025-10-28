@@ -54,9 +54,21 @@ class Reservation extends Model
     }
 
     // Relasi dengan order
-    public function order()
+    // public function order()
+    // {
+    //     return $this->hasOne(Order::class);
+    // }
+
+    // Relasi dengan orders (ubah dari hasOne menjadi hasMany)
+    public function orders()
     {
-        return $this->hasOne(Order::class);
+        return $this->hasMany(Order::class);
+    }
+
+    // Relasi dengan payments
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
     }
 
     // public function getTotalItemsAttribute()
@@ -156,6 +168,61 @@ class Reservation extends Model
     public function getCustomerTypeLabelAttribute()
     {
         return $this->user_id ? 'Member' : 'Guest';
+    }
+
+    /**
+     * Hitung jumlah diskon yang diberikan
+     */
+    public function getDiscountAmountAttribute()
+    {
+        if (!$this->promo_id) {
+            return 0;
+        }
+
+        $promo = $this->promo;
+        if (!$promo) {
+            return 0;
+        }
+
+        // Hitung DP awal (sebelum diskon)
+        $dpAwal = $this->calculateInitialDP();
+
+        // Hitung diskon berdasarkan type promo
+        if ($promo->type === 'percent') {
+            return $dpAwal * ($promo->discount / 100);
+        } else {
+            return min($promo->discount, $dpAwal);
+        }
+    }
+
+    /**
+     * Hitung DP awal sebelum diskon
+     */
+    public function calculateInitialDP()
+    {
+        // Jika ada pre-order, hitung dari total pesanan
+        if ($this->orders->count() > 0) {
+            $order = $this->orders->first();
+            
+            // Hitung total pesanan sebelum diskon dari order items
+            $totalBeforeDiscount = 0;
+            foreach ($order->orderItems as $item) {
+                $totalBeforeDiscount += $item->qty * $item->price;
+            }
+            
+            return $totalBeforeDiscount * 0.3; // 30% dari total pesanan
+        } else {
+            // Untuk reservasi tanpa pre-order
+            return 300000;
+        }
+    }
+
+    /**
+     * Hitung DP awal untuk tampilan
+     */
+    public function getInitialDPAttribute()
+    {
+        return $this->calculateInitialDP();
     }
 
 }

@@ -62,10 +62,10 @@
                 </div>
             </div>
             <div class="mt-4 flex items-center text-sm">
-                <span class="text-green-600 font-medium">
+                {{-- <span class="text-green-600 font-medium">
                     <i class="fas fa-arrow-up mr-1"></i>+12%
-                </span>
-                <span class="text-gray-500 ml-2">dari bulan lalu</span>
+                </span> --}}
+                {{-- <span class="text-gray-500 ml-2">dari bulan lalu</span> --}}
             </div>
         </div>
         
@@ -173,8 +173,63 @@
                 </div>
             </div>
 
-            <!-- Revenue Chart -->
+            <!-- Table Status -->
             <div class="bg-white rounded-xl shadow">
+                <div class="px-6 py-4 border-b">
+                    <h3 class="font-bold text-lg flex items-center">
+                        <i class="fas fa-chair text-secondary mr-2"></i>
+                        Status Meja
+                    </h3>
+                </div>
+                <div class="p-4">
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        @php
+                            $statusColors = [
+                                'available' => ['bg' => 'success', 'text' => 'success', 'label' => 'Tersedia'],
+                                'occupied' => ['bg' => 'primary', 'text' => 'primary', 'label' => 'Terisi'],
+                                'reserved' => ['bg' => 'warning', 'text' => 'warning', 'label' => 'Reservasi'],
+                                'maintenance' => ['bg' => 'gray-400', 'text' => 'gray-500', 'label' => 'Perbaikan']
+                            ];
+                        @endphp
+                        
+                        @foreach($tableStatus as $status)
+                            @php
+                                $colorConfig = $statusColors[$status->status] ?? ['bg' => 'gray', 'text' => 'gray', 'label' => $status->status];
+                            @endphp
+                            <div class="bg-{{ $colorConfig['bg'] }}/10 border border-{{ $colorConfig['bg'] }} rounded-lg p-3 text-center">
+                                <div class="text-2xl font-bold text-{{ $colorConfig['text'] }}">{{ $status->count }}</div>
+                                <div class="text-sm text-{{ $colorConfig['text'] }}">{{ $colorConfig['label'] }}</div>
+                            </div>
+                        @endforeach
+                    </div>
+                    
+                    <div class="mt-6">
+                        <h4 class="font-medium mb-3 text-gray-800">Legenda Status</h4>
+                        <div class="space-y-2">
+                            @foreach($statusColors as $status => $color)
+                            <div class="flex items-center">
+                                <div class="w-4 h-4 bg-{{ $color['bg'] }} rounded-full mr-2"></div>
+                                <span class="text-sm text-gray-700">{{ $color['label'] }}</span>
+                            </div>
+                            @endforeach
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 pt-4 border-t">
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-gray-600">Total Meja:</span>
+                            <span class="font-bold text-gray-800">{{ $totalTables }}</span>
+                        </div>
+                        <div class="flex justify-between items-center text-sm mt-1">
+                            <span class="text-gray-600">Tersedia:</span>
+                            <span class="font-bold text-success">{{ $availableTables }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Revenue Chart -->
+            {{-- <div class="bg-white rounded-xl shadow">
                 <div class="px-6 py-4 border-b">
                     <h3 class="font-bold text-lg flex items-center">
                         <i class="fas fa-chart-line text-primary mr-2"></i>
@@ -214,7 +269,7 @@
                         Total: Rp {{ number_format($revenueData->sum('revenue'), 0, ',', '.') }}
                     </div>
                 </div>
-            </div>
+            </div> --}}
         </div>
 
         <!-- Right Column (1/3 width) -->
@@ -289,7 +344,7 @@
             </div>
 
             <!-- Table Status -->
-            <div class="bg-white rounded-xl shadow">
+            {{-- <div class="bg-white rounded-xl shadow">
                 <div class="px-6 py-4 border-b">
                     <h3 class="font-bold text-lg flex items-center">
                         <i class="fas fa-chair text-secondary mr-2"></i>
@@ -341,7 +396,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> --}}
         </div>
     </div>
 @endsection

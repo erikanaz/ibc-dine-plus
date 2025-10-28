@@ -46,7 +46,7 @@
                              class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 ring-1 ring-black ring-opacity-5"
                              x-cloak>
                             <a href="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-yellow-600 transition-colors focus:bg-gray-50 focus:text-yellow-600">Profil</a>
-                            <a href="/reservation-history" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-yellow-600 transition-colors focus:bg-gray-50 focus:text-yellow-600">Riwayat Reservasi</a>
+                            <a href="/reservation/history" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-yellow-600 transition-colors focus:bg-gray-50 focus:text-yellow-600">Riwayat Reservasi</a>
                             <a href="/order-history" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-yellow-600 transition-colors focus:bg-gray-50 focus:text-yellow-600">Riwayat Pesanan</a>
                             <div class="border-t border-gray-200 my-1"></div>
                             <form method="POST" action="{{ route('logout') }}">

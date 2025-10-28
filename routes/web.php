@@ -70,15 +70,23 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::group(['middleware' => ['auth', 'role:customer']], function () {
+    //form create reservasi
     Route::get('/reservation', [ReservationController::class, 'index'])->name('reservation.index');
+    // Route::post('/reservation/store', [ReservationController::class, 'store'])->name('reservation.store');
+    // Process reservasi
+    Route::post('/reservation/check-availability', [ReservationController::class, 'checkAvailability'])->name('reservation.check-availability');
+    Route::post('/reservation/apply-promo', [ReservationController::class, 'applyPromo'])->name('reservation.apply-promo');
+    Route::post('/reservation/calculate-price', [ReservationController::class, 'calculatePrice'])->name('reservation.calculate-price');
     Route::post('/reservation/store', [ReservationController::class, 'store'])->name('reservation.store');
-    // Route::post('/reservation/pilih-meja', [ReservationController::class, 'pilihMeja'])->name('reservation.pilihMeja');
-    // Route::post('/reservation/simpan', [ReservationController::class, 'store'])->name('reservation.store');
-    Route::get('/reservasi/sukses', [ReservationController::class, 'success'])
-        ->name('reservation.success');
+    // Success page & history
+    Route::get('/reservation/success/{id}', [ReservationController::class, 'success'])->name('reservation.success');
+    Route::get('/reservation/history', [ReservationController::class, 'history'])->name('reservation.history');
+    Route::post('/reservation/{id}/cancel', [ReservationController::class, 'cancel'])->name('reservation.cancel');
+    // Route::get('/reservasi/sukses', [ReservationController::class, 'success'])
+    //     ->name('reservation.success');
     // / ✅ Tambahkan route riwayat reservasi
-    Route::get('/reservation/history', [ReservationController::class, 'history'])
-        ->name('reservation.history');
+    // Route::get('/reservation/history', [ReservationController::class, 'history'])
+    //     ->name('reservation.history');
     Route::get('/order', [OrderController::class, 'index'])->name('order.index');
     Route::get('/order/checkout', [OrderController::class, 'checkout'])->name('order.checkout'); // ← ini ditambahkan
     Route::post('/order/store', [OrderController::class, 'store'])->name('order.store');

@@ -109,13 +109,14 @@
         </div>
     </div>
     
-    <!-- Step 3: Detail Reservasi & Promo -->
-    <div class="bg-white rounded-lg shadow-sm p-6 mb-6 border border-gray-100" x-show="step === 3" x-transition>
+    <!-- Step 3: Detail Reservasi -->
+    {{-- <div class="bg-white rounded-lg shadow-sm p-6 mb-6 border border-gray-100" x-show="step === 3" x-transition>
         <h2 class="text-xl font-bold mb-4 text-gray-800">3. Detail Reservasi</h2>
         
         <form @submit.prevent="submitReservasi()" class="space-y-4">
             <div class="space-y-3">
                 <div>
+                    
                     <label class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
                     <input type="text" x-model="reservasi.nama" required
                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500">
@@ -131,43 +132,6 @@
                         <input type="tel" x-model="reservasi.telepon" required
                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500">
                     </div>
-                </div>
-                
-                <!-- Promo Code Section -->
-                <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                    <div class="flex items-center justify-between mb-2">
-                        <label class="block text-sm font-medium text-gray-700">Kode Promo</label>
-                        <button type="button" @click="applyPromo()" 
-                                class="text-sm bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded transition"
-                                :disabled="!reservasi.kode_promo">
-                            Terapkan
-                        </button>
-                    </div>
-                    <div class="flex space-x-2">
-                        <input type="text" x-model="reservasi.kode_promo" placeholder="Masukkan kode promo"
-                               class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500">
-                    </div>
-                    
-                    <template x-if="reservasi.promo_terpakai">
-                        <div class="mt-3 p-3 bg-green-50 border border-green-200 rounded-md">
-                            <div class="flex justify-between items-center">
-                                <div>
-                                    <span class="text-green-800 font-medium" x-text="reservasi.promo_terpakai.nama"></span>
-                                    <p class="text-sm text-green-600" x-text="reservasi.promo_terpakai.deskripsi"></p>
-                                </div>
-                                <button type="button" @click="hapusPromo()" class="text-red-500 hover:text-red-700">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </div>
-                            <p class="text-xs text-green-600 mt-1" x-text="'Diskon: ' + reservasi.promo_terpakai.diskon_text"></p>
-                        </div>
-                    </template>
-                    
-                    <template x-if="promoError">
-                        <div class="mt-3 p-3 bg-red-50 border border-red-200 rounded-md">
-                            <p class="text-red-800 text-sm" x-text="promoError"></p>
-                        </div>
-                    </template>
                 </div>
 
                 <div>
@@ -185,6 +149,105 @@
                              :class="{'bg-yellow-500': reservasi.pesan_menu}"></div>
                         <div class="dot absolute left-0.5 top-0.5 bg-white w-4 h-4 rounded-full transition"
                              :class="{'transform translate-x-5': reservasi.pesan_menu}"></div>
+                    </div>
+                    <span class="ml-2 text-sm text-gray-700">Pesan menu sekarang</span>
+                </label>
+            </div>
+            
+            <div class="flex justify-between mt-6 pt-4 border-t">
+                <button type="button" @click="step = 2" 
+                        class="border border-gray-300 text-gray-700 px-4 py-1.5 rounded-md hover:bg-gray-50 transition">
+                    Kembali
+                </button>
+                <button type="submit"
+                        class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-1.5 rounded-md font-medium transition">
+                    <span x-text="reservasi.pesan_menu ? 'Lanjut ke Menu' : 'Lanjut ke Konfirmasi'"></span>
+                </button>
+            </div>
+        </form>
+    </div> --}}
+
+        <!-- Step 3: Detail Reservasi -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-6 border border-gray-100" x-show="step === 3" x-transition>
+        <h2 class="text-xl font-bold mb-4 text-gray-800">3. Detail Reservasi</h2>
+        
+        <form @submit.prevent="submitReservasi()" class="space-y-4">
+            <div class="space-y-3">
+                <!-- Informasi User -->
+                <div class="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4">
+                    <div class="flex items-start">
+                        <svg class="w-4 h-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <p class="text-xs text-blue-700">
+                            Data dari profil Anda tersedia dan dapat digunakan dengan mengklik field.
+                        </p>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
+                    <input type="text" x-model="reservasi.nama" required
+                        placeholder="{{ Auth::user()->name }}"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500 bg-white text-gray-800"
+                        @focus="if(!reservasi.nama) reservasi.nama = '{{ Auth::user()->name }}'">
+                    <p class="text-xs text-gray-500 mt-1" x-show="!reservasi.nama">
+                        Klik field untuk menggunakan: <span class="font-medium">{{ Auth::user()->name }}</span>
+                    </p>
+                    <p class="text-xs text-green-500 mt-1" x-show="reservasi.nama && reservasi.nama === '{{ Auth::user()->name }}'">
+                        ✓ Menggunakan data dari profil Anda
+                    </p>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1 mt-2">Email</label>
+                        <input type="email" x-model="reservasi.email" required
+                            placeholder="{{ Auth::user()->email }}"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500 bg-white text-gray-800"
+                            @focus="if(!reservasi.email) reservasi.email = '{{ Auth::user()->email }}'">
+                        <p class="text-xs text-gray-500 mt-1" x-show="!reservasi.email">
+                            Klik field untuk menggunakan: <span class="font-medium">{{ Auth::user()->email }}</span>
+                        </p>
+                        <p class="text-xs text-green-500 mt-1" x-show="reservasi.email && reservasi.email === '{{ Auth::user()->email }}'">
+                            ✓ Menggunakan data dari profil Anda
+                        </p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1 mt-2">Nomor Telepon</label>
+                        <input type="tel" x-model="reservasi.telepon" required
+                            placeholder="{{ Auth::user()->phone ? Auth::user()->phone : 'Masukkan nomor telepon' }}"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500 bg-white text-gray-800"
+                            @focus="if(!reservasi.telepon && '{{ Auth::user()->phone }}') reservasi.telepon = '{{ Auth::user()->phone }}'">
+                        @if(Auth::user()->phone)
+                            <p class="text-xs text-gray-500 mt-1" x-show="!reservasi.telepon">
+                                Klik field untuk menggunakan: <span class="font-medium">{{ Auth::user()->phone }}</span>
+                            </p>
+                            <p class="text-xs text-green-500 mt-1" x-show="reservasi.telepon && reservasi.telepon === '{{ Auth::user()->phone }}'">
+                                ✓ Menggunakan data dari profil Anda
+                            </p>
+                        @else
+                            <p class="text-xs text-gray-500 mt-1">Nomor telepon belum tersedia di profil Anda</p>
+                        @endif
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1 mt-2">Catatan Khusus (opsional)</label>
+                    <textarea x-model="reservasi.catatan" rows="2" placeholder="Contoh: Meja dekat jendela, ada tamu ulang tahun, dll."
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500 bg-white text-gray-800"></textarea>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <label class="flex items-center cursor-pointer">
+                    <div class="relative">
+                        <input type="checkbox" x-model="reservasi.pesan_menu" class="sr-only">
+                        <div class="block bg-gray-300 w-10 h-5 rounded-full transition"
+                            :class="{'bg-yellow-500': reservasi.pesan_menu}"></div>
+                        <div class="dot absolute left-0.5 top-0.5 bg-white w-4 h-4 rounded-full transition"
+                            :class="{'transform translate-x-5': reservasi.pesan_menu}"></div>
                     </div>
                     <span class="ml-2 text-sm text-gray-700">Pesan menu sekarang</span>
                 </label>
@@ -299,6 +362,42 @@
                 </div>
             </div>
             
+            <!-- Promo Code Section -->
+            <div class="bg-white p-4 rounded-md border border-gray-200">
+                <h3 class="text-sm font-semibold mb-3 text-gray-700">Gunakan Kode Promo</h3>
+                
+                <div class="flex space-x-2 mb-3">
+                    <input type="text" x-model="reservasi.kode_promo" placeholder="Masukkan kode promo"
+                           class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500">
+                    <button type="button" @click="applyPromo()" 
+                            class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded transition font-medium"
+                            :disabled="!reservasi.kode_promo">
+                        Terapkan
+                    </button>
+                </div>
+                
+                <template x-if="reservasi.promo_terpakai">
+                    <div class="mt-3 p-3 bg-green-50 border border-green-200 rounded-md">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <span class="text-green-800 font-medium" x-text="reservasi.promo_terpakai.nama"></span>
+                                <p class="text-sm text-green-600" x-text="reservasi.promo_terpakai.deskripsi"></p>
+                            </div>
+                            <button type="button" @click="hapusPromo()" class="text-red-500 hover:text-red-700">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <p class="text-xs text-green-600 mt-1" x-text="'Diskon: ' + reservasi.promo_terpakai.diskon_text"></p>
+                    </div>
+                </template>
+                
+                <template x-if="promoError">
+                    <div class="mt-3 p-3 bg-red-50 border border-red-200 rounded-md">
+                        <p class="text-red-800 text-sm" x-text="promoError"></p>
+                    </div>
+                </template>
+            </div>
+            
             <template x-if="reservasi.pesan_menu && pesananMenu.length > 0">
                 <div class="bg-gray-50 p-4 rounded-md border border-gray-200">
                     <h3 class="text-sm font-semibold mb-3 text-gray-700 border-b pb-2">Pesanan Menu</h3>
@@ -322,7 +421,7 @@
                         </div>
                         
                         <!-- Diskon Promo -->
-                        <template x-if="reservasi.promo_terpakai">
+                        <template x-if="reservasi.promo_terpakai && reservasi.pesan_menu">
                             <div class="flex justify-between text-green-600">
                                 <span class="text-sm" x-text="'Diskon (' + reservasi.promo_terpakai.nama + '):'"></span>
                                 <span x-text="'-Rp ' + hitungDiskonPromo().toLocaleString('id-ID')" 
@@ -456,7 +555,8 @@
 <script>
     function reservasiApp() {
         return {
-            step: Number(localStorage.getItem('reservasi_step')) || 1,
+            userId: {{ Auth::id() }}, // Tambahkan user ID
+            step: Number(localStorage.getItem(`reservasi_step_${ {{ Auth::id() }} }`)) || 1,
             reservasi: {
                 tanggal: '',
                 waktu: '',
@@ -474,11 +574,30 @@
             },
             mejaTersedia: @json($tables),
             daftarMenu: @json($menus),
-            daftarPromo: @json($promos), // Pastikan variable $promos dikirim dari controller
-            pesananMenu: JSON.parse(localStorage.getItem('pesananMenu')) || [],
+            pesananMenu: JSON.parse(localStorage.getItem(`pesananMenu_${ {{ Auth::id() }} }`)) || [],
             activeCategory: Object.keys(@json($menus))[0],
             promoError: null,
             isLoading: false,
+            calculations: {
+                subtotal_pesanan: 0,
+                diskon_promo: 0,
+                total_pesanan: 0,
+                dp: 0,
+                diskon_dp: 0,
+                total_dp: 0
+            },
+
+            // Helper functions
+            getStepName(step) {
+                const steps = {
+                    1: 'Tanggal & Waktu',
+                    2: 'Pilih Meja',
+                    3: 'Detail',
+                    4: 'Menu',
+                    5: 'Konfirmasi'
+                };
+                return steps[step] || '';
+            },
 
             getFormattedCategoryName(category) {
                 const names = {
@@ -492,139 +611,231 @@
             },
 
             init() {
-                const savedReservasi = localStorage.getItem('reservasi_data');
-                if (savedReservasi) this.reservasi = {...this.reservasi, ...JSON.parse(savedReservasi)};
+                // Gunakan user ID di localStorage key
+                const savedReservasi = localStorage.getItem(`reservasi_data_${this.userId}`);
+                if (savedReservasi) {
+                    const savedData = JSON.parse(savedReservasi);
+                    this.reservasi = { ...this.reservasi, ...savedData };
+                }
                 
-                const savedPesanan = localStorage.getItem('pesananMenu');
-                if (savedPesanan) this.pesananMenu = JSON.parse(savedPesanan);
+                const savedPesanan = localStorage.getItem(`pesananMenu_${this.userId}`);
+                if (savedPesanan) {
+                    this.pesananMenu = JSON.parse(savedPesanan);
+                }
+
+                // Hitung ulang harga saat init
+                if (this.step >= 5) {
+                    this.calculatePrice();
+                }
             },
 
-            getStepName(stepNum) {
-                return ['Tanggal & Waktu', 'Pilih Meja', 'Detail', 'Pesan Menu', 'Konfirmasi'][stepNum-1] || '';
+            // Method untuk auto-fill data user
+            fillUserData(field, value) {
+                if (!this.reservasi[field]) {
+                    this.reservasi[field] = value;
+                }
             },
-            
-            goToStep(stepNum) {
-                if (stepNum < this.step) this.step = stepNum;
-                localStorage.setItem('reservasi_step', String(this.step));
+
+            goToStep(stepNumber) {
+                if (stepNumber < this.step) {
+                    this.step = stepNumber;
+                    localStorage.setItem(`reservasi_step_${this.userId}`, String(stepNumber));
+                }
             },
-            
-            cekKetersediaan() {
-                if (!this.reservasi.jumlah_tamu || this.reservasi.jumlah_tamu < 1) {
-                    alert('Jumlah tamu harus lebih dari 0');
+
+            async cekKetersediaan() {
+                if (!this.reservasi.tanggal || !this.reservasi.waktu || !this.reservasi.jumlah_tamu) {
+                    alert('Harap isi semua field');
                     return;
                 }
 
-                localStorage.setItem('reservasi_data', JSON.stringify({
-                    tanggal: this.reservasi.tanggal,
-                    waktu: this.reservasi.waktu,
-                    jumlah_tamu: this.reservasi.jumlah_tamu
-                }));
+                this.isLoading = true;
 
-                this.step = 2;
-                localStorage.setItem('reservasi_step', '2');
-            },
-            
-            pilihMeja(meja) {
-                this.reservasi.meja_id = meja.id;
-                localStorage.setItem('reservasi_data', JSON.stringify(this.reservasi));
-            },
-            
-            getNamaMeja(mejaId) {
-                const meja = this.mejaTersedia.find(m => m.id === mejaId);
-                return meja ? meja.number : '';
-            },
-            
-            submitReservasi() {
-                localStorage.setItem('reservasi_data', JSON.stringify(this.reservasi));
-                this.step = this.reservasi.pesan_menu ? 4 : 5;
-                localStorage.setItem('reservasi_step', String(this.step));
-                if (!this.reservasi.pesan_menu) {
-                    this.pesananMenu = [];
-                    localStorage.removeItem('pesananMenu');
+                try {
+                    const response = await fetch('{{ route("reservation.check-availability") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            tanggal: this.reservasi.tanggal,
+                            waktu: this.reservasi.waktu,
+                            jumlah_tamu: this.reservasi.jumlah_tamu
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        this.mejaTersedia = data.available_tables;
+                        // Update dengan key yang include user ID
+                        localStorage.setItem(`reservasi_data_${this.userId}`, JSON.stringify({
+                            tanggal: this.reservasi.tanggal,
+                            waktu: this.reservasi.waktu,
+                            jumlah_tamu: this.reservasi.jumlah_tamu
+                        }));
+                        this.step = 2;
+                        localStorage.setItem(`reservasi_step_${this.userId}`, '2');
+                    } else {
+                        alert('Gagal memeriksa ketersediaan meja');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Terjadi kesalahan saat memeriksa ketersediaan');
+                } finally {
+                    this.isLoading = false;
                 }
             },
-            
-            // Fungsi Promo
-            // Di bagian applyPromo() - ganti validasi status
-            applyPromo() {
+
+            async applyPromo() {
                 this.promoError = null;
-                const kode = this.reservasi.kode_promo.trim().toUpperCase();
+                const kode = this.reservasi.kode_promo.trim();
                 
                 if (!kode) {
                     this.promoError = 'Masukkan kode promo';
                     return;
                 }
 
-                const promo = this.daftarPromo.find(p => 
-                    p.promo_code.toUpperCase() === kode
-                    // Hapus validasi status karena kolom tidak ada
-                );
+                try {
+                    const response = await fetch('{{ route("reservation.apply-promo") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            kode_promo: kode
+                        })
+                    });
 
-                if (!promo) {
-                    this.promoError = 'Kode promo tidak valid';
-                    return;
+                    const data = await response.json();
+
+                    if (data.success) {
+                        this.reservasi.promo_terpakai = data.promo;
+                        await this.calculatePrice();
+                        localStorage.setItem(`reservasi_data_${this.userId}`, JSON.stringify(this.reservasi));
+                    } else {
+                        this.promoError = data.message;
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    this.promoError = 'Terjadi kesalahan saat menerapkan promo';
                 }
-
-                // Validasi tanggal promo saja
-                const today = new Date();
-                if (promo.start_date && new Date(promo.start_date) > today) {
-                    this.promoError = 'Promo belum berlaku';
-                    return;
-                }
-
-                if (promo.end_date && new Date(promo.end_date) < today) {
-                    this.promoError = 'Promo sudah kadaluarsa';
-                    return;
-                }
-
-                // Validasi usage_limit jika ada
-                if (promo.usage_limit !== null && promo.usage_limit <= 0) {
-                    this.promoError = 'Promo sudah habis kuota';
-                    return;
-                }
-
-                this.reservasi.promo_terpakai = {
-                    id: promo.id,
-                    nama: promo.promo_code,
-                    deskripsi: promo.description,
-                    type: promo.type,
-                    discount: promo.discount,
-                    diskon_text: promo.type === 'percent' ? 
-                        `${promo.discount}%` : 
-                        `Rp ${promo.discount.toLocaleString('id-ID')}`
-                };
-
-                localStorage.setItem('reservasi_data', JSON.stringify(this.reservasi));
-            },  
-
-            hapusPromo() {
-                this.reservasi.promo_terpakai = null;
-                this.reservasi.kode_promo = '';
-                localStorage.setItem('reservasi_data', JSON.stringify(this.reservasi));
             },
 
-            // Fungsi Menu
+            async calculatePrice() {
+                try {
+                    const response = await fetch('{{ route("reservation.calculate-price") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            pesan_menu: this.reservasi.pesan_menu,
+                            menu_items: this.pesananMenu,
+                            promo_id: this.reservasi.promo_terpakai?.id || null,
+                            promo_type: this.reservasi.promo_terpakai?.type || null,
+                            promo_discount: this.reservasi.promo_terpakai?.discount || null
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        this.calculations = data.calculations;
+                        console.log('Calculations updated:', this.calculations);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            },
+
+            pilihMeja(meja) {
+                this.reservasi.meja_id = meja.id;
+                localStorage.setItem(`reservasi_data_${this.userId}`, JSON.stringify(this.reservasi));
+            },
+
+            submitReservasi() {
+                // Jika field masih kosong, isi dengan data user
+                if (!this.reservasi.nama) {
+                    this.reservasi.nama = '{{ Auth::user()->name }}';
+                }
+                if (!this.reservasi.email) {
+                    this.reservasi.email = '{{ Auth::user()->email }}';
+                }
+                if (!this.reservasi.telepon && '{{ Auth::user()->phone }}') {
+                    this.reservasi.telepon = '{{ Auth::user()->phone }}';
+                }
+                
+                // Validasi data sebelum lanjut
+                if (!this.reservasi.nama || !this.reservasi.email || !this.reservasi.telepon) {
+                    alert('Harap lengkapi data diri terlebih dahulu');
+                    return;
+                }
+
+                // Validasi format email
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(this.reservasi.email)) {
+                    alert('Format email tidak valid');
+                    return;
+                }
+
+                // Validasi format telepon
+                const phoneRegex = /^[0-9]{10,15}$/;
+                const cleanPhone = this.reservasi.telepon.replace(/\D/g, '');
+                if (!phoneRegex.test(cleanPhone)) {
+                    alert('Format nomor telepon tidak valid. Minimal 10 digit angka');
+                    return;
+                }
+                
+                // Format nomor telepon
+                this.reservasi.telepon = cleanPhone;
+
+                localStorage.setItem(`reservasi_data_${this.userId}`, JSON.stringify(this.reservasi));
+                this.step = this.reservasi.pesan_menu ? 4 : 5;
+                localStorage.setItem(`reservasi_step_${this.userId}`, String(this.step));
+                
+                if (!this.reservasi.pesan_menu) {
+                    this.pesananMenu = [];
+                    localStorage.removeItem(`pesananMenu_${this.userId}`);
+                }
+                
+                if (this.step === 5) {
+                    this.calculatePrice();
+                }
+            },
+
             tambahJumlah(menuId) {
                 const existing = this.pesananMenu.find(item => item.menu_id == menuId);
-                if (existing) existing.jumlah++;
-                else this.pesananMenu.push({ menu_id: menuId, jumlah: 1 });
-                localStorage.setItem('pesananMenu', JSON.stringify(this.pesananMenu));
+                if (existing) {
+                    existing.jumlah++;
+                } else {
+                    this.pesananMenu.push({ menu_id: menuId, jumlah: 1 });
+                }
+                localStorage.setItem(`pesananMenu_${this.userId}`, JSON.stringify(this.pesananMenu));
+                this.calculatePrice();
             },
-            
+
             kurangiJumlah(menuId) {
                 const index = this.pesananMenu.findIndex(item => item.menu_id == menuId);
                 if (index !== -1) {
-                    if (this.pesananMenu[index].jumlah > 1) this.pesananMenu[index].jumlah--;
-                    else this.pesananMenu.splice(index, 1);
-                    localStorage.setItem('pesananMenu', JSON.stringify(this.pesananMenu));
+                    if (this.pesananMenu[index].jumlah > 1) {
+                        this.pesananMenu[index].jumlah--;
+                    } else {
+                        this.pesananMenu.splice(index, 1);
+                    }
+                    localStorage.setItem(`pesananMenu_${this.userId}`, JSON.stringify(this.pesananMenu));
+                    this.calculatePrice();
                 }
             },
-            
+
             getJumlahPesanan(menuId) {
                 const item = this.pesananMenu.find(item => item.menu_id == menuId);
                 return item ? item.jumlah : 0;
             },
-            
+
             getNamaMenu(menuId) {
                 for (const category in this.daftarMenu) {
                     const menu = this.daftarMenu[category].find(m => m.id == menuId);
@@ -632,7 +843,7 @@
                 }
                 return '';
             },
-            
+
             getHargaMenu(menuId) {
                 for (const category in this.daftarMenu) {
                     const menu = this.daftarMenu[category].find(m => m.id == menuId);
@@ -640,69 +851,56 @@
                 }
                 return 0;
             },
-            
+
             simpanMenu() {
                 this.step = 5;
-                localStorage.setItem('reservasi_step', '5');
+                localStorage.setItem(`reservasi_step_${this.userId}`, '5');
+                this.calculatePrice();
             },
-            
+
+            // Fungsi perhitungan untuk tampilan
+            hitungSubtotalPesanan() {
+                return this.calculations.subtotal_pesanan || 0;
+            },
+
+            hitungDiskonPromo() {
+                return this.calculations.diskon_promo || 0;
+            },
+
+            hitungTotalPesanan() {
+                return this.calculations.total_pesanan || 0;
+            },
+
+            hitungDP() {
+                return this.calculations.dp || 0;
+            },
+
+            hitungDiskonDP() {
+                return this.calculations.diskon_dp || 0;
+            },
+
+            hitungTotalDP() {
+                return this.calculations.total_dp || 0;
+            },
+
             formatTanggal(tanggal) {
                 if (!tanggal) return '';
                 const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
                 return new Date(tanggal).toLocaleDateString('id-ID', options);
             },
-            
-            // Kalkulasi Harga
-            hitungSubtotalPesanan() {
-                return this.pesananMenu.reduce((total, item) => {
-                    return total + (item.jumlah * this.getHargaMenu(item.menu_id));
-                }, 0);
+
+            getNamaMeja(mejaId) {
+                const meja = this.mejaTersedia.find(m => m.id === mejaId);
+                return meja ? meja.number : '';
             },
 
-            hitungDiskonPromo() {
-                if (!this.reservasi.promo_terpakai || !this.reservasi.pesan_menu) return 0;
-                
-                const subtotal = this.hitungSubtotalPesanan();
-                if (this.reservasi.promo_terpakai.type === 'percent') {
-                    return Math.round(subtotal * (this.reservasi.promo_terpakai.discount / 100));
-                } else {
-                    return this.reservasi.promo_terpakai.discount;
-                }
+            hapusPromo() {
+                this.reservasi.promo_terpakai = null;
+                this.reservasi.kode_promo = '';
+                localStorage.setItem(`reservasi_data_${this.userId}`, JSON.stringify(this.reservasi));
+                this.calculatePrice();
             },
 
-            hitungTotalPesanan() {
-                const subtotal = this.hitungSubtotalPesanan();
-                const diskon = this.hitungDiskonPromo();
-                return Math.max(0, subtotal - diskon);
-            },
-
-            hitungDiskonDP() {
-                if (!this.reservasi.promo_terpakai || this.reservasi.pesan_menu) return 0;
-                
-                const dpBase = 300000; // DP fixed untuk reservasi tanpa makanan
-                if (this.reservasi.promo_terpakai.type === 'percent') {
-                    return Math.round(dpBase * (this.reservasi.promo_terpakai.discount / 100));
-                } else {
-                    return Math.min(this.reservasi.promo_terpakai.discount, dpBase);
-                }
-            },
-
-            hitungDP() {
-                if (!this.reservasi.pesan_menu) {
-                    return 300000; // DP fixed amount when not ordering food
-                } else if (this.pesananMenu.length > 0) {
-                    // 30% of total food order setelah diskon
-                    return Math.round(this.hitungTotalPesanan() * 0.3);
-                }
-                return 0;
-            },
-
-            hitungTotalDP() {
-                const dp = this.hitungDP();
-                const diskonDP = this.hitungDiskonDP();
-                return Math.max(0, dp - diskonDP);
-            },
-            
             handleFileUpload(event) {
                 const file = event.target.files[0];
                 if (file) {
@@ -724,7 +922,7 @@
                     reader.readAsDataURL(file);
                 }
             },
-            
+
             async submitReservasiFinal() {
                 if (!this.reservasi.bukti_transfer) {
                     alert('Silakan upload bukti transfer terlebih dahulu');
@@ -732,32 +930,25 @@
                 }
 
                 this.isLoading = true;
-                
-                const waktu = this.reservasi.waktu?.length === 5 
-                    ? `${this.reservasi.waktu}:00` 
-                    : this.reservasi.waktu;
 
-                const withPreorder = (this.reservasi.pesan_menu && this.pesananMenu.length > 0) ? '1' : '0';
-                
                 const formData = new FormData();
                 formData.append('name', this.reservasi.nama);
                 formData.append('email', this.reservasi.email);
                 formData.append('phone', this.reservasi.telepon);
                 formData.append('reservation_date', this.reservasi.tanggal);
-                formData.append('reservation_time', waktu);
+                formData.append('reservation_time', this.reservasi.waktu);
                 formData.append('guest_count', String(this.reservasi.jumlah_tamu));
                 formData.append('table_id', String(this.reservasi.meja_id));
                 formData.append('notes', this.reservasi.catatan || '');
-                formData.append('payment_method', 'bank_transfer');
-                formData.append('with_preorder', withPreorder);
-                formData.append('down_payment', String(this.hitungTotalDP()));
+                formData.append('with_preorder', this.reservasi.pesan_menu ? '1' : '0');
+                formData.append('down_payment', String(this.calculations.total_dp));
                 formData.append('promo_id', this.reservasi.promo_terpakai ? String(this.reservasi.promo_terpakai.id) : '');
                 
                 if (this.reservasi.bukti_file) {
                     formData.append('bukti_transfer', this.reservasi.bukti_file);
                 }
                 
-                if (withPreorder === '1') {
+                if (this.reservasi.pesan_menu) {
                     this.pesananMenu.forEach((item, i) => {
                         formData.append(`menu_items[${i}][menu_id]`, String(item.menu_id));
                         formData.append(`menu_items[${i}][jumlah]`, String(item.jumlah));
@@ -774,26 +965,22 @@
                         body: formData
                     });
 
-                    let data;
-                    try { data = await response.json(); } catch (_) { data = {}; }
+                    const data = await response.json();
+                    console.log('Response data:', data);
 
-                    if (response.ok && data.success) {
-                        localStorage.removeItem('reservasi_data');
-                        localStorage.removeItem('pesananMenu');
-                        localStorage.removeItem('reservasi_step');
+                    if (data.success) {
+                        // HAPUS localStorage dengan key yang include user ID
+                        localStorage.removeItem(`reservasi_data_${this.userId}`);
+                        localStorage.removeItem(`pesananMenu_${this.userId}`);
+                        localStorage.removeItem(`reservasi_step_${this.userId}`);
                         
-                        window.location.href = '{{ route("reservation.success", "") }}/?id=' + data.reservation_id;
+                        window.location.href = `/reservation/success/${data.reservation_id}`;
+                        
                     } else {
-                        const errs = data.errors 
-                            ? Object.entries(data.errors)
-                                .map(([k,v]) => `• ${k}: ${Array.isArray(v) ? v.join(', ') : v}`)
-                                .join('\n')
-                            : (data.message || 'Terjadi kesalahan');
-                        alert('Gagal membuat reservasi:\n' + errs);
-                        console.warn('Validasi gagal:', data);
+                        alert('Gagal membuat reservasi: ' + data.message);
                     }
                 } catch (error) {
-                    console.error('Error detail:', error);
+                    console.error('Error:', error);
                     alert('Terjadi kesalahan jaringan/server. Silakan coba lagi.');
                 } finally {
                     this.isLoading = false;
