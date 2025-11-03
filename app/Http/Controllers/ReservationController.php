@@ -206,9 +206,8 @@ class ReservationController extends Controller
         'table_id' => 'required|exists:tables,id',
         'notes' => 'nullable|string',
         'with_preorder' => 'required|boolean',
-        'down_payment' => 'required|numeric|min:0', // Ini sudah total DP setelah diskon
+        'down_payment' => 'required|numeric|min:0',
         'promo_id' => 'nullable|exists:promos,id',
-        'bukti_transfer' => 'required|file|image|max:2048',
         'menu_items' => 'nullable|array',
         'menu_items.*.menu_id' => 'required_with:menu_items|exists:menus,id',
         'menu_items.*.jumlah' => 'required_with:menu_items|integer|min:1',
@@ -217,18 +216,9 @@ class ReservationController extends Controller
     DB::beginTransaction();
 
     try {
-        // Handle file upload
-        $filePath = null;
-        if ($request->hasFile('bukti_transfer')) {
-            $file = $request->file('bukti_transfer');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $filePath = $file->storeAs('bukti_transfer', $filename, 'public');
-        }
-
-        // Hitung DP awal (sebelum diskon) untuk keperluan tampilan
+        // Hitung DP awal
         $dpAwal = 0;
         if ($validated['with_preorder'] && isset($validated['menu_items']) && !empty($validated['menu_items'])) {
-            // Untuk pre-order: DP awal = 30% dari total pesanan sebelum diskon
             $totalPesanan = 0;
             $menuIds = array_column($validated['menu_items'], 'menu_id');
             $menus = Menu::whereIn('id', $menuIds)->get()->keyBy('id');
@@ -241,12 +231,21 @@ class ReservationController extends Controller
             }
             $dpAwal = $totalPesanan * 0.3;
         } else {
-            // Untuk tanpa pre-order: DP awal = 300.000
             $dpAwal = 300000;
         }
 
-        // Buat reservasi
-        $reservation = Reservation::create([
+        // ✅ PERBAIKI: Gunakan format yang tepat untuk payment_deadline
+        $paymentDeadline = now()->addHours(24);
+        
+        // Debug detail
+        Log::info('=== RESERVATION CREATION DEBUG ===');
+        Log::info('Payment Deadline Carbon: ' . $paymentDeadline);
+        Log::info('Payment Deadline Format: ' . $paymentDeadline->format('Y-m-d H:i:s'));
+        Log::info('Payment Deadline ISO: ' . $paymentDeadline->toISOString());
+        Log::info('Payment Deadline Timestamp: ' . $paymentDeadline->timestamp);
+
+        // Data untuk create reservation
+        $reservationData = [
             'user_id' => Auth::id(),
             'customer_name' => $validated['name'],
             'customer_email' => $validated['email'],
@@ -257,9 +256,22 @@ class ReservationController extends Controller
             'guest_count' => $validated['guest_count'],
             'notes' => $validated['notes'] ?? null,
             'promo_id' => $validated['promo_id'] ?? null,
-            'total_DP' => $validated['down_payment'], // Sudah termasuk diskon
-            'status' => 'pending',
-        ]);
+            'total_DP' => $validated['down_payment'],
+            'status' => 'waiting_payment',
+            'payment_deadline' => $paymentDeadline, // Pastikan ini ada
+        ];
+
+        Log::info('Reservation Data:', $reservationData);
+
+        // Buat reservasi
+        $reservation = Reservation::create($reservationData);
+
+        // Debug setelah create
+        Log::info('=== AFTER RESERVATION CREATION ===');
+        Log::info('Reservation ID: ' . $reservation->id);
+        Log::info('Payment Deadline from DB: ' . $reservation->payment_deadline);
+        Log::info('Raw Payment Deadline: ' . $reservation->getRawOriginal('payment_deadline'));
+        Log::info('Status: ' . $reservation->status);
 
         // Update usage limit promo
         if ($validated['promo_id']) {
@@ -269,22 +281,21 @@ class ReservationController extends Controller
             }
         }
 
-        // Buat payment untuk DP (jumlah yang harus dibayar setelah diskon)
-        $payment = Payment::create([
-            'reservation_id' => $reservation->id,
-            'amount' => $validated['down_payment'], // Sudah termasuk diskon
-            'status' => 'pending',
-            'payment_proof' => $filePath,
-            'bank_name' => 'BCA',
-            'account_number' => '1234567890',
-            'account_name' => 'IBC Batu Tulis',
-            'notes' => 'Down Payment (DP) Reservasi',
-        ]);
+        // Buat payment untuk DP
+        // $payment = Payment::create([
+        //     'reservation_id' => $reservation->id,
+        //     'amount' => $validated['down_payment'],
+        //     'status' => 'pending',
+        //     'payment_proof' => null,
+        //     'bank_name' => 'BCA',
+        //     'account_number' => '1234567890',
+        //     'account_name' => 'IBC Batu Tulis',
+        //     'notes' => 'Down Payment (DP) Reservasi',
+        // ]);
 
         // Jika ada pre-order menu, buat order
         if ($validated['with_preorder'] && isset($validated['menu_items']) && !empty($validated['menu_items'])) {
             
-            // Hitung total price untuk order
             $totalPriceBeforeDiscount = 0;
             $menuIds = array_column($validated['menu_items'], 'menu_id');
             $menus = Menu::whereIn('id', $menuIds)->get()->keyBy('id');
@@ -296,7 +307,6 @@ class ReservationController extends Controller
                 }
             }
 
-            // Apply diskon jika ada untuk total pesanan
             $totalPriceAfterDiscount = $totalPriceBeforeDiscount;
             if ($validated['promo_id']) {
                 $promo = Promo::find($validated['promo_id']);
@@ -309,7 +319,6 @@ class ReservationController extends Controller
                 }
             }
 
-            // Buat order
             $order = Order::create([
                 'user_id' => Auth::id(),
                 'reservation_id' => $reservation->id,
@@ -317,7 +326,6 @@ class ReservationController extends Controller
                 'notes' => 'Pre-order dari reservasi',
             ]);
 
-            // Buat order items (simpan harga asli)
             foreach ($validated['menu_items'] as $item) {
                 $menu = $menus[$item['menu_id']] ?? null;
                 if ($menu) {
@@ -333,10 +341,16 @@ class ReservationController extends Controller
 
         DB::commit();
 
+        // Debug final
+        Log::info('=== FINAL CHECK ===');
+        $finalReservation = Reservation::find($reservation->id);
+        Log::info('Final Payment Deadline: ' . $finalReservation->payment_deadline);
+        Log::info('Final Raw Payment Deadline: ' . $finalReservation->getRawOriginal('payment_deadline'));
+
         return response()->json([
             'success' => true,
             'reservation_id' => $reservation->id,
-            'message' => 'Reservasi berhasil dibuat. Bukti transfer sedang diverifikasi.'
+            'message' => 'Reservasi berhasil dibuat. Silakan lakukan pembayaran dalam 24 jam.'
         ]);
 
     } catch (\Exception $e) {
@@ -373,8 +387,11 @@ class ReservationController extends Controller
         return redirect()->route('reservation.history')
             ->with('error', 'Reservasi tidak ditemukan');
     }
+
+    // ✅ HITUNG PAYMENT DEADLINE
+    $paymentDeadline = $reservation->payment_deadline ?? $reservation->created_at->addHours(24);
     
-    return view('customer.reservation.success', compact('reservation'));
+    return view('customer.reservation.success', compact('reservation', 'paymentDeadline'));
 }
 
     public function history()
@@ -384,7 +401,7 @@ class ReservationController extends Controller
                 'table', 
                 'orders.orderItems.menu', 
                 'promo', 
-                'payments'
+                'payments' // Tetap load payments, tapi mungkin kosong
             ])
             ->orderBy('created_at', 'desc')
             ->get()
@@ -400,7 +417,9 @@ class ReservationController extends Controller
                     'notes' => $reservation->notes,
                     'status' => $reservation->status,
                     'total_DP' => $reservation->total_DP,
+                    'payment_deadline' => $reservation->payment_deadline ? $reservation->payment_deadline->toISOString() : null,
                     'created_at' => $reservation->created_at->toISOString(),
+                    'with_preorder' => $reservation->orders->count() > 0,
                     'table' => [
                         'id' => $reservation->table->id,
                         'number' => $reservation->table->number,
@@ -441,12 +460,22 @@ class ReservationController extends Controller
     public function cancel($id)
     {
         $reservation = Reservation::where('user_id', Auth::id())->findOrFail($id);
+
+        // Status yang boleh dibatalkan oleh user
+        $cancelableStatuses = ['waiting_payment', 'pending'];
         
-        // Hanya bisa cancel reservasi yang masih pending
-        if ($reservation->status !== 'pending') {
+        if (!in_array($reservation->status, $cancelableStatuses)) {
+            $statusText = [
+                'waiting_payment' => 'menunggu pembayaran',
+                'pending' => 'menunggu verifikasi',
+                'confirmed' => 'sudah dikonfirmasi',
+                'completed' => 'selesai',
+                'cancelled' => 'sudah dibatalkan'
+            ];
+
             return response()->json([
                 'success' => false,
-                'message' => 'Reservasi tidak dapat dibatalkan'
+                'message' => 'Reservasi tidak dapat dibatalkan karena statusnya ' . ($statusText[$reservation->status] ?? $reservation->status) . '.'
             ]);
         }
         
@@ -457,4 +486,50 @@ class ReservationController extends Controller
             'message' => 'Reservasi berhasil dibatalkan'
         ]);
     }
+
+    public function payment(Reservation $reservation)
+{
+    // Pastikan reservasi milik user yang login dan status waiting_payment
+    if ($reservation->user_id !== Auth::id() || $reservation->status !== 'waiting_payment') {
+        abort(403);
+    }
+
+    return view('customer.reservation.payment', compact('reservation'));
+}
+
+public function uploadPayment(Request $request, Reservation $reservation)
+{
+    // Validasi bukti transfer
+    $request->validate([
+        'bukti_transfer' => 'required|image|max:2048'
+    ]);
+
+    // Handle file upload
+    $filePath = null;
+    if ($request->hasFile('bukti_transfer')) {
+        $file = $request->file('bukti_transfer');
+        $filename = time() . '_' . $file->getClientOriginalName();
+        $filePath = $file->storeAs('bukti_transfer', $filename, 'public');
+    }
+
+    // ✅ BUAT payment record di sini (bukan di store)
+    $payment = Payment::create([
+        'reservation_id' => $reservation->id,
+        'amount' => $reservation->total_DP,
+        'status' => 'verifying',
+        'payment_proof' => $filePath,
+        'bank_name' => 'BCA',
+        'account_number' => '1234567890',
+        'account_name' => 'IBC Batu Tulis',
+        'notes' => 'Down Payment (DP) Reservasi - Menunggu Verifikasi',
+    ]);
+
+    // Update reservation status
+    $reservation->update([
+        'status' => 'pending' // Menunggu verifikasi admin
+    ]);
+
+    return redirect()->route('reservation.history')
+        ->with('success', 'Bukti pembayaran berhasil diupload. Menunggu verifikasi admin.');
+}
 }

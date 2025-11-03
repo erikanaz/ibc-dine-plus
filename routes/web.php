@@ -32,6 +32,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'role:admin']], func
     // Reservation
     Route::resource('/reservations', AdminReservationController::class, ['as' => 'admin']);
     // Tambahkan route khusus untuk reservasi
+    
     Route::post('/reservations/{reservation}/add-menu', [AdminReservationController::class, 'addMenu'])->name('admin.reservations.add-menu');
     Route::put('/reservations/{reservation}/menu/{orderItem}', [AdminReservationController::class, 'updateMenu'])->name('admin.reservations.update-menu');
     Route::delete('/reservations/{reservation}/menu/{orderItem}', [AdminReservationController::class, 'removeMenu'])->name('admin.reservations.remove-menu');
@@ -78,6 +79,11 @@ Route::group(['middleware' => ['auth', 'role:customer']], function () {
     Route::post('/reservation/apply-promo', [ReservationController::class, 'applyPromo'])->name('reservation.apply-promo');
     Route::post('/reservation/calculate-price', [ReservationController::class, 'calculatePrice'])->name('reservation.calculate-price');
     Route::post('/reservation/store', [ReservationController::class, 'store'])->name('reservation.store');
+    // Proses pembayaran reservasi
+    Route::get('/reservation/payment/{reservation}', [ReservationController::class, 'payment'])
+        ->name('reservation.payment');
+    Route::post('/reservation/upload-payment/{reservation}', [ReservationController::class, 'uploadPayment'])
+        ->name('reservation.upload-payment');
     // Success page & history
     Route::get('/reservation/success/{id}', [ReservationController::class, 'success'])->name('reservation.success');
     Route::get('/reservation/history', [ReservationController::class, 'history'])->name('reservation.history');

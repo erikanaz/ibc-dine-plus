@@ -110,64 +110,6 @@
     </div>
     
     <!-- Step 3: Detail Reservasi -->
-    {{-- <div class="bg-white rounded-lg shadow-sm p-6 mb-6 border border-gray-100" x-show="step === 3" x-transition>
-        <h2 class="text-xl font-bold mb-4 text-gray-800">3. Detail Reservasi</h2>
-        
-        <form @submit.prevent="submitReservasi()" class="space-y-4">
-            <div class="space-y-3">
-                <div>
-                    
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
-                    <input type="text" x-model="reservasi.nama" required
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500">
-                </div>
-                <div class="grid md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                        <input type="email" x-model="reservasi.email" required
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Nomor Telepon</label>
-                        <input type="tel" x-model="reservasi.telepon" required
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Catatan Khusus (opsional)</label>
-                    <textarea x-model="reservasi.catatan" rows="2"
-                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500"></textarea>
-                </div>
-            </div>
-            
-            <div class="mt-4">
-                <label class="flex items-center cursor-pointer">
-                    <div class="relative">
-                        <input type="checkbox" x-model="reservasi.pesan_menu" class="sr-only">
-                        <div class="block bg-gray-300 w-10 h-5 rounded-full transition"
-                             :class="{'bg-yellow-500': reservasi.pesan_menu}"></div>
-                        <div class="dot absolute left-0.5 top-0.5 bg-white w-4 h-4 rounded-full transition"
-                             :class="{'transform translate-x-5': reservasi.pesan_menu}"></div>
-                    </div>
-                    <span class="ml-2 text-sm text-gray-700">Pesan menu sekarang</span>
-                </label>
-            </div>
-            
-            <div class="flex justify-between mt-6 pt-4 border-t">
-                <button type="button" @click="step = 2" 
-                        class="border border-gray-300 text-gray-700 px-4 py-1.5 rounded-md hover:bg-gray-50 transition">
-                    Kembali
-                </button>
-                <button type="submit"
-                        class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-1.5 rounded-md font-medium transition">
-                    <span x-text="reservasi.pesan_menu ? 'Lanjut ke Menu' : 'Lanjut ke Konfirmasi'"></span>
-                </button>
-            </div>
-        </form>
-    </div> --}}
-
-        <!-- Step 3: Detail Reservasi -->
     <div class="bg-white rounded-lg shadow-sm p-6 mb-6 border border-gray-100" x-show="step === 3" x-transition>
         <h2 class="text-xl font-bold mb-4 text-gray-800">3. Detail Reservasi</h2>
         
@@ -322,9 +264,9 @@
         </div>
     </div>
     
-    <!-- Step 5: Konfirmasi & Pembayaran -->
+    <!-- Step 5: Konfirmasi Reservasi -->
     <div class="bg-white rounded-lg shadow-sm p-6 mb-6 border border-gray-100" x-show="step === 5" x-transition>
-        <h2 class="text-xl font-bold mb-4 text-gray-800">5. Konfirmasi & Pembayaran</h2>
+        <h2 class="text-xl font-bold mb-4 text-gray-800">5. Konfirmasi Reservasi</h2>
         
         <div class="mb-6 space-y-4">
             <div class="bg-gray-50 p-4 rounded-md border border-gray-200">
@@ -490,42 +432,23 @@
                         </div>
                     </div>
                     <p class="text-xs text-gray-500 mt-2">
-                        * Silakan transfer DP sebesar jumlah di atas dan upload bukti transfer
+                        * Silakan lakukan pembayaran DP dalam <strong>24 jam</strong> setelah reservasi dibuat
                     </p>
                 </div>
             </div>
 
-            <!-- Upload Bukti Transfer -->
-            <div class="bg-gray-50 p-4 rounded-md border border-gray-200">
-                <h3 class="text-sm font-semibold mb-3 text-gray-700">Upload Bukti Transfer</h3>
-                
-                <div class="space-y-3">
-                    <div x-show="!reservasi.bukti_transfer" 
-                         class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-yellow-400 transition"
-                         @click="document.getElementById('buktiTransfer').click()">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                        </svg>
-                        <p class="text-sm font-medium text-gray-600 mt-2">Klik untuk upload bukti transfer</p>
-                        <p class="text-xs text-gray-500">Format: JPG, PNG (Maks. 2MB)</p>
-                    </div>
-                    
-                    <div x-show="reservasi.bukti_transfer" class="text-center">
-                        <img :src="reservasi.bukti_transfer" alt="Bukti Transfer" class="max-w-full h-48 mx-auto rounded-md object-cover">
-                        <div class="mt-3 flex justify-center space-x-2">
-                            <button type="button" @click="document.getElementById('buktiTransfer').click()"
-                                    class="text-sm text-yellow-600 hover:text-yellow-700 font-medium">
-                                Ganti Foto
-                            </button>
-                            <button type="button" @click="reservasi.bukti_transfer = null"
-                                    class="text-sm text-red-600 hover:text-red-700 font-medium">
-                                Hapus
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <input type="file" id="buktiTransfer" accept="image/*" class="hidden" 
-                           @change="handleFileUpload($event)">
+            <!-- Checklist Konfirmasi -->
+            <div class="bg-blue-50 p-4 rounded-md border border-blue-200">
+                <h3 class="text-sm font-semibold mb-3 text-gray-700">Konfirmasi</h3>
+                <div class="space-y-2">
+                    <label class="flex items-start space-x-2">
+                        <input type="checkbox" x-model="konfirmasi.syarat" class="mt-0.5">
+                        <span class="text-sm text-gray-700">Saya menyetujui syarat & ketentuan reservasi</span>
+                    </label>
+                    <label class="flex items-start space-x-2">
+                        <input type="checkbox" x-model="konfirmasi.pembayaran" class="mt-0.5">
+                        <span class="text-sm text-gray-700">Saya akan melakukan pembayaran DP dalam 24 jam</span>
+                    </label>
                 </div>
             </div>
         </div>
@@ -538,14 +461,14 @@
 
             <button @click="submitReservasiFinal()" 
                     class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md font-medium transition shadow-sm flex items-center disabled:opacity-50"
-                    :disabled="!reservasi.bukti_transfer || isLoading">
+                    :disabled="!konfirmasi.syarat || !konfirmasi.pembayaran || isLoading">
                 <template x-if="isLoading">
                     <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                 </template>
-                <span x-text="isLoading ? 'Memproses...' : 'Konfirmasi Reservasi'"></span>
+                <span x-text="isLoading ? 'Memproses...' : 'Buat Reservasi'"></span>
             </button>
         </div>
     </div>
@@ -555,7 +478,7 @@
 <script>
     function reservasiApp() {
         return {
-            userId: {{ Auth::id() }}, // Tambahkan user ID
+            userId: {{ Auth::id() }},
             step: Number(localStorage.getItem(`reservasi_step_${ {{ Auth::id() }} }`)) || 1,
             reservasi: {
                 tanggal: '',
@@ -568,9 +491,11 @@
                 catatan: '',
                 pesan_menu: false,
                 kode_promo: '',
-                promo_terpakai: null,
-                bukti_transfer: null,
-                bukti_file: null
+                promo_terpakai: null
+            },
+            konfirmasi: {
+                syarat: false,
+                pembayaran: false
             },
             mejaTersedia: @json($tables),
             daftarMenu: @json($menus),
@@ -611,7 +536,6 @@
             },
 
             init() {
-                // Gunakan user ID di localStorage key
                 const savedReservasi = localStorage.getItem(`reservasi_data_${this.userId}`);
                 if (savedReservasi) {
                     const savedData = JSON.parse(savedReservasi);
@@ -623,16 +547,8 @@
                     this.pesananMenu = JSON.parse(savedPesanan);
                 }
 
-                // Hitung ulang harga saat init
                 if (this.step >= 5) {
                     this.calculatePrice();
-                }
-            },
-
-            // Method untuk auto-fill data user
-            fillUserData(field, value) {
-                if (!this.reservasi[field]) {
-                    this.reservasi[field] = value;
                 }
             },
 
@@ -669,7 +585,6 @@
 
                     if (data.success) {
                         this.mejaTersedia = data.available_tables;
-                        // Update dengan key yang include user ID
                         localStorage.setItem(`reservasi_data_${this.userId}`, JSON.stringify({
                             tanggal: this.reservasi.tanggal,
                             waktu: this.reservasi.waktu,
@@ -745,7 +660,6 @@
 
                     if (data.success) {
                         this.calculations = data.calculations;
-                        console.log('Calculations updated:', this.calculations);
                     }
                 } catch (error) {
                     console.error('Error:', error);
@@ -758,7 +672,6 @@
             },
 
             submitReservasi() {
-                // Jika field masih kosong, isi dengan data user
                 if (!this.reservasi.nama) {
                     this.reservasi.nama = '{{ Auth::user()->name }}';
                 }
@@ -769,20 +682,17 @@
                     this.reservasi.telepon = '{{ Auth::user()->phone }}';
                 }
                 
-                // Validasi data sebelum lanjut
                 if (!this.reservasi.nama || !this.reservasi.email || !this.reservasi.telepon) {
                     alert('Harap lengkapi data diri terlebih dahulu');
                     return;
                 }
 
-                // Validasi format email
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 if (!emailRegex.test(this.reservasi.email)) {
                     alert('Format email tidak valid');
                     return;
                 }
 
-                // Validasi format telepon
                 const phoneRegex = /^[0-9]{10,15}$/;
                 const cleanPhone = this.reservasi.telepon.replace(/\D/g, '');
                 if (!phoneRegex.test(cleanPhone)) {
@@ -790,7 +700,6 @@
                     return;
                 }
                 
-                // Format nomor telepon
                 this.reservasi.telepon = cleanPhone;
 
                 localStorage.setItem(`reservasi_data_${this.userId}`, JSON.stringify(this.reservasi));
@@ -901,31 +810,9 @@
                 this.calculatePrice();
             },
 
-            handleFileUpload(event) {
-                const file = event.target.files[0];
-                if (file) {
-                    if (file.size > 2 * 1024 * 1024) {
-                        alert('Ukuran file maksimal 2MB');
-                        return;
-                    }
-                    
-                    if (!file.type.match('image.*')) {
-                        alert('Hanya file gambar yang diizinkan');
-                        return;
-                    }
-                    
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        this.reservasi.bukti_transfer = e.target.result;
-                        this.reservasi.bukti_file = file;
-                    };
-                    reader.readAsDataURL(file);
-                }
-            },
-
             async submitReservasiFinal() {
-                if (!this.reservasi.bukti_transfer) {
-                    alert('Silakan upload bukti transfer terlebih dahulu');
+                if (!this.konfirmasi.syarat || !this.konfirmasi.pembayaran) {
+                    alert('Harap centang semua konfirmasi terlebih dahulu');
                     return;
                 }
 
@@ -943,10 +830,6 @@
                 formData.append('with_preorder', this.reservasi.pesan_menu ? '1' : '0');
                 formData.append('down_payment', String(this.calculations.total_dp));
                 formData.append('promo_id', this.reservasi.promo_terpakai ? String(this.reservasi.promo_terpakai.id) : '');
-                
-                if (this.reservasi.bukti_file) {
-                    formData.append('bukti_transfer', this.reservasi.bukti_file);
-                }
                 
                 if (this.reservasi.pesan_menu) {
                     this.pesananMenu.forEach((item, i) => {
@@ -966,16 +849,14 @@
                     });
 
                     const data = await response.json();
-                    console.log('Response data:', data);
 
                     if (data.success) {
-                        // HAPUS localStorage dengan key yang include user ID
                         localStorage.removeItem(`reservasi_data_${this.userId}`);
                         localStorage.removeItem(`pesananMenu_${this.userId}`);
                         localStorage.removeItem(`reservasi_step_${this.userId}`);
                         
+                        // Redirect ke success page
                         window.location.href = `/reservation/success/${data.reservation_id}`;
-                        
                     } else {
                         alert('Gagal membuat reservasi: ' + data.message);
                     }

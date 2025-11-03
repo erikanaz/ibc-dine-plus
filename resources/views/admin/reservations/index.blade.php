@@ -21,16 +21,34 @@
     </div>
 
     <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-6">
         <!-- Total Reservations -->
         <div class="dashboard-card bg-white rounded-xl shadow p-6 border-l-4 border-primary transition-all">
             <div class="flex justify-between items-start">
                 <div>
                     <p class="text-gray-500">Total Reservasi</p>
-                    <p class="text-3xl font-bold mt-2">{{ $reservations->total() }}</p>
+                    <p class="text-3xl font-bold mt-2">{{ $totalAllReservations }}</p>
+                    @if(request('search') || request('status'))
+                        <p class="text-xs text-gray-500 mt-1">
+                            Ditampilkan: {{ $reservations->total() }}
+                        </p>
+                    @endif
                 </div>
                 <div class="bg-primary/10 p-3 rounded-lg">
                     <i class="fas fa-calendar-alt text-primary text-2xl"></i>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Waiting Payment -->
+        <div class="dashboard-card bg-white rounded-xl shadow p-6 border-l-4 border-blue-500 transition-all">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-gray-500">Menunggu Bayar</p>
+                    <p class="text-3xl font-bold mt-2">{{ $statusCounts['waiting_payment'] }}</p>
+                </div>
+                <div class="bg-blue-100 p-3 rounded-lg">
+                    <i class="fas fa-money-bill-wave text-blue-500 text-2xl"></i>
                 </div>
             </div>
         </div>
@@ -74,7 +92,7 @@
             </div>
         </div>
         
-        <!-- Cancelled -->
+        <!-- Cancelled & Expired -->
         <div class="dashboard-card bg-white rounded-xl shadow p-6 border-l-4 border-red-500 transition-all">
             <div class="flex justify-between items-start">
                 <div>
@@ -96,18 +114,30 @@
                 Daftar Reservasi & Pesanan
             </h3>
             <div class="flex items-center space-x-2">
-                <div class="relative">
-                    <input type="text" id="searchInput" placeholder="Cari customer atau meja..." 
-                           class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
-                    <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
-                </div>
-                <select id="statusFilter" class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
-                    <option value="">Semua Status</option>
-                    <option value="pending">Menunggu</option>
-                    <option value="confirmed">Dikonfirmasi</option>
-                    <option value="completed">Selesai</option>
-                    <option value="cancelled">Dibatalkan</option>
-                </select>
+                <form method="GET" action="{{ route('admin.reservations.index') }}" class="flex items-center space-x-2" id="filterForm">
+                    <div class="relative">
+                        <input type="text" name="search" value="{{ request('search') }}" 
+                               placeholder="Cari customer atau meja..." 
+                               class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                    </div>
+                    <select name="status" class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                        <option value="">Semua Status</option>
+                        <option value="waiting_payment" {{ request('status') == 'waiting_payment' ? 'selected' : '' }}>Menunggu Pembayaran</option>
+                        <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Menunggu</option>
+                        <option value="confirmed" {{ request('status') == 'confirmed' ? 'selected' : '' }}>Dikonfirmasi</option>
+                        <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Selesai</option>
+                        <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Dibatalkan</option>
+                    </select>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-filter mr-2"></i>Filter
+                    </button>
+                    @if(request('search') || request('status'))
+                        <a href="{{ route('admin.reservations.index') }}" class="btn-secondary">
+                            <i class="fas fa-times mr-2"></i>Reset
+                        </a>
+                    @endif
+                </form>
             </div>
         </div>
         <div class="overflow-x-auto">
@@ -145,7 +175,6 @@
                                         </div>
                                     </div>
                                     <div>
-                                        <!-- PERBAIKAN DI SINI: Handle user yang null -->
                                         <div class="text-sm font-medium text-gray-900">
                                             {{ $reservation->customer_name }}
                                             @if($reservation->user_id)
@@ -190,43 +219,38 @@
                                 </div>
                             </td>
                             <td class="px-6 py-4">
-                                @if($reservation->order && $reservation->order->orderItems->count() > 0)
-                                    <div class="space-y-2">
-                                        <div class="flex justify-between items-start">
+                                @php
+                                    $order = $reservation->orders->first();
+                                @endphp
+                                @if($order && $order->orderItems->count() > 0)
+                                    <div class="space-y-1">
+                                        <div class="flex justify-between items-center">
                                             <div>
                                                 <div class="text-sm font-medium text-gray-900">
                                                     {{ $reservation->total_items }} item
                                                 </div>
                                                 <div class="text-xs text-gray-500">
-                                                    {{ $reservation->order->orderItems->count() }} jenis menu
+                                                    {{ $order->orderItems->count() }} jenis menu
                                                 </div>
                                             </div>
                                             <div class="text-right">
                                                 <div class="text-sm font-bold text-primary">
-                                                    Rp {{ number_format($reservation->order->total_price, 0, ',', '.') }}
+                                                    Rp {{ number_format($order->total_price, 0, ',', '.') }}
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="flex flex-wrap gap-1">
-                                            @foreach($reservation->order->orderItems->take(3) as $item)
-                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
-                                                    {{ $item->menu->name }} ({{ $item->qty }})
-                                                </span>
-                                            @endforeach
-                                            @if($reservation->order->orderItems->count() > 3)
-                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-600">
-                                                    +{{ $reservation->order->orderItems->count() - 3 }} lainnya
-                                                </span>
-                                            @endif
+                                        <!-- TAMBAHKAN JUMLAH PORSI TOTAL -->
+                                        <div class="text-xs text-gray-500">
+                                            {{ $order->orderItems->sum('qty') }} porsi total
                                         </div>
                                     </div>
                                 @else
                                     <div class="text-center py-2">
-                                        <div class="text-sm text-gray-500">Belum ada pesanan</div>
-                                        <a href="{{ route('admin.reservations.show', $reservation->id) }}" 
+                                        <div class="text-sm text-gray-500">Tidak ada pesanan</div>
+                                        {{-- <a href="{{ route('admin.reservations.show', $reservation->id) }}" 
                                            class="text-xs text-primary hover:underline">
                                             Tambah pesanan
-                                        </a>
+                                        </a> --}}
                                     </div>
                                 @endif
                             </td>
@@ -238,17 +262,18 @@
                                         </span>
                                     </div>
                                     <div>
-                                        <span class="status-badge 
-                                            @if($reservation->status === 'pending') bg-warning/10 text-warning
-                                            @elseif($reservation->status === 'confirmed') bg-success/10 text-success
-                                            @elseif($reservation->status === 'completed') bg-secondary/10 text-secondary
-                                            @elseif(in_array($reservation->status, ['cancelled', 'expired'])) bg-red-100 text-red-600 @endif">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                            @if($reservation->status === 'waiting_payment') bg-blue-100 text-blue-800
+                                            @elseif($reservation->status === 'pending') bg-yellow-100 text-yellow-800
+                                            @elseif($reservation->status === 'confirmed') bg-green-100 text-green-800
+                                            @elseif($reservation->status === 'completed') bg-blue-100 text-blue-800
+                                            @elseif(in_array($reservation->status, ['cancelled', 'expired'])) bg-red-100 text-red-800 @endif">
                                             {{ $reservation->status_label }}
                                         </span>
                                     </div>
-                                    @if($reservation->order && $reservation->order->total_price > 0)
+                                    @if($order && $order->total_price > 0)
                                         <div class="text-xs text-gray-500">
-                                            Sisa: Rp {{ number_format($reservation->order->total_price - $reservation->total_DP, 0, ',', '.') }}
+                                            Sisa: Rp {{ number_format($order->total_price - $reservation->total_DP, 0, ',', '.') }}
                                         </div>
                                     @endif
                                 </div>
@@ -256,37 +281,41 @@
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex justify-end space-x-2">
                                     <a href="{{ route('admin.reservations.show', $reservation->id) }}" 
-                                       class="text-blue-600 hover:text-blue-800 transition-colors"
+                                       class="text-blue-600 hover:text-blue-800 transition-colors p-2 rounded-lg hover:bg-blue-50"
                                        title="Detail Lengkap">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <a href="{{ route('admin.reservations.edit', $reservation->id) }}" 
-                                       class="text-primary hover:text-primary/80 transition-colors"
+                                    @if($reservation->can_edit)
+                                    {{-- <a href="{{ route('admin.reservations.edit', $reservation->id) }}" 
+                                       class="text-primary hover:text-primary/80 transition-colors p-2 rounded-lg hover:bg-primary/10"
                                        title="Edit Reservasi">
                                         <i class="fas fa-edit"></i>
-                                    </a>
-                                    <a href="{{ route('admin.reservations.invoice', $reservation->id) }}" 
+                                    </a> --}}
+                                    @endif
+                                    {{-- <a href="{{ route('admin.reservations.invoice', $reservation->id) }}" 
                                        target="_blank"
-                                       class="text-green-600 hover:text-green-800 transition-colors"
+                                       class="text-green-600 hover:text-green-800 transition-colors p-2 rounded-lg hover:bg-green-50"
                                        title="Cetak Invoice">
                                         <i class="fas fa-print"></i>
-                                    </a>
+                                    </a> --}}
+                                    {{-- @if($reservation->can_cancel) --}}
                                     <form action="{{ route('admin.reservations.destroy', $reservation->id) }}" 
                                           method="POST" 
                                           onsubmit="return confirm('Yakin ingin menghapus reservasi #{{ $reservation->id }}?')"
                                           class="inline">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="text-red-600 hover:text-red-800 transition-colors"
+                                        <button type="submit" class="text-red-600 hover:text-red-800 transition-colors p-2 rounded-lg hover:bg-red-50"
                                                 title="Hapus Reservasi">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </form>
+                                    {{-- @endif --}}
                                 </div>
                                 
                                 <!-- Quick Actions -->
                                 <div class="flex justify-end space-x-1 mt-2">
-                                    @if($reservation->status === 'confirmed')
+                                    @if($reservation->can_complete)
                                         <form action="{{ route('admin.reservations.update-status', $reservation->id) }}" 
                                               method="POST" class="inline">
                                             @csrf
@@ -295,13 +324,13 @@
                                             <button type="submit" 
                                                     class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200 transition-colors"
                                                     title="Tandai Selesai">
-                                                <i class="fas fa-check"></i>
+                                                <i class="fas fa-check"></i> Selesai
                                             </button>
                                         </form>
                                     @endif
                                     
-                                    @if(!in_array($reservation->status, ['cancelled', 'completed', 'expired']))
-                                        <form action="{{ route('admin.reservations.update-status', $reservation->id) }}" 
+                                    @if($reservation->can_cancel)
+                                        {{-- <form action="{{ route('admin.reservations.update-status', $reservation->id) }}" 
                                               method="POST" class="inline">
                                             @csrf
                                             @method('PATCH')
@@ -309,21 +338,24 @@
                                             <button type="submit" 
                                                     class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200 transition-colors"
                                                     title="Batalkan">
-                                                <i class="fas fa-times"></i>
+                                                <i class="fas fa-times"></i> Batal
                                             </button>
-                                        </form>
+                                        </form> --}}
                                     @endif
                                 </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-4 text-center text-gray-500">
-                                <i class="fas fa-calendar-times text-4xl mb-2"></i>
-                                <p>Belum ada reservasi</p>
-                                <a href="{{ route('admin.reservations.create') }}" class="text-primary hover:underline mt-2 inline-block">
-                                    Buat reservasi pertama
-                                </a>
+                            <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                                <div class="flex flex-col items-center justify-center">
+                                    <i class="fas fa-calendar-times text-4xl text-gray-300 mb-3"></i>
+                                    <p class="text-lg font-medium text-gray-400">Belum ada reservasi</p>
+                                    <p class="text-sm text-gray-500 mt-1">Tidak ada reservasi yang ditemukan</p>
+                                    <a href="{{ route('admin.reservations.create') }}" class="btn-primary mt-4">
+                                        <i class="fas fa-plus mr-2"></i>Buat Reservasi Pertama
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                     @endforelse
@@ -342,47 +374,93 @@
 
 @section('styles')
 <style>
-    /* Styles tetap sama */
+    .dashboard-card {
+        transition: all 0.3s ease;
+    }
+    
+    .dashboard-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn-primary {
+        @apply bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium;
+    }
+    
+    .btn-secondary {
+        @apply bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors font-medium;
+    }
 </style>
 @endsection
 
 @section('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const searchInput = document.getElementById('searchInput');
-        const statusFilter = document.getElementById('statusFilter');
+        const searchInput = document.querySelector('input[name="search"]');
+        const statusFilter = document.querySelector('select[name="status"]');
         const reservationRows = document.querySelectorAll('.reservation-row');
 
-        function filterReservations() {
-            const searchTerm = searchInput.value.toLowerCase();
-            const statusValue = statusFilter.value.toLowerCase();
+        // Hanya jalankan client-side filter jika tidak ada parameter URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const hasFilterParams = urlParams.has('search') || urlParams.has('status');
 
-            reservationRows.forEach(row => {
-                const customerName = row.querySelector('td:first-child .text-sm.font-medium').textContent.toLowerCase();
-                const customerEmail = row.querySelector('td:first-child .text-sm.text-gray-600').textContent.toLowerCase();
-                const tableNumber = row.querySelector('td:nth-child(3) .text-sm.font-medium').textContent.toLowerCase();
-                const status = row.getAttribute('data-status');
+        if (!hasFilterParams && reservationRows.length > 0) {
+            function filterReservations() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const statusValue = statusFilter.value.toLowerCase();
 
-                const matchesSearch = customerName.includes(searchTerm) || 
-                                    customerEmail.includes(searchTerm) || 
-                                    tableNumber.includes(searchTerm);
-                const matchesStatus = !statusValue || status.includes(statusValue);
+                reservationRows.forEach(row => {
+                    const customerName = row.querySelector('td:first-child .text-sm.font-medium').textContent.toLowerCase();
+                    const customerEmail = row.querySelector('td:first-child .text-sm.text-gray-600').textContent.toLowerCase();
+                    const tableNumber = row.querySelector('td:nth-child(3) .text-sm.font-medium').textContent.toLowerCase();
+                    const status = row.getAttribute('data-status');
 
-                if (matchesSearch && matchesStatus) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
+                    const matchesSearch = customerName.includes(searchTerm) || 
+                                        customerEmail.includes(searchTerm) || 
+                                        tableNumber.includes(searchTerm);
+                    
+                    // Handle cancelled filter (include expired)
+                    let matchesStatus = !statusValue || status === statusValue;
+                    if (statusValue === 'cancelled') {
+                        matchesStatus = status === 'cancelled' || status === 'expired';
+                    }
+
+                    if (matchesSearch && matchesStatus) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            }
+
+            if (searchInput && statusFilter) {
+                searchInput.addEventListener('input', filterReservations);
+                statusFilter.addEventListener('change', filterReservations);
+            }
         }
 
-        if (searchInput) {
-            searchInput.addEventListener('input', filterReservations);
-        }
+        // Toast notification untuk success message
+        @if(session('success'))
+            showToast('{{ session('success') }}', 'success');
+        @endif
 
-        if (statusFilter) {
-            statusFilter.addEventListener('change', filterReservations);
-        }
+        @if(session('error'))
+            showToast('{{ session('error') }}', 'error');
+        @endif
     });
+
+    function showToast(message, type = 'success') {
+        // Implement toast notification here
+        const toast = document.createElement('div');
+        toast.className = `fixed top-4 right-4 p-4 rounded-lg text-white font-medium z-50 ${
+            type === 'success' ? 'bg-green-500' : 'bg-red-500'
+        }`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.remove();
+        }, 3000);
+    }
 </script>
 @endsection

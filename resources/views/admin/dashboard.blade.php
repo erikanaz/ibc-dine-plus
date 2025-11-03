@@ -178,7 +178,7 @@
                 <div class="px-6 py-4 border-b">
                     <h3 class="font-bold text-lg flex items-center">
                         <i class="fas fa-chair text-secondary mr-2"></i>
-                        Status Meja
+                        Status Meja Hari Ini
                     </h3>
                 </div>
                 <div class="p-4">

@@ -4,11 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Testing\Fluent\Concerns\Has;
 
 class Reservation extends Model
 {
-    //
     use HasFactory;
 
     protected $fillable = [
@@ -24,24 +22,39 @@ class Reservation extends Model
         'promo_id',
         'total_DP',
         'status',
-        // 'name',
-        // 'email',
-        // 'phone',
+        'payment_deadline',
     ];
 
     protected $casts = [
         'reservation_date' => 'date',
+        'payment_deadline' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
         'total_DP' => 'decimal:2',
     ];
 
+    protected $appends = [
+        'status_label',
+        'status_color',
+        'formatted_time',
+        'total_items',
+        'customer_type',
+        'customer_type_label',
+        'formatted_dp',
+        'can_edit',
+        'can_cancel',
+        'can_complete',
+        'initial_dp',
+        'discount_amount'
+    ];
 
-    //relasi ke user
+    // Relasi ke user
     public function user()
     {  
         return $this->belongsTo(User::class);
     }
 
-    //relasi ke table
+    // Relasi ke table
     public function table()
     {
         return $this->belongsTo(Table::class);
@@ -53,13 +66,7 @@ class Reservation extends Model
         return $this->belongsTo(Promo::class);
     }
 
-    // Relasi dengan order
-    // public function order()
-    // {
-    //     return $this->hasOne(Order::class);
-    // }
-
-    // Relasi dengan orders (ubah dari hasOne menjadi hasMany)
+    // Relasi dengan orders
     public function orders()
     {
         return $this->hasMany(Order::class);
@@ -71,31 +78,27 @@ class Reservation extends Model
         return $this->hasMany(Payment::class);
     }
 
-    // public function getTotalItemsAttribute()
-    // {
-    //     if ($this->order) {
-    //         return $this->order->orderItems->sum('qty');
-    //     }
-    //     return 0;
-    // }
-
+    // Accessor untuk total_items
     public function getTotalItemsAttribute()
     {
-        if ($this->order && $this->order->orderItems) {
-            return $this->order->orderItems->sum('qty');
+        $total = 0;
+        foreach ($this->orders as $order) {
+            $total += $order->orderItems->sum('qty');
         }
-        return 0;
+        return $total;
     }
 
+    // Accessor untuk total_price
     public function getTotalPriceAttribute()
     {
-        return $this->order ? $this->order->total_price : 0;
+        return $this->orders->sum('total_price');
     }
 
     // Accessor untuk status label
     public function getStatusLabelAttribute()
     {
         $statusLabels = [
+            'waiting_payment' => 'Menunggu Pembayaran',
             'pending' => 'Menunggu Konfirmasi',
             'confirmed' => 'Dikonfirmasi',
             'cancelled' => 'Dibatalkan',
@@ -110,11 +113,12 @@ class Reservation extends Model
     public function getStatusColorAttribute()
     {
         $statusColors = [
+            'waiting_payment' => 'blue',
             'pending' => 'warning',
             'confirmed' => 'success',
             'cancelled' => 'danger',
             'completed' => 'secondary',
-            'expired' => 'gray',
+            'expired' => 'danger',
         ];
 
         return $statusColors[$this->status] ?? 'secondary';
@@ -126,24 +130,39 @@ class Reservation extends Model
         return \Carbon\Carbon::parse($this->reservation_time)->format('H:i');
     }
 
-    // //relasi ke menu
-    // public function menus()
-    // {
-    //     return $this->belongsToMany(Menu::class, 'menu_reservation')
-    //                 ->withPivot('quantity')
-    //                 ->withTimestamps();
-    // }
-
-    // // relasi ke order
-    // public function order()
-    // {
-    //     return $this->hasOne(Order::class); 
-    // }
-
     // Format total_DP
     public function getFormattedDpAttribute()
     {
         return 'Rp ' . number_format($this->total_DP, 0, ',', '.');
+    }
+
+    // Customer type
+    public function getCustomerTypeAttribute()
+    {
+        return $this->user_id ? 'member' : 'guest';
+    }
+
+    public function getCustomerTypeLabelAttribute()
+    {
+        return $this->user_id ? 'Member' : 'Guest';
+    }
+
+    // Cek apakah reservasi bisa di-edit
+    public function getCanEditAttribute()
+    {
+        return in_array($this->status, ['waiting_payment', 'pending', 'confirmed']);
+    }
+
+    // Cek apakah reservasi bisa di-batalkan
+    public function getCanCancelAttribute()
+    {
+        return in_array($this->status, ['waiting_payment', 'pending', 'confirmed']);
+    }
+
+    // Cek apakah reservasi bisa di-selesaikan
+    public function getCanCompleteAttribute()
+    {
+        return $this->status === 'confirmed';
     }
 
     // Scope for today's reservations
@@ -157,17 +176,6 @@ class Reservation extends Model
     {
         return $query->where('reservation_date', '>=', today())
                     ->whereIn('status', ['pending', 'confirmed']);
-    }
-
-    // Di model Reservation
-    public function getCustomerTypeAttribute()
-    {
-        return $this->user_id ? 'member' : 'guest';
-    }
-
-    public function getCustomerTypeLabelAttribute()
-    {
-        return $this->user_id ? 'Member' : 'Guest';
     }
 
     /**
@@ -224,5 +232,4 @@ class Reservation extends Model
     {
         return $this->calculateInitialDP();
     }
-
 }
