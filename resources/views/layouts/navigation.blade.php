@@ -12,7 +12,7 @@
             </div>
 
             <!-- Menu Desktop -->
-            <div class="hidden md:flex items-center space-x-8">
+            <div class="hidden md:flex items-center space-x-4">
                 @auth
                     <a href="/homepage" class="font-medium {{ Request::is('homepage') ? 'text-yellow-500' : 'hover:text-yellow-500' }}">Beranda</a>
                     <a href="/reservation" class="font-medium {{ Request::is('reservation.index') ? 'text-yellow-500' : 'hover:text-yellow-500' }}">Reservasi</a>
@@ -24,8 +24,8 @@
                         </button>
                     </form>
                 @else
-                    <a href="/login" class="gold-border border-2 gold-text px-4 py-1 rounded-md hover:gold-bg hover:text-white">Login</a>
-                    <a href="/register" class="gold-bg text-white px-4 py-2 rounded-md hover:bg-opacity-90">Register</a>
+                    <a href="/login" class="gold-border border-2 gold-text px-4 py-1 rounded-md hover:border-gray-800 hover:text-gray-800">Login</a>
+                    <a href="/register" class="gold-bg text-white px-4 py-1.5 rounded-md hover:bg-opacity-90">Register</a>
                 @endauth
             </div>
 
@@ -71,7 +71,7 @@
                     </button>
                 </form>
             @else
-                <a href="/login" class="block border-2 gold-border gold-text px-4 py-2 rounded-md hover:gold-bg hover:text-white">Login</a>
+                <a href="/login" class="block border-2 gold-border gold-text px-4 py-2 rounded-md hover:border-gray-800 hover:text-gray-800">Login</a>
                 <a href="/register" class="block gold-bg text-white px-4 py-2 rounded-md hover:bg-opacity-90">Register</a>
             @endauth
         </div>
