@@ -322,7 +322,7 @@
                         <div class="border-t border-gray-200 pt-4 mt-4">
                             <h4 class="font-bold mb-3 flex items-center text-gray-800">
                                 <i class="fas fa-file-invoice-dollar text-blue-500 mr-2"></i>
-                                Bukti Pembayaran
+                                Bukti Pembayaran DP
                             </h4>
                             
                             <div class="space-y-3">

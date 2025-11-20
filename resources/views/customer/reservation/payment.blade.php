@@ -123,15 +123,21 @@
                                 <!-- Preview Image -->
                                 <div x-show="previewUrl" class="mb-4">
                                     <img :src="previewUrl" alt="Preview bukti transfer" class="w-full max-w-xs h-auto rounded-lg border border-gray-300">
-                                    <button type="button" @click="file = null; previewUrl = null" class="mt-2 text-sm text-red-600 hover:text-red-800">
-                                        Hapus gambar
-                                    </button>
+                                    <div class="mt-2 flex items-center gap-3">
+                                        <button type="button" @click="$refs.fileInput.value = null; $refs.fileInput.click()" class="text-sm text-yellow-600 hover:text-yellow-800 bg-yellow-50 px-3 py-1 rounded-md">
+                                            Ganti
+                                        </button>
+                                        <button type="button" @click="file = null; previewUrl = null; $refs.fileInput.value = null" class="text-sm text-red-600 hover:text-red-800 bg-red-50 px-3 py-1 rounded-md">
+                                            Hapus
+                                        </button>
+                                        <!-- <span class="text-xs text-gray-500 ml-2" x-text="file ? file.name : ''"></span> -->
+                                    </div>
                                 </div>
 
                                 <!-- Upload Box -->
                                 <div x-show="!previewUrl" 
                                      class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-yellow-500 transition cursor-pointer"
-                                     @click="$refs.fileInput.click()">
+                                     @click="$refs.fileInput.value = null; $refs.fileInput.click()">
                                     <input type="file" 
                                            name="bukti_transfer" 
                                            id="bukti_transfer"
@@ -169,14 +175,14 @@
                             </div>
 
                             <!-- Tombol Submit -->
-                            <div class="flex space-x-3 pt-4">
+                            <div class="flex justify-center space-x-3 pt-4">
                                 <a href="{{ route('reservation.history') }}" 
-                                   class="flex-1 px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition text-center">
+                                   class="flex-1 px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition flex items-center justify-center">
                                     Kembali
                                 </a>
                                 <button type="submit" 
                                         id="submit-btn"
-                                        class="flex-1 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-yellow-500 hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                                        class="flex-1 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-yellow-500 hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center">
                                     <span id="submit-text">Konfirmasi Pembayaran</span>
                                     <span id="loading-text" class="hidden">
                                         <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" fill="none" viewBox="0 0 24 24">

@@ -115,8 +115,8 @@
                                             </div>
                                         </div>
                                         
-                                        <div class="text-center md:text-right">
-                                            <p class="text-xs text-orange-700 font-medium mb-1">SISA WAKTU:</p>
+                                        <div class="text-center text-right">
+                                            <p class="text-xs text-orange-700 font-medium mb-1 text-center">SISA WAKTU:</p>
                                             <div class="flex items-center justify-center md:justify-end space-x-1">
                                                 <template x-if="getTimeLeft(reservation.payment_deadline).hours > 0">
                                                     <div class="bg-white border border-orange-300 rounded px-2 py-1 min-w-[40px] text-center">
