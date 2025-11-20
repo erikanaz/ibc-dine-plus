@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Http\Requests\ChangePasswordRequest; // IMPORT REQUEST BARU
+use App\Models\Reservation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
 
@@ -16,9 +19,13 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
-        return view('profile.edit', [
-            'user' => $request->user(),
-        ]);
+        $user = $request->user();
+        $totalReservations = Reservation::where('user_id', $user->id)->count();
+        $completedReservations = Reservation::where('user_id', $user->id)
+            ->where('status', 'completed')
+            ->count();
+
+        return view('customer.profile.edit', compact('user', 'totalReservations', 'completedReservations'));
     }
 
     /**
@@ -34,7 +41,19 @@ class ProfileController extends Controller
 
         $request->user()->save();
 
-        return Redirect::route('profile.edit')->with('status', 'profile-updated');
+        return Redirect::route('customer.profile.edit')->with('status', 'profile-updated');
+    }
+
+    /**
+     * Change the user's password.
+     */
+    public function changePassword(ChangePasswordRequest $request): RedirectResponse // GUNAKAN REQUEST BARU
+    {
+        $user = $request->user();
+        $user->password = Hash::make($request->new_password);
+        $user->save();
+
+        return Redirect::route('customer.profile.edit')->with('status', 'password-updated');
     }
 
     /**

@@ -1,10 +1,10 @@
-{{-- GANTI: x-app-layout dengan layout customer --}}
 @extends('layouts.customer.app')
 
 @section('title', 'Profil Saya')
 
 @section('content')
 <div class="max-w-4xl mx-auto mt-8 mb-12">
+
     <!-- Header -->
     <div class="mb-8 text-center">
         <h1 class="text-3xl font-bold text-gray-800 mb-2">Profil Saya</h1>
@@ -26,7 +26,7 @@
                     </div>
                 </div>
 
-                <form method="post" action="{{ route('profile.update') }}" class="space-y-6">
+                <form method="post" action="{{ route('customer.profile.update') }}" class="space-y-6">
                     @csrf
                     @method('patch')
 
@@ -51,8 +51,8 @@
                             <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
                                 <i class="fas fa-envelope text-yellow-500 mr-1"></i>Alamat Email
                             </label>
-                            <input type="email" name="email" id="email" value="{{ old('email', $user->email) }}" 
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition bg-gray-50"
+                            <input type="email" name="email" id="email" value="{{ $user->email }}" 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
                                    disabled>
                             <p class="mt-2 text-xs text-gray-500 flex items-center">
                                 <i class="fas fa-info-circle mr-1"></i>Email tidak dapat diubah
@@ -107,9 +107,9 @@
                     </div>
                 </div>
 
-                <form method="post" action="{{ route('profile.change-password') }}" class="space-y-6">
+                <form method="post" action="{{ route('customer.profile.change-password') }}" class="space-y-6">
                     @csrf
-                    @method('patch') {{-- UBAH: dari @method('put') menjadi @method('patch') --}}
+                    @method('patch')
 
                     <div class="space-y-4">
                         <!-- Current Password -->
@@ -235,11 +235,10 @@
                         <p class="text-sm text-red-700 mb-3">
                             Hapus akun Anda secara permanen. Tindakan ini tidak dapat dibatalkan.
                         </p>
-                        <form method="post" action="{{ route('profile.destroy') }}" class="inline">
+                        <form id="delete-account-form" method="post" action="{{ route('customer.profile.destroy') }}">
                             @csrf
                             @method('delete')
-                            <button type="submit" 
-                                    onclick="return confirm('Apakah Anda yakin ingin menghapus akun? Semua data akan hilang.')"
+                            <button type="button" id="delete-account-btn"
                                     class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center">
                                 <i class="fas fa-trash mr-2"></i>
                                 Hapus Akun Saya
@@ -251,4 +250,87 @@
         </div>
     </div>
 </div>
+
+<!-- SweetAlert -->
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    // Flash message profil/password
+    @if (session('status') === 'profile-updated')
+        Swal.fire({
+            icon: 'success',
+            title: '<span class="text-gray-800 font-bold">Berhasil!</span>',
+            html: '<p class="text-gray-600">Profil berhasil diperbarui.</p>',
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#FBBF24',
+            customClass: {
+                popup: 'rounded-xl shadow-lg p-6 text-gray-800',
+                title: 'text-xl font-bold',
+                content: 'text-gray-600',
+                confirmButton: 'bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded-lg font-medium transition shadow-sm'
+            }
+        });
+    @elseif (session('status') === 'password-updated')
+        Swal.fire({
+            icon: 'success',
+            title: '<span class="text-gray-800 font-bold">Berhasil!</span>',
+            html: '<p class="text-gray-600">Password berhasil diubah.</p>',
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#FBBF24',
+            customClass: {
+                popup: 'rounded-xl shadow-lg p-6 text-gray-800',
+                title: 'text-xl font-bold',
+                content: 'text-gray-600',
+                confirmButton: 'bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded-lg font-medium transition shadow-sm'
+            }
+        });
+    @endif
+
+    // Konfirmasi hapus akun
+    document.getElementById('delete-account-btn').addEventListener('click', function(){
+        Swal.fire({
+            title: '<span class="text-gray-800 font-bold">Apakah Anda yakin?</span>',
+            html: '<p class="text-gray-600">Semua data akun akan hilang permanen!</p>',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, hapus!',
+            cancelButtonText: 'Batal',
+            customClass: {
+                popup: 'rounded-xl shadow-lg p-6 text-gray-800',
+                title: 'text-xl font-bold',
+                content: 'text-gray-600',
+                confirmButton: 'bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-medium transition shadow-sm',
+                cancelButton: 'bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-2 rounded-lg font-medium transition shadow-sm'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // submit form hapus akun
+                let form = document.createElement('form');
+                form.method = 'POST';
+                form.action = "{{ route('customer.profile.destroy') }}";
+
+                // csrf
+                let csrf = document.createElement('input');
+                csrf.type = 'hidden';
+                csrf.name = '_token';
+                csrf.value = "{{ csrf_token() }}";
+                form.appendChild(csrf);
+
+                // method delete
+                let method = document.createElement('input');
+                method.type = 'hidden';
+                method.name = '_method';
+                method.value = 'delete';
+                form.appendChild(method);
+
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
+    });
+</script>
+
 @endsection

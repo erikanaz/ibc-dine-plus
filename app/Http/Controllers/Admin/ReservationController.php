@@ -95,13 +95,17 @@ class ReservationController extends Controller
             'notes' => 'nullable|string',
             'promo_id' => 'nullable|exists:promos,id',
             'total_DP' => 'required|numeric|min:0',
-            'status' => 'required|in:waiting_payment,pending,confirmed,cancelled,completed',
+            'status' => 'required|in:pending,confirmed,cancelled,completed',
             'menus' => 'required|array|min:1',
             'menus.*.menu_id' => 'required|exists:menus,id',
             'menus.*.quantity' => 'required|integer|min:1',
         ]);
 
         DB::transaction(function () use ($validated) {
+            // Tentukan created_by - admin area pasti dibuat oleh admin
+            $createdBy = 'admin';
+            $status = 'confirmed'; // Admin langsung confirm
+
             // 1. CREATE RESERVASI
             $reservation = Reservation::create([
                 'customer_name' => $validated['customer_name'],
@@ -116,6 +120,9 @@ class ReservationController extends Controller
                 'total_DP' => $validated['total_DP'],
                 'status' => $validated['status'],
                 'user_id' => null,
+                'created_by' => 'admin',
+                // 'user_id' => auth()->id(),
+                'created_by' => $createdBy, // 'admin'
             ]);
 
             // 2. HITUNG TOTAL HARGA DARI MENU
@@ -162,6 +169,8 @@ class ReservationController extends Controller
             // 6. UPDATE TABLE STATUS JIKA RESERVASI CONFIRMED
             if ($validated['status'] == 'confirmed') {
                 Table::where('id', $validated['table_id'])->update(['status' => 'reserved']);
+            } else {
+                Table::where('id', $validated['table_id'])->update(['status' => 'available']);
             }
         });
 
@@ -380,7 +389,7 @@ class ReservationController extends Controller
     {
         $validated = $request->validate([
             'status' => 'required|in:waiting_payment,pending,confirmed,cancelled,completed,expired',
-        ]);
+        ]); 
 
         $oldStatus = $reservation->status;
         $newStatus = $validated['status'];

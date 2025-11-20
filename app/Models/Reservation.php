@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 
 class Reservation extends Model
 {
@@ -23,6 +24,7 @@ class Reservation extends Model
         'total_DP',
         'status',
         'payment_deadline',
+        'created_by',
     ];
 
     protected $casts = [
@@ -31,6 +33,10 @@ class Reservation extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'total_DP' => 'decimal:2',
+    ];
+
+    protected $attributes = [
+        'created_by' => 'customer',
     ];
 
     protected $appends = [
@@ -231,5 +237,19 @@ class Reservation extends Model
     public function getInitialDPAttribute()
     {
         return $this->calculateInitialDP();
+    }
+
+    // Di model Reservation.php
+    public function checkAndCancelIfExpired()
+    {
+        if ($this->status === 'waiting_payment' && 
+            $this->payment_deadline && 
+            now()->greaterThan($this->payment_deadline)) {
+            
+            $this->update(['status' => 'cancelled']);
+            Log::info("Reservation #{$this->id} auto-cancelled via helper method");
+            return true;
+        }
+        return false;
     }
 }

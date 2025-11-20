@@ -45,9 +45,9 @@
                              x-transition:leave-end="opacity-0 translate-y-1"
                              class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 ring-1 ring-black ring-opacity-5"
                              x-cloak>
-                            <a href="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-yellow-600 transition-colors focus:bg-gray-50 focus:text-yellow-600">Profil</a>
+                            <a href="/profile/edit" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-yellow-600 transition-colors focus:bg-gray-50 focus:text-yellow-600">Profil</a>
                             <a href="/reservation/history" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-yellow-600 transition-colors focus:bg-gray-50 focus:text-yellow-600">Riwayat Reservasi</a>
-                            <a href="/order-history" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-yellow-600 transition-colors focus:bg-gray-50 focus:text-yellow-600">Riwayat Pesanan</a>
+                            {{-- <a href="/order-history" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-yellow-600 transition-colors focus:bg-gray-50 focus:text-yellow-600">Riwayat Pesanan</a> --}}
                             <div class="border-t border-gray-200 my-1"></div>
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
@@ -126,7 +126,7 @@
                 <a href="/tables" class="block font-medium {{ Request::is('tables*') ? 'text-yellow-500' : 'hover:text-yellow-500' }} px-4 py-2 rounded hover:bg-gray-50 focus:bg-gray-50">Meja</a>
                 <div class="border-t border-gray-200 pt-2">
                     <p class="text-sm font-semibold text-gray-500 px-4 py-1">Akun Saya</p>
-                    <a href="/profile" class="block px-4 py-2 text-gray-700 hover:text-yellow-500 hover:bg-gray-50 rounded focus:bg-gray-50">Profil</a>
+                    <a href="/profile/edit" class="block px-4 py-2 text-gray-700 hover:text-yellow-500 hover:bg-gray-50 rounded focus:bg-gray-50">Profil</a>
                     <a href="/reservation-history" class="block px-4 py-2 text-gray-700 hover:text-yellow-500 hover:bg-gray-50 rounded focus:bg-gray-50">Riwayat Reservasi</a>
                     <a href="/order-history" class="block px-4 py-2 text-gray-700 hover:text-yellow-500 hover:bg-gray-50 rounded focus:bg-gray-50">Riwayat Pesanan</a>
                 </div>

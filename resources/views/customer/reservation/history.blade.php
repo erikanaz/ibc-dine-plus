@@ -340,37 +340,6 @@
                 
                 <template x-if="selectedReservation">
                     <div class="space-y-4">
-                        <!-- INFO EDIT RESERVASI - TAMPIL HANYA UNTUK STATUS YANG BISA DIEDIT -->
-                        {{-- <template x-if="['waiting_payment', 'pending'].includes(selectedReservation.status)">
-                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                <div class="flex items-start">
-                                    <div class="flex-shrink-0">
-                                        <svg class="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                    </div>
-                                    <div class="ml-3">
-                                        <p class="text-sm font-medium text-blue-800">Ingin mengubah reservasi?</p>
-                                        <p class="text-sm text-blue-700 mt-1">
-                                            Untuk perubahan jadwal, meja, atau jumlah tamu, silakan hubungi admin di:
-                                        </p>
-                                        <div class="mt-2 space-y-1">
-                                            <a href="https://wa.me/6281234567890" target="_blank"
-                                               class="inline-flex items-center px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-xs font-medium rounded-md transition mr-2">
-                                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24">
-                                                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893-.001-3.189-1.262-6.209-3.553-8.523"/>
-                                                </svg>
-                                                WhatsApp: 0812-3456-7890
-                                            </a>
-                                            <span class="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-md">
-                                                📞 Telepon: (021) 1234567
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </template> --}}
-
                         <!-- Countdown di Modal -->
                         <template x-if="selectedReservation.status === 'waiting_payment' && selectedReservation.payment_deadline">
                             <div class="bg-gradient-to-r from-orange-50 to-red-50 p-4 rounded-lg border border-orange-200">
@@ -536,6 +505,12 @@
 @endsection
 
 @push('scripts')
+<!-- SweetAlert2 CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+<!-- SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
 function reservationHistory() {
     return {
@@ -546,7 +521,6 @@ function reservationHistory() {
         showDetailModal: false,
         selectedReservation: null,
         countdownInterval: null,
-        // Tambahkan counter untuk memaksa re-render
         countdownTick: 0,
 
         init() {
@@ -556,7 +530,7 @@ function reservationHistory() {
             const waitingPayments = this.reservations.filter(r => r.status === 'waiting_payment');
             console.log('🟡 Waiting payment reservations:', waitingPayments);
             
-            // Start countdown interval yang benar
+            // Start countdown interval
             this.startCountdown();
         },
 
@@ -566,7 +540,7 @@ function reservationHistory() {
                 clearInterval(this.countdownInterval);
             }
             
-            // Update countdown every second dengan cara yang benar
+            // Update countdown every second
             this.countdownInterval = setInterval(() => {
                 // Increment counter untuk memaksa Alpine.js re-render
                 this.countdownTick++;
@@ -764,7 +738,24 @@ function reservationHistory() {
         },
 
         async cancelReservation(reservationId) {
-            if (!confirm('Apakah Anda yakin ingin membatalkan reservasi ini?')) {
+            // SweetAlert untuk konfirmasi pembatalan
+            const result = await Swal.fire({
+                title: 'Batalkan Reservasi?',
+                text: "Apakah Anda yakin ingin membatalkan reservasi ini?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Ya, Batalkan!',
+                cancelButtonText: 'Batal',
+                reverseButtons: true,
+                customClass: {
+                    confirmButton: 'px-4 py-2 rounded-md',
+                    cancelButton: 'px-4 py-2 rounded-md'
+                }
+            });
+
+            if (!result.isConfirmed) {
                 return;
             }
 
@@ -787,35 +778,78 @@ function reservationHistory() {
                         this.reservations[index].status = 'cancelled';
                     }
                     
-                    // Show success message
-                    this.showNotification('Reservasi berhasil dibatalkan', 'success');
+                    // SweetAlert sukses
+                    await Swal.fire({
+                        title: 'Berhasil!',
+                        text: 'Reservasi berhasil dibatalkan',
+                        icon: 'success',
+                        confirmButtonColor: '#10b981',
+                        confirmButtonText: 'OK',
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
                 } else {
-                    // Show error message from server
-                    this.showNotification(data.message, 'error');
+                    // SweetAlert error dari server
+                    await Swal.fire({
+                        title: 'Gagal!',
+                        text: data.message || 'Terjadi kesalahan saat membatalkan reservasi',
+                        icon: 'error',
+                        confirmButtonColor: '#ef4444',
+                        confirmButtonText: 'OK'
+                    });
                 }
             } catch (error) {
                 console.error('Error:', error);
-                this.showNotification('Terjadi kesalahan saat membatalkan reservasi', 'error');
+                // SweetAlert error network
+                await Swal.fire({
+                    title: 'Error!',
+                    text: 'Terjadi kesalahan jaringan saat membatalkan reservasi',
+                    icon: 'error',
+                    confirmButtonColor: '#ef4444',
+                    confirmButtonText: 'OK'
+                });
             }
         },
 
-        // Tambahkan function untuk notification
-        showNotification(message, type = 'info') {
-            // Buat element notification sederhana
-            const notification = document.createElement('div');
-            notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
-                type === 'success' ? 'bg-green-500 text-white' :
-                type === 'error' ? 'bg-red-500 text-white' :
-                'bg-blue-500 text-white'
-            }`;
-            notification.textContent = message;
+        // Function untuk menampilkan notifikasi countdown hampir habis
+        showCountdownWarning(reservationId, minutesLeft) {
+            // Hanya tampilkan sekali per reservasi
+            if (this.warningShown && this.warningShown[reservationId]) return;
             
-            document.body.appendChild(notification);
-            
-            // Hapus setelah 5 detik
-            setTimeout(() => {
-                notification.remove();
-            }, 5000);
+            if (!this.warningShown) this.warningShown = {};
+            this.warningShown[reservationId] = true;
+
+            if (minutesLeft <= 30) {
+                Swal.fire({
+                    title: 'Waktu Pembayaran Hampir Habis!',
+                    html: `Sisa waktu pembayaran DP untuk reservasi #${reservationId} hanya <strong>${minutesLeft} menit</strong> lagi.<br><br>Segera lakukan pembayaran sebelum waktu habis.`,
+                    icon: 'warning',
+                    confirmButtonColor: '#f59e0b',
+                    confirmButtonText: 'Bayar Sekarang',
+                    showCancelButton: true,
+                    cancelButtonText: 'Nanti',
+                    customClass: {
+                        confirmButton: 'bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded-md',
+                        cancelButton: 'bg-gray-500 hover:bg-gray-600 px-4 py-2 rounded-md'
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = `/reservation/payment/${reservationId}`;
+                    }
+                });
+            }
+        },
+
+        // Function untuk expired payment
+        showExpiredNotification(reservationId) {
+            Swal.fire({
+                title: 'Waktu Pembayaran Habis',
+                text: `Waktu pembayaran untuk reservasi #${reservationId} telah habis. Reservasi otomatis dibatalkan.`,
+                icon: 'error',
+                confirmButtonColor: '#ef4444',
+                confirmButtonText: 'Mengerti',
+                allowOutsideClick: false
+            });
         },
 
         // Cleanup
@@ -826,6 +860,21 @@ function reservationHistory() {
         }
     }
 }
+
+// Tambahkan event listener untuk menangani expired payments
+document.addEventListener('DOMContentLoaded', function() {
+    // Cek jika ada parameter expired di URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('expired') === 'true') {
+        Swal.fire({
+            title: 'Pembayaran Kadaluarsa',
+            text: 'Waktu pembayaran DP telah habis. Reservasi Anda otomatis dibatalkan.',
+            icon: 'warning',
+            confirmButtonText: 'Mengerti',
+            confirmButtonColor: '#f59e0b'
+        });
+    }
+});
 </script>
 
 <style>
@@ -839,6 +888,29 @@ function reservationHistory() {
 
 .text-red-500, .text-red-600 {
     animation: pulse-warning 1s ease-in-out infinite;
+}
+
+/* Custom styling untuk SweetAlert */
+.swal2-popup {
+    border-radius: 0.75rem !important;
+    font-family: 'Inter', sans-serif !important;
+}
+
+.swal2-title {
+    font-size: 1.25rem !important;
+    font-weight: 600 !important;
+}
+
+.swal2-confirm {
+    border-radius: 0.5rem !important;
+    padding: 0.5rem 1rem !important;
+    font-weight: 500 !important;
+}
+
+.swal2-cancel {
+    border-radius: 0.5rem !important;
+    padding: 0.5rem 1rem !important;
+    font-weight: 500 !important;
 }
 </style>
 @endpush

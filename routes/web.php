@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\MenuController;
 use App\Http\Controllers\Admin\PromoController;
 use App\Http\Controllers\Admin\ReservationController as AdminReservationController;
 use App\Http\Controllers\Admin\TableController;
+use App\Http\Controllers\Admin\ProfileController as AdminProfileController; 
 use App\Http\Controllers\Customer\TableController as CustomerTableController;
 use App\Http\Controllers\HomepageController;
 use App\Http\Controllers\OrderController;
@@ -20,6 +21,14 @@ Route::get('/', function () {
 
 Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'role:admin']], function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
+
+    // Profil admin
+    Route::get('/profile', [AdminProfileController::class, 'edit'])->name('admin.profile.edit');
+    Route::patch('/profile', [AdminProfileController::class, 'update'])->name('admin.profile.update');
+    Route::patch('/profile/password', [AdminProfileController::class, 'changePassword'])->name('admin.profile.change-password');
+    Route::delete('/profile', [AdminProfileController::class, 'destroy'])->name('admin.profile.destroy');
+
+    // Route::get('/users', 'index')->name('admin.users.index');
 
     // Menu
     Route::resource('/menus', MenuController::class, ['as' => 'admin']);
@@ -64,10 +73,11 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'role:admin']], func
 Route::get('/homepage', [HomepageController::class, 'index'])->name('homepage');
 
 
-Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+Route::middleware('auth', 'role:customer')->group(function () {
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('customer.profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('customer.profile.update');
+    Route::patch('/profile/change-password', [ProfileController::class, 'changePassword'])->name('customer.profile.change-password');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('customer.profile.destroy');
 });
 
 Route::group(['middleware' => ['auth', 'role:customer']], function () {

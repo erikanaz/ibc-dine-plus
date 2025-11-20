@@ -25,7 +25,7 @@
     </div>
 
     <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+    {{-- <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <!-- Total Tables -->
         <div class="dashboard-card bg-white rounded-xl shadow p-6 border-l-4 border-primary transition-all">
             <div class="flex justify-between items-start">
@@ -93,7 +93,7 @@
                 <span>Kapasitas 6 orang</span>
             </div>
         </div>
-    </div>
+    </div> --}}
 
     <!-- Status Statistics -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -129,6 +129,7 @@
                 <span class="text-2xl font-bold text-secondary">{{ $reservedTables }}</span>
             </div>
         </div>
+        
     </div>
 
     <!-- Two Column Layout -->
