@@ -238,6 +238,7 @@
                         <form id="delete-account-form" method="post" action="{{ route('customer.profile.destroy') }}">
                             @csrf
                             @method('delete')
+                            
                             <button type="button" id="delete-account-btn"
                                     class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center">
                                 <i class="fas fa-trash mr-2"></i>
@@ -287,27 +288,27 @@
         });
     @endif
 
-    // Konfirmasi hapus akun
     document.getElementById('delete-account-btn').addEventListener('click', function(){
         Swal.fire({
-            title: '<span class="text-gray-800 font-bold">Apakah Anda yakin?</span>',
-            html: '<p class="text-gray-600">Semua data akun akan hilang permanen!</p>',
+            title: 'Apakah Anda yakin?',
+            html: `
+                <p>Semua data akun akan hilang permanen!</p>
+                <input type="password" id="delete-password" class="swal2-input" placeholder="Masukkan password Anda">`,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
             cancelButtonColor: '#3085d6',
             confirmButtonText: 'Ya, hapus!',
             cancelButtonText: 'Batal',
-            customClass: {
-                popup: 'rounded-xl shadow-lg p-6 text-gray-800',
-                title: 'text-xl font-bold',
-                content: 'text-gray-600',
-                confirmButton: 'bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-medium transition shadow-sm',
-                cancelButton: 'bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-2 rounded-lg font-medium transition shadow-sm'
+            preConfirm: () => {
+                const password = Swal.getPopup().querySelector('#delete-password').value
+                if (!password) {
+                    Swal.showValidationMessage(`Masukkan password terlebih dahulu`)
+                }
+                return password
             }
         }).then((result) => {
             if (result.isConfirmed) {
-                // submit form hapus akun
                 let form = document.createElement('form');
                 form.method = 'POST';
                 form.action = "{{ route('customer.profile.destroy') }}";
@@ -326,11 +327,19 @@
                 method.value = 'delete';
                 form.appendChild(method);
 
+                // password
+                let passwordInput = document.createElement('input');
+                passwordInput.type = 'hidden';
+                passwordInput.name = 'password';
+                passwordInput.value = result.value;
+                form.appendChild(passwordInput);
+
                 document.body.appendChild(form);
                 form.submit();
             }
         });
     });
+
 </script>
 
 @endsection

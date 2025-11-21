@@ -33,6 +33,7 @@ class RegisteredUserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'whatsapp' => ['required', 'string', 'max:15'],
         ]);
 
         $user = User::create([
@@ -47,8 +48,10 @@ class RegisteredUserController extends Controller
 
         event(new Registered($user));
 
-        Auth::login($user);
+        // Auth::login($user);
 
-        return redirect(route('homepage', absolute: false));
+        // return redirect(route('homepage', absolute: false));
+
+        return redirect()->route('verification.notice')->with('status', 'Registrasi berhasil! Silakan verifikasi email Anda.');
     }
 }

@@ -14,9 +14,40 @@ use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\TableController as ControllersTableController;
 use Illuminate\Support\Facades\Route;
 use App\Models\Menu;
+use App\Models\Promo;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use Illuminate\Http\Request;
+
+// Halaman notice verifikasi
+Route::get('/email/verify', function () {
+    return view('auth.verify-email');
+})->middleware('auth')->name('verification.notice');
+
+// Link verifikasi
+Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+    $request->fulfill();
+    return redirect('/login')->with('status', 'Email berhasil diverifikasi. Silakan login!');
+})->middleware(['auth', 'signed'])->name('verification.verify');
+
+// Kirim ulang email verifikasi
+Route::post('/email/verification-notification', function (Request $request) {
+    $request->user()->sendEmailVerificationNotification();
+    return back()->with('message', 'Tautan verifikasi email baru telah dikirim.');
+})->middleware(['auth', 'throttle:6,1'])->name('verification.send');
+
+// Route::get('/', function () {
+//     return view('welcome');
+// });
 
 Route::get('/', function () {
-    return view('welcome');
+    $activePromos = Promo::where('start_date', '<=', now())
+                        ->where('end_date', '>=', now())
+                        ->where('usage_limit', '>', 0)
+                        ->orderBy('created_at', 'desc')
+                        ->limit(2)
+                        ->get();
+    
+    return view('welcome', compact('activePromos'));
 });
 
 Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'role:admin']], function () {
@@ -70,7 +101,8 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'role:admin']], func
 //     return view('homepage'); // buat file resources/views/homepage.blade.php
 // })->middleware(['auth', 'role:member'])->name('homepage');
 
-Route::get('/homepage', [HomepageController::class, 'index'])->name('homepage');
+Route::get('/homepage', [HomepageController::class, 'index'])
+    ->middleware(['auth', 'verified'])->name('homepage');
 
 
 Route::middleware('auth', 'role:customer')->group(function () {
