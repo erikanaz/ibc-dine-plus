@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('promos', function (Blueprint $table) {
-            // $table->dropColumn('type'); // hapus enum percent/fixed
+            $table->dropColumn('type'); // hapus enum percent/fixed
             $table->decimal('discount', 5, 2)->change(); // ubah precision persen
         });
     }
@@ -23,7 +23,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('promos', function (Blueprint $table) {
-            // $table->enum('type', ['percent', 'fixed'])->default('percent');
+            $table->enum('type', ['percent', 'fixed'])->default('percent');
             $table->decimal('discount', 10, 2)->change();
         });
     }

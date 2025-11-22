@@ -15,6 +15,7 @@
             <div class="hidden md:flex items-center space-x-8">
                 @auth
                     <a href="/homepage" class="font-medium {{ Request::is('homepage*') ? 'text-yellow-500' : 'hover:text-yellow-500' }} focus:outline-none focus:underline">Beranda</a>
+                    <a href="/member-dashboard" class="font-medium {{ Request::is('member-dashboard*') ? 'text-yellow-500' : 'hover:text-yellow-500' }} focus:outline-none focus:underline">Dashboard</a>
                     <a href="/reservation" class="font-medium {{ Request::is('reservation*') ? 'text-yellow-500' : 'hover:text-yellow-500' }} focus:outline-none focus:underline">Reservasi</a>
                     <!-- Tambahan Meja -->
                     <a href="/tables" class="font-medium {{ Request::is('tables*') ? 'text-yellow-500' : 'hover:text-yellow-500' }} focus:outline-none focus:underline">Meja</a>
@@ -121,6 +122,7 @@
              x-cloak>
             @auth
                 <a href="/homepage" class="block font-medium {{ Request::is('homepage*') ? 'text-yellow-500' : 'hover:text-yellow-500' }} px-4 py-2 rounded hover:bg-gray-50 focus:bg-gray-50">Beranda</a>
+                <a href="/member-dashboard" class="block font-medium {{ Request::is('member-dashboard*') ? 'text-yellow-500' : 'hover:text-yellow-500' }} px-4 py-2 rounded hover:bg-gray-50 focus:bg-gray-50">Dashboard</a>
                 <a href="/reservation" class="block font-medium {{ Request::is('reservation*') ? 'text-yellow-500' : 'hover:text-yellow-500' }} px-4 py-2 rounded hover:bg-gray-50 focus:bg-gray-50">Reservasi</a>
                 <a href="/order" class="block font-medium {{ Request::is('order*') ? 'text-yellow-500' : 'hover:text-yellow-500' }} px-4 py-2 rounded hover:bg-gray-50 focus:bg-gray-50">Menu.</a>
                 <a href="/tables" class="block font-medium {{ Request::is('tables*') ? 'text-yellow-500' : 'hover:text-yellow-500' }} px-4 py-2 rounded hover:bg-gray-50 focus:bg-gray-50">Meja</a>

@@ -5,7 +5,8 @@ use App\Http\Controllers\Admin\MenuController;
 use App\Http\Controllers\Admin\PromoController;
 use App\Http\Controllers\Admin\ReservationController as AdminReservationController;
 use App\Http\Controllers\Admin\TableController;
-use App\Http\Controllers\Admin\ProfileController as AdminProfileController; 
+use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
+use App\Http\Controllers\Customer\DashboardController as CustomerDashboardController;
 use App\Http\Controllers\Customer\TableController as CustomerTableController;
 use App\Http\Controllers\HomepageController;
 use App\Http\Controllers\OrderController;
@@ -41,12 +42,12 @@ Route::post('/email/verification-notification', function (Request $request) {
 
 Route::get('/', function () {
     $activePromos = Promo::where('start_date', '<=', now())
-                        ->where('end_date', '>=', now())
-                        ->where('usage_limit', '>', 0)
-                        ->orderBy('created_at', 'desc')
-                        ->limit(2)
-                        ->get();
-    
+        ->where('end_date', '>=', now())
+        ->where('usage_limit', '>', 0)
+        ->orderBy('created_at', 'desc')
+        ->limit(2)
+        ->get();
+
     return view('welcome', compact('activePromos'));
 });
 
@@ -68,16 +69,16 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'role:admin']], func
     // Table
     Route::resource('/tables', TableController::class, ['as' => 'admin']);
     Route::patch('/tables/{table}/update-status', [TableController::class, 'updateStatus'])->name('admin.tables.update-status');
-    
+
     // Reservation
     Route::resource('/reservations', AdminReservationController::class, ['as' => 'admin']);
     // Tambahkan route khusus untuk reservasi
-    
+
     Route::post('/reservations/{reservation}/add-menu', [AdminReservationController::class, 'addMenu'])->name('admin.reservations.add-menu');
     Route::put('/reservations/{reservation}/menu/{orderItem}', [AdminReservationController::class, 'updateMenu'])->name('admin.reservations.update-menu');
     Route::delete('/reservations/{reservation}/menu/{orderItem}', [AdminReservationController::class, 'removeMenu'])->name('admin.reservations.remove-menu');
     Route::get('/reservations/{reservation}/invoice', [AdminReservationController::class, 'printInvoice'])->name('admin.reservations.invoice');
-    
+
     Route::patch('/reservations/{reservation}/status', [AdminReservationController::class, 'updateStatus'])->name('admin.reservations.update-status');
 
     // Order
@@ -86,7 +87,6 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'role:admin']], func
 
     // Promo
     Route::resource('/promos', PromoController::class, ['as' => 'admin']);
-
 });
 
 // Route::get('/admin/dashboard', function () {
@@ -113,6 +113,7 @@ Route::middleware('auth', 'role:customer')->group(function () {
 });
 
 Route::group(['middleware' => ['auth', 'role:customer']], function () {
+    Route::get('/member-dashboard', [CustomerDashboardController::class, 'index'])->name('customer.member-dashboard');
     //form create reservasi
     Route::get('/reservation', [ReservationController::class, 'index'])->name('reservation.index');
     // Route::post('/reservation/store', [ReservationController::class, 'store'])->name('reservation.store');
