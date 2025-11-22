@@ -205,13 +205,13 @@
                                     {{ $promo->description ? Str::limit($promo->description, 60) : 'Tidak ada deskripsi' }}
                                 </div>
                             </td>
-                            <td class="px-6 py-4">
+                            <td class="px-6 py-4 text-center">
                                 <div class="text-sm font-medium text-green-600">
-                                    @if($promo->type == 'percent')
+                                    {{-- @if($promo->type == 'percent') --}}
                                         {{ $promo->discount }}%
-                                    @else
-                                        Rp {{ number_format($promo->discount, 0, ',', '.') }}
-                                    @endif
+                                    {{-- @else --}}
+                                        {{-- Rp {{ number_format($promo->discount, 0, ',', '.') }} --}}
+                                    {{-- @endif --}}
                                 </div>
                                 <div class="text-xs text-gray-500 capitalize">
                                     {{ $promo->type }}
@@ -230,7 +230,7 @@
                                     </div>
                                 @endif
                             </td>
-                            <td class="px-6 py-4">
+                            <td class="px-6 py-4 ">
                                 <div class="text-sm text-gray-900">
                                     @if($promo->usage_limit)
                                         {{ $promo->usage_limit }} kali

@@ -23,7 +23,7 @@ class Promo extends Model
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
-        'discount' => 'decimal:2',
+        // 'discount' => 'decimal:2',
     ];
 
     // ✅ METHOD UNTUK CEK STATUS PROMO

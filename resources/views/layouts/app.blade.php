@@ -15,6 +15,11 @@
             background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), 
                         url('/images/ibc-bg.png') no-repeat center center;
             background-size: cover;
+            /* Tambah tinggi background hero */
+            min-height: 85vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .gold-text {
             color: #D4AF37;

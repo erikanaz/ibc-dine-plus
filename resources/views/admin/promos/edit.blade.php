@@ -77,7 +77,7 @@
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Tipe Diskon -->
-                        <div>
+                        {{-- <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 Tipe Diskon <span class="text-red-500">*</span>
                             </label>
@@ -104,7 +104,7 @@
                             @error('type')
                                 <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                             @enderror
-                        </div>
+                        </div> --}}
                         
                         <!-- Nilai Diskon -->
                         <div>
