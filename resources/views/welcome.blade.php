@@ -130,8 +130,8 @@
         </div>
 
         <div class="text-center mt-12">
-            <a href="/login" class="inline-block gold-border border-2 gold-text px-8 py-3 rounded-md font-medium hover:gold-bg  transition duration-300 transform hover:scale-105 shadow-md hover:shadow-lg">
-                LOGIN UNTUK MELIHAT PROMO LENGKAP
+            <a href="/register" class="inline-block gold-border border-2 gold-text px-8 py-3 rounded-md font-medium hover:gold-bg  transition duration-300 transform hover:scale-105 shadow-md hover:shadow-lg">
+                REGISTER UNTUK MENJADI MEMBER
             </a>
         </div>
     </div>

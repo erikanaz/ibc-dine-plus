@@ -33,13 +33,19 @@ class RegisteredUserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'whatsapp' => ['required', 'string', 'max:15'],
+            'whatsapp' => ['required', 'string', 'regex:/^[0-9]{9,13}$/'],
+        ], [
+            'whatsapp.regex' => 'Format nomor WhatsApp tidak valid. Contoh: 81234567890',
         ]);
+
+         // Format: +62 + nomor (tanpa 0 di depan)
+        $phoneNumber = '+62' . $request->whatsapp;
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'phone' => $request->whatsapp,
+            'phone' => $phoneNumber, // Simpan sebagai +628123456789
+            // 'phone' => $request->whatsapp,
             // 'address' => $request->address,
             'password' => Hash::make($request->password),
         ]);

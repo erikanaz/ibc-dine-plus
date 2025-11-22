@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Table;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class TableController extends Controller
 {
@@ -69,19 +70,36 @@ class TableController extends Controller
     }
 
     public function store(Request $request)
-    {
-        $request->validate([
-            'number' => 'required|unique:tables,number',
-            'capacity' => 'required|integer|min:1|max:20',
-            'location' => 'required|in:indoor,outdoor',
-            'status' => 'required|in:available,occupied,reserved,maintenance'
+{
+    $request->validate([
+        'number' => 'required|unique:tables,number',
+        'capacity' => 'required|integer|min:1|max:20',
+        'location' => 'required|in:indoor,outdoor',
+        'status' => 'required|in:available,occupied,reserved,maintenance'
+    ]);
+
+    try {
+        // Debug: lihat data yang diterima
+        Log::info('Data yang diterima:', $request->all());
+        
+        // Buat meja baru
+        $table = Table::create([
+            'number' => $request->number,
+            'capacity' => $request->capacity,
+            'location' => $request->location,
+            'status' => $request->status
         ]);
 
-        Table::create($request->all());
+        Log::info('Meja berhasil dibuat:', $table->toArray());
 
         return redirect()->route('admin.tables.index')
             ->with('success', 'Meja berhasil ditambahkan.');
+
+    } catch (\Exception $e) {
+        Log::error('Error membuat meja: ' . $e->getMessage());
+        return back()->with('error', 'Gagal menambahkan meja: ' . $e->getMessage());
     }
+}   
 
     public function edit(Table $table)
     {
