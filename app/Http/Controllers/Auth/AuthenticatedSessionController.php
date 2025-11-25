@@ -43,7 +43,7 @@ class AuthenticatedSessionController extends Controller
         }
 
         if ($user->hasRole('customer')) {
-            return redirect()->intended('/homepage'); // atau route('home')
+            return redirect()->intended('/member-dashboard'); // atau route('home')
         }
 
         // Jika role tidak dikenali

@@ -90,7 +90,7 @@
     </div>
 
     <!-- Menu Header -->
-    <section class="menu-header bg-cover bg-center py-32" style="background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('/images/menu-hero.jpg')">
+    <section class="menu-header bg-cover bg-center py-40" style="background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('/images/ibc-bg.png');">
         <div class="container mx-auto px-4 text-center text-white">
             <h1 class="text-4xl md:text-5xl font-bold mb-4">MENU KAMI</h1>
             <p class="text-xl max-w-2xl mx-auto">Nikmati berbagai hidangan ikan bakar dan seafood dengan bumbu rahasia kami</p>
@@ -138,28 +138,28 @@
                 @foreach ($items as $item)
                     <div class="relative group bg-gray-50 rounded-lg overflow-hidden shadow-md menu-card transition duration-300 flex flex-col h-full">
                         {{-- Gambar --}}
-                        <!-- <div class="{{ $category === 'drinks' ? 'h-96' : 'h-60' }} bg-cover bg-center" 
-                            style="background-image: url('/images/menus/{{ $item->image }}')">
-                        </div> -->
-                        <div class="{{ $category === 'drinks' ? 'h-96' : 'h-60' }} bg-cover bg-center" 
+                        <div class="{{ $category === 'drinks' ? 'h-96' : 'h-80' }} bg-cover bg-center relative overflow-hidden" 
                             style="background-image: url('{{ $item->image_url }}')">
+                            
+                            {{-- Overlay dan badge untuk menu tidak tersedia --}}
+                            @if (!$item->is_available)
+                                <div class="absolute inset-0 bg-black bg-opacity-70 text-white flex items-center justify-center ">
+                                    <span class="text-lg font-medium">Menu tidak tersedia</span>
+                                </div>
+                                <div class="absolute top-3 left-3 bg-red-600 text-white px-2 py-1 rounded text-xs font-bold ">
+                                    STOK HABIS
+                                </div>
+                            @endif
                         </div>
 
-                        {{-- Overlay jika tidak tersedia --}}
-                        @if (!$item->is_available)
-                            <div class="absolute inset-0 bg-black bg-opacity-65 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300 z-10">
-                                <span class="text-lg font-medium">Menu tidak tersedia</span>
-                            </div>
-                        @endif
-
                         {{-- Konten --}}
-                        <div class="p-6 flex flex-col flex-grow z-0">
+                        <div class="p-6 flex flex-col flex-grow z-0 @if(!$item->is_available) opacity-70 @endif">
                             <h3 class="text-xl font-bold mb-2">{{ $item->name }}</h3>
                             <p class="text-gray-600 mb-4">{{ $item->description }}</p>
                             <div class="flex justify-between items-center mt-auto">
                                 <span class="font-bold gold-text">Rp {{ number_format($item->price, 0, ',', '.') }}</span>
 
-                                <!-- @if($item->is_available)
+                                {{-- @if($item->is_available)
                                     <button 
                                         @click="addToOrderList({ id: {{ $item->id }}, name: '{{ $item->name }}', price: {{ $item->price }} })" 
                                         class="flex items-center gap-2 gold-bg hover:bg-opacity-100 text-white px-4 py-2 rounded-md text-sm transition duration-300 shadow-md hover:scale-105">
@@ -171,13 +171,13 @@
                                 @else
                                     <button 
                                         disabled 
-                                        class="flex items-center gap-2 gold-bg hover:bg-opacity-100 text-white px-4 py-2 rounded-md text-sm transition duration-300 shadow-md cursor-not-allowed opacity-50">
+                                        class="flex items-center gap-2 bg-gray-400 text-white px-4 py-2 rounded-md text-sm cursor-not-allowed">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                                         </svg>
-                                        Pesan
+                                        Tidak Tersedia
                                     </button>
-                                @endif -->
+                                @endif --}}
                             </div>
                         </div>
                     </div>

@@ -19,6 +19,15 @@
                         @else bg-secondary/10 text-secondary @endif">
                         {{ $promo->status_label }}
                     </span>
+                    @if($promo->can_be_used)
+                        <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                            Dapat Digunakan
+                        </span>
+                    @else
+                        <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
+                            Tidak Dapat Digunakan
+                        </span>
+                    @endif
                 </div>
             </div>
         </div>
@@ -76,60 +85,56 @@
                     </h3>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Tipe Diskon -->
-                        {{-- <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Tipe Diskon <span class="text-red-500">*</span>
-                            </label>
-                            <div class="grid grid-cols-2 gap-4">
-                                <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                                    <input type="radio" name="type" value="percent" 
-                                           {{ old('type', $promo->type) == 'percent' ? 'checked' : '' }}
-                                           class="text-primary focus:ring-primary">
-                                    <span class="ml-2 text-sm font-medium text-gray-700">
-                                        <i class="fas fa-percentage text-green-500 mr-1"></i>
-                                        Persentase (%)
-                                    </span>
-                                </label>
-                                <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                                    <input type="radio" name="type" value="fixed"
-                                           {{ old('type', $promo->type) == 'fixed' ? 'checked' : '' }}
-                                           class="text-primary focus:ring-primary">
-                                    <span class="ml-2 text-sm font-medium text-gray-700">
-                                        <i class="fas fa-money-bill-wave text-blue-500 mr-1"></i>
-                                        Nominal (Rp)
-                                    </span>
-                                </label>
-                            </div>
-                            @error('type')
-                                <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                            @enderror
-                        </div> --}}
-                        
                         <!-- Nilai Diskon -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Nilai Diskon <span class="text-red-500">*</span>
+                                Nilai Diskon (%) <span class="text-red-500">*</span>
                             </label>
                             <div class="relative">
                                 <input type="number" name="discount" value="{{ old('discount', $promo->discount) }}" 
-                                       min="0" step="0.01"
+                                       min="0" max="100" step="0.01"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent pr-12"
-                                       placeholder="0.00"
+                                       placeholder="0"
                                        required
                                        id="discountInput">
                                 <div class="absolute inset-y-0 right-0 flex items-center pr-3">
-                                    <span class="text-gray-500 text-sm" id="discountSuffix">
-                                        {{ $promo->type == 'percent' ? '%' : 'Rp' }}
-                                    </span>
+                                    <span class="text-gray-500 text-sm">%</span>
                                 </div>
                             </div>
                             @error('discount')
                                 <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                             @enderror
-                            <p class="text-xs text-gray-500 mt-1" id="discountHelp">
-                                {{ $promo->type == 'percent' ? 'Masukkan nilai diskon dalam persentase' : 'Masukkan nilai diskon dalam Rupiah' }}
+                            <p class="text-xs text-gray-500 mt-1">Masukkan nilai diskon dalam persentase (0-100%)</p>
+                            <p class="text-sm text-green-600 font-medium mt-1">
+                                Nilai diskon: <span id="discountPreview">{{ $promo->discount_formatted }}</span>
                             </p>
+                        </div>
+
+                        <!-- Info Status Saat Ini -->
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h4 class="font-medium text-gray-700 mb-2">Status Saat Ini:</h4>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Status:</span>
+                                    <span class="status-badge 
+                                        @if($promo->status === 'active') bg-success/10 text-success
+                                        @elseif($promo->status === 'upcoming') bg-info/10 text-info
+                                        @elseif($promo->status === 'expired') bg-warning/10 text-warning
+                                        @else bg-secondary/10 text-secondary @endif">
+                                        {{ $promo->status_label }}
+                                    </span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Dapat Digunakan:</span>
+                                    <span class="{{ $promo->can_be_used ? 'text-green-600' : 'text-red-600' }} font-medium">
+                                        {{ $promo->can_be_used ? 'Ya' : 'Tidak' }}
+                                    </span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Digunakan:</span>
+                                    <span>{{ $promo->used_count }} kali</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -193,7 +198,7 @@
                     @endif
                     
                     <!-- Periode Cepat -->
-                    <!-- <div class="mt-4">
+                    <div class="mt-4">
                         <label class="block text-sm font-medium text-gray-700 mb-2">
                             Periode Cepat
                         </label>
@@ -211,7 +216,7 @@
                                 Selamanya
                             </button>
                         </div>
-                    </div> -->
+                    </div>
                 </div>
 
                 <!-- Batas Penggunaan -->
@@ -243,17 +248,19 @@
                                 <p class="font-medium">Info Penggunaan:</p>
                                 <div class="mt-1">
                                     @php
-                                        $usedCount = $promo->reservations()->count();
-                                        $remaining = $promo->usage_limit ? $promo->usage_limit - $usedCount : 'Unlimited';
+                                        $remaining = $promo->usage_limit ? $promo->usage_limit - $promo->used_count : 'Unlimited';
                                     @endphp
                                     <div class="flex items-center space-x-2 text-xs">
-                                        <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded">Digunakan: {{ $usedCount }}x</span>
+                                        <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded">Digunakan: {{ $promo->used_count }}x</span>
                                         @if($promo->usage_limit)
                                             <span class="bg-green-100 text-green-800 px-2 py-1 rounded">Sisa: {{ $remaining }}x</span>
                                         @else
                                             <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded">Tidak terbatas</span>
                                         @endif
                                     </div>
+                                    @if($promo->usage_limit && $promo->used_count >= $promo->usage_limit)
+                                        <p class="text-red-500 text-xs mt-1">⚠️ Promo telah mencapai batas penggunaan</p>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -277,55 +284,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Preview Promo -->
-                <!-- <div class="mb-8 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
-                    <h3 class="text-lg font-bold mb-3 flex items-center text-gray-800">
-                        <i class="fas fa-eye text-indigo-500 mr-2"></i>
-                        Preview Promo
-                    </h3>
-                    
-                    <div class="bg-white rounded-lg p-4 shadow-sm">
-                        <div class="flex items-center justify-between mb-3">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                                    <span class="text-white font-bold text-sm" id="previewCode">{{ substr($promo->promo_code, 0, 3) }}</span>
-                                </div>
-                                <div>
-                                    <div class="font-bold text-gray-900 text-lg" id="previewDiscount">
-                                        @if($promo->type == 'percent')
-                                            {{ $promo->discount }}%
-                                        @else
-                                            Rp {{ number_format($promo->discount, 0, ',', '.') }}
-                                        @endif
-                                    </div>
-                                    <div class="text-sm text-gray-600" id="previewType">
-                                        {{ $promo->type == 'percent' ? 'Diskon Persentase' : 'Diskon Nominal' }}
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <div class="text-sm text-gray-500" id="previewPeriod">
-                                    @if($promo->start_date && $promo->end_date)
-                                        {{ $promo->start_date->format('d M') }} - {{ $promo->end_date->format('d M Y') }}
-                                    @elseif($promo->start_date && !$promo->end_date)
-                                        Mulai {{ $promo->start_date->format('d M Y') }}
-                                    @else
-                                        Segera - Selamanya
-                                    @endif
-                                </div>
-                                <div class="text-xs text-gray-400" id="previewUsage">
-                                    @if($promo->usage_limit)
-                                        Maksimal {{ $promo->usage_limit }} penggunaan
-                                    @else
-                                        Tidak terbatas
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-                        <p class="text-sm text-gray-600" id="previewDescription">{{ $promo->description ?: 'Deskripsi promo akan muncul di sini' }}</p>
-                    </div>
-                </div> -->
 
                 <!-- Informasi Sistem -->
                 <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
@@ -368,14 +326,6 @@
                        class="bg-gray-100 text-gray-700 py-3 px-6 rounded-lg font-medium hover:bg-gray-200 transition-colors flex items-center">
                         <i class="fas fa-arrow-left mr-2"></i> Kembali
                     </a>
-                    <!-- <button type="button" onclick="resetToOriginal()"
-                            class="bg-orange-100 text-orange-700 py-3 px-6 rounded-lg font-medium hover:bg-orange-200 transition-colors flex items-center">
-                        <i class="fas fa-history mr-2"></i> Reset
-                    </button>
-                    <a href="{{ route('admin.promos.create') }}" 
-                       class="bg-green-100 text-green-700 py-3 px-6 rounded-lg font-medium hover:bg-green-200 transition-colors flex items-center">
-                        <i class="fas fa-plus mr-2"></i> Buat Baru
-                    </a> -->
                 </div>
             </div>
         </form>
@@ -384,16 +334,6 @@
 
 @section('styles')
 <style>
-    input[type="radio"]:checked + span {
-        color: #3b82f6;
-        font-weight: 600;
-    }
-    
-    input[type="radio"]:checked {
-        background-color: #3b82f6;
-        border-color: #3b82f6;
-    }
-    
     .status-badge {
         padding: 0.25rem 0.75rem;
         border-radius: 1rem;
@@ -407,119 +347,19 @@
 @section('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const typeRadios = document.querySelectorAll('input[name="type"]');
         const discountInput = document.getElementById('discountInput');
-        const discountSuffix = document.getElementById('discountSuffix');
-        const discountHelp = document.getElementById('discountHelp');
-        
-        const previewCode = document.getElementById('previewCode');
-        const previewDiscount = document.getElementById('previewDiscount');
-        const previewType = document.getElementById('previewType');
-        const previewPeriod = document.getElementById('previewPeriod');
-        const previewUsage = document.getElementById('previewUsage');
-        const previewDescription = document.getElementById('previewDescription');
-        
-        const promoCodeInput = document.querySelector('input[name="promo_code"]');
-        const descriptionInput = document.querySelector('textarea[name="description"]');
+        const discountPreview = document.getElementById('discountPreview');
         const startDateInput = document.getElementById('startDate');
         const endDateInput = document.getElementById('endDate');
         const usageLimitInput = document.querySelector('input[name="usage_limit"]');
 
-        // Store original values for reset
-        const originalValues = {
-            promo_code: '{{ $promo->promo_code }}',
-            description: `{{ $promo->description }}`,
-            type: '{{ $promo->type }}',
-            discount: '{{ $promo->discount }}',
-            start_date: '{{ $promo->start_date ? $promo->start_date->format("Y-m-d") : "" }}',
-            end_date: '{{ $promo->end_date ? $promo->end_date->format("Y-m-d") : "" }}',
-            usage_limit: '{{ $promo->usage_limit }}'
-        };
-
-        // Update preview when inputs change
-        function updatePreview() {
-            // Kode promo
-            const code = promoCodeInput.value || originalValues.promo_code;
-            previewCode.textContent = code.substring(0, 3).toUpperCase();
-            
-            // Diskon
-            const discountValue = discountInput.value || originalValues.discount;
-            const discountType = document.querySelector('input[name="type"]:checked').value;
-            
-            if (discountType === 'percent') {
-                previewDiscount.textContent = `${discountValue}%`;
-                previewType.textContent = 'Diskon Persentase';
-            } else {
-                previewDiscount.textContent = `Rp ${formatCurrency(discountValue)}`;
-                previewType.textContent = 'Diskon Nominal';
-            }
-            
-            // Periode
-            const startDate = startDateInput.value;
-            const endDate = endDateInput.value;
-            
-            if (startDate && endDate) {
-                const start = new Date(startDate);
-                const end = new Date(endDate);
-                previewPeriod.textContent = `${formatDate(start)} - ${formatDate(end)}`;
-            } else if (startDate && !endDate) {
-                previewPeriod.textContent = `Mulai ${formatDate(new Date(startDate))}`;
-            } else if (!startDate && endDate) {
-                previewPeriod.textContent = `Sampai ${formatDate(new Date(endDate))}`;
-            } else {
-                previewPeriod.textContent = 'Segera - Selamanya';
-            }
-            
-            // Batas penggunaan
-            const usageLimit = usageLimitInput.value;
-            if (usageLimit) {
-                previewUsage.textContent = `Maksimal ${usageLimit} penggunaan`;
-            } else {
-                previewUsage.textContent = 'Tidak terbatas';
-            }
-            
-            // Deskripsi
-            previewDescription.textContent = descriptionInput.value || originalValues.description || 'Deskripsi promo akan muncul di sini';
+        // Update discount preview
+        function updateDiscountPreview() {
+            const discountValue = parseFloat(discountInput.value) || 0;
+            // Format dengan menghilangkan .00 untuk angka bulat
+            const formattedValue = parseFloat(discountValue).toString().replace(/\.0+$/, '') + '%';
+            discountPreview.textContent = formattedValue;
         }
-
-        // Format currency
-        function formatCurrency(amount) {
-            return parseInt(amount).toLocaleString('id-ID');
-        }
-
-        // Format date
-        function formatDate(date) {
-            return date.toLocaleDateString('id-ID', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric'
-            });
-        }
-
-        // Handle discount type change
-        typeRadios.forEach(radio => {
-            radio.addEventListener('change', function() {
-                if (this.value === 'percent') {
-                    discountSuffix.textContent = '%';
-                    discountHelp.textContent = 'Masukkan nilai diskon dalam persentase (0-100)';
-                    discountInput.setAttribute('max', '100');
-                    discountInput.setAttribute('step', '0.01');
-                } else {
-                    discountSuffix.textContent = 'Rp';
-                    discountHelp.textContent = 'Masukkan nilai diskon dalam Rupiah';
-                    discountInput.removeAttribute('max');
-                    discountInput.setAttribute('step', '1');
-                }
-                updatePreview();
-            });
-        });
-
-        // Update preview on input changes
-        [promoCodeInput, discountInput, descriptionInput, startDateInput, endDateInput, usageLimitInput]
-            .forEach(input => {
-                input.addEventListener('input', updatePreview);
-                input.addEventListener('change', updatePreview);
-            });
 
         // Set quick period
         window.setQuickPeriod = function(days) {
@@ -529,48 +369,16 @@
             
             startDateInput.value = startDate.toISOString().split('T')[0];
             endDateInput.value = endDate.toISOString().split('T')[0];
-            updatePreview();
         }
 
         // Set no end date
         window.setNoEndDate = function() {
             endDateInput.value = '';
-            updatePreview();
         }
 
         // Set usage limit
         window.setUsageLimit = function(limit) {
             usageLimitInput.value = limit;
-            updatePreview();
-        }
-
-        // Reset to original values
-        window.resetToOriginal = function() {
-            if (confirm('Yakin ingin mengembalikan ke nilai semula?')) {
-                promoCodeInput.value = originalValues.promo_code;
-                descriptionInput.value = originalValues.description;
-                
-                // Reset radio buttons
-                document.querySelectorAll('input[name="type"]').forEach(radio => {
-                    radio.checked = radio.value === originalValues.type;
-                });
-                
-                discountInput.value = originalValues.discount;
-                startDateInput.value = originalValues.start_date;
-                endDateInput.value = originalValues.end_date;
-                usageLimitInput.value = originalValues.usage_limit;
-                
-                // Update suffix based on type
-                if (originalValues.type === 'percent') {
-                    discountSuffix.textContent = '%';
-                    discountHelp.textContent = 'Masukkan nilai diskon dalam persentase (0-100)';
-                } else {
-                    discountSuffix.textContent = 'Rp';
-                    discountHelp.textContent = 'Masukkan nilai diskon dalam Rupiah';
-                }
-                
-                updatePreview();
-            }
         }
 
         // Set minimum end date based on start date
@@ -580,8 +388,11 @@
             }
         });
 
-        // Initialize preview
-        updatePreview();
+        // Update discount preview on input
+        discountInput.addEventListener('input', updateDiscountPreview);
+
+        // Initialize discount preview
+        updateDiscountPreview();
     });
 </script>
 @endsection

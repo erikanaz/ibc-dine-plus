@@ -129,6 +129,8 @@ class DashboardController extends Controller
                 
                 return $promo;
             });
+
+        
         
         return view('customer.member-dashboard', compact(
             'totalReservations',

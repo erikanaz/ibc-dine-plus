@@ -79,21 +79,101 @@
     <div class="bg-white rounded-lg shadow-sm p-6 mb-6 border border-gray-100" x-show="step === 2" x-transition>
         <h2 class="text-xl font-bold mb-4 text-gray-800">2. Pilih Meja</h2>
         
+        <!-- Legend -->
+        <div class="mb-4 p-3 bg-gray-50 rounded-md border border-gray-200">
+            <h3 class="text-sm font-semibold mb-2 text-gray-600">Keterangan Status:</h3>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 text-xs">
+                <div class="flex items-center space-x-2">
+                    <div class="w-4 h-4 rounded border-2 border-green-500 bg-green-50"></div>
+                    <span class="text-gray-700">Tersedia</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <div class="w-4 h-4 rounded border-2 border-yellow-500 bg-yellow-50"></div>
+                    <span class="text-gray-700">Dipilih</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <div class="w-4 h-4 rounded border-2 border-red-500 bg-red-50"></div>
+                    <span class="text-gray-700">Sudah Dipesan</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <div class="w-4 h-4 rounded border-2 border-orange-500 bg-orange-50"></div>
+                    <span class="text-gray-700">Terisi</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <div class="w-4 h-4 rounded border-2 border-purple-500 bg-purple-50"></div>
+                    <span class="text-gray-700">Maintenance</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <div class="w-4 h-4 rounded border-2 border-gray-400 bg-gray-100"></div>
+                    <span class="text-gray-700">Kapasitas Kurang</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Pencarian -->
+        <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+            <div class="flex items-start">
+                <svg class="w-4 h-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <p class="text-xs text-blue-700">
+                    Menampilkan ketersediaan meja untuk <strong x-text="reservasi.jumlah_tamu"></strong> tamu 
+                    pada <strong x-text="formatTanggal(reservasi.tanggal)"></strong> 
+                    pukul <strong x-text="reservasi.waktu"></strong>
+                </p>
+            </div>
+        </div>
+        
+        <!-- Daftar Semua Meja -->
         <div class="mb-4">
-            <h3 class="text-sm font-semibold mb-3 text-gray-600">Meja Tersedia</h3>
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                <template x-for="meja in mejaTersedia.filter(m => m.capacity >= reservasi.jumlah_tamu)" :key="meja.id">
-                    <button type="button" @click="pilihMeja(meja)"
-                            class="border p-3 rounded-md text-center transition"
-                            :class="{ 
-                                'border-yellow-500 bg-yellow-50': reservasi.meja_id === meja.id,
-                                'border-gray-200 hover:border-yellow-300': reservasi.meja_id !== meja.id
-                            }">
-                        <span x-text="'Meja ' + meja.number" class="font-medium text-gray-800"></span>
-                        <span x-text="'(' + meja.capacity + ' orang)'" class="block text-xs text-gray-500"></span>
+            <h3 class="text-sm font-semibold mb-3 text-gray-600">Semua Meja</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <template x-for="meja in mejaTersedia" :key="meja.id">
+                    <button type="button" 
+                            @click="meja.is_available ? pilihMeja(meja) : null"
+                            class="border-2 p-4 rounded-lg text-center transition-all relative"
+                            :disabled="!meja.is_available"
+                            :class="getTableClasses(meja)">
+                        
+                        <!-- Check icon untuk meja dipilih -->
+                        <div x-show="reservasi.meja_id === meja.id" 
+                             class="absolute top-1 right-1 bg-yellow-500 rounded-full p-1">
+                            <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+
+                        <!-- Nomor Meja -->
+                        <div class="mb-2">
+                            <span x-text="'Meja ' + meja.number" 
+                                  class="font-bold text-lg"
+                                  :class="getTableTextClass(meja)"></span>
+                        </div>
+
+                        <!-- Kapasitas -->
+                        <div class="text-xs mb-1"
+                             :class="getTableTextClass(meja)">
+                            <span x-text="meja.capacity + ' orang'"></span>
+                        </div>
+
+                        <!-- Status Label -->
+                        <div class="mt-2 pt-2 border-t"
+                             :class="getTableBorderClass(meja)">
+                            <span class="text-xs font-medium"
+                                  :class="getTableTextClass(meja)"
+                                  x-text="getTableStatusLabel(meja)"></span>
+                        </div>
                     </button>
                 </template>
             </div>
+        </div>
+
+        <!-- Info Tambahan -->
+        <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+            <p class="text-xs text-yellow-800">
+                <strong>Catatan:</strong> Hanya meja dengan kapasitas mencukupi yang dapat dipilih. 
+                Meja berwarna hijau tersedia untuk dipilih.
+            </p>
         </div>
         
         <div class="flex justify-between mt-6 pt-4 border-t">
@@ -153,7 +233,7 @@
                         </p>
                         <p class="text-xs text-green-500 mt-1" x-show="reservasi.email && reservasi.email === '{{ Auth::user()->email }}'">
                             ✓ Menggunakan data dari profil Anda
-                        </p>
+                    </p>
                     </div>
                     
                     <div>
@@ -308,16 +388,18 @@
             <div class="bg-white p-4 rounded-md border border-gray-200">
                 <h3 class="text-sm font-semibold mb-3 text-gray-700">Gunakan Kode Promo</h3>
                 
-                <div class="flex space-x-2 mb-3">
+                <!-- Form input promo awal -->
+                <div class="flex space-x-2 mb-3" x-show="!reservasi.promo_terpakai">
                     <input type="text" x-model="reservasi.kode_promo" placeholder="Masukkan kode promo"
                            class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500">
                     <button type="button" @click="applyPromo()" 
-                            class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded transition font-medium"
-                            :disabled="!reservasi.kode_promo">
+                            class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded transition font-medium disabled:opacity-50"
+                            :disabled="!reservasi.kode_promo.trim()">
                         Terapkan
                     </button>
                 </div>
                 
+                <!-- Tampilkan promo yang sudah diterapkan -->
                 <template x-if="reservasi.promo_terpakai">
                     <div class="mt-3 p-3 bg-green-50 border border-green-200 rounded-md">
                         <div class="flex justify-between items-center">
@@ -325,13 +407,27 @@
                                 <span class="text-green-800 font-medium" x-text="reservasi.promo_terpakai.nama"></span>
                                 <p class="text-sm text-green-600" x-text="reservasi.promo_terpakai.deskripsi"></p>
                             </div>
-                            <button type="button" @click="hapusPromo()" class="text-red-500 hover:text-red-700">
-                                <i class="fas fa-times"></i>
+                            <button type="button" @click="hapusPromo()" 
+                                    class="text-red-500 hover:text-red-700 transition p-1 rounded-full hover:bg-red-50">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
                             </button>
                         </div>
                         <p class="text-xs text-green-600 mt-1" x-text="'Diskon: ' + reservasi.promo_terpakai.diskon_text"></p>
                     </div>
                 </template>
+                
+                <!-- Form input promo baru untuk mengganti -->
+                <div class="flex space-x-2 mt-3" x-show="reservasi.promo_terpakai">
+                    <input type="text" x-model="reservasi.kode_promo_baru" placeholder="Masukkan kode promo baru"
+                           class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500">
+                    <button type="button" @click="gantiPromo()" 
+                            class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition font-medium disabled:opacity-50"
+                            :disabled="!reservasi.kode_promo_baru?.trim()">
+                        Ganti Promo
+                    </button>
+                </div>
                 
                 <template x-if="promoError">
                     <div class="mt-3 p-3 bg-red-50 border border-red-200 rounded-md">
@@ -490,14 +586,15 @@
                 telepon: '',
                 catatan: '',
                 pesan_menu: false,
-                kode_promo: '',
+                kode_promo: '', // Untuk input awal
+                kode_promo_baru: '', // Untuk input ganti promo
                 promo_terpakai: null
             },
             konfirmasi: {
                 syarat: false,
                 pembayaran: false
             },
-            mejaTersedia: @json($tables),
+            mejaTersedia: JSON.parse(localStorage.getItem(`meja_tersedia_${ {{ Auth::id() }} }`)) || @json($tables),
             daftarMenu: @json($menus),
             pesananMenu: JSON.parse(localStorage.getItem(`pesananMenu_${ {{ Auth::id() }} }`)) || [],
             activeCategory: Object.keys(@json($menus))[0],
@@ -547,6 +644,12 @@
                     this.pesananMenu = JSON.parse(savedPesanan);
                 }
 
+                // Jika di step 2 dan ada data meja tersedia di localStorage, gunakan itu
+                const savedMejaTersedia = localStorage.getItem(`meja_tersedia_${this.userId}`);
+                if (savedMejaTersedia && this.step === 2) {
+                    this.mejaTersedia = JSON.parse(savedMejaTersedia);
+                }
+
                 if (this.step >= 5) {
                     this.calculatePrice();
                 }
@@ -584,7 +687,21 @@
                     const data = await response.json();
 
                     if (data.success) {
-                        this.mejaTersedia = data.available_tables;
+                        // Update mejaTersedia dengan semua meja + status
+                        this.mejaTersedia = data.all_tables;
+                        
+                        // Simpan data meja tersedia ke localStorage
+                        localStorage.setItem(`meja_tersedia_${this.userId}`, JSON.stringify(data.all_tables));
+                        
+                        // Reset pilihan meja jika sebelumnya dipilih meja yang sekarang tidak tersedia
+                        if (this.reservasi.meja_id) {
+                            const mejaYangDipilih = this.mejaTersedia.find(m => m.id === this.reservasi.meja_id);
+                            if (mejaYangDipilih && !mejaYangDipilih.is_available) {
+                                this.reservasi.meja_id = null;
+                                localStorage.setItem(`reservasi_data_${this.userId}`, JSON.stringify(this.reservasi));
+                            }
+                        }
+                        
                         localStorage.setItem(`reservasi_data_${this.userId}`, JSON.stringify({
                             tanggal: this.reservasi.tanggal,
                             waktu: this.reservasi.waktu,
@@ -601,6 +718,124 @@
                 } finally {
                     this.isLoading = false;
                 }
+            },
+
+            // Helper functions untuk styling meja berdasarkan status
+            getTableClasses(meja) {
+                if (this.reservasi.meja_id === meja.id) {
+                    return 'border-yellow-500 bg-yellow-50 shadow-md';
+                }
+                
+                if (meja.is_available) {
+                    return 'border-green-500 bg-green-50 hover:border-green-600 hover:shadow-md cursor-pointer';
+                }
+                
+                // Status tidak tersedia
+                const effectiveStatus = meja.effective_status;
+                
+                if (effectiveStatus === 'reserved_slot') {
+                    return 'border-red-500 bg-red-50 cursor-not-allowed opacity-60';
+                }
+                
+                if (meja.status === 'occupied') {
+                    return 'border-orange-500 bg-orange-50 cursor-not-allowed opacity-60';
+                }
+                
+                if (meja.status === 'maintenance') {
+                    return 'border-purple-500 bg-purple-50 cursor-not-allowed opacity-60';
+                }
+                
+                if (meja.status === 'reserved') {
+                    return 'border-red-500 bg-red-50 cursor-not-allowed opacity-60';
+                }
+                
+                // Kapasitas kurang atau status lainnya
+                return 'border-gray-400 bg-gray-100 cursor-not-allowed opacity-50';
+            },
+
+            getTableTextClass(meja) {
+                if (this.reservasi.meja_id === meja.id) {
+                    return 'text-yellow-700';
+                }
+                
+                if (meja.is_available) {
+                    return 'text-green-700';
+                }
+                
+                const effectiveStatus = meja.effective_status;
+                
+                if (effectiveStatus === 'reserved_slot') {
+                    return 'text-red-600';
+                }
+                
+                if (meja.status === 'occupied') {
+                    return 'text-orange-600';
+                }
+                
+                if (meja.status === 'maintenance') {
+                    return 'text-purple-600';
+                }
+                
+                if (meja.status === 'reserved') {
+                    return 'text-red-600';
+                }
+                
+                return 'text-gray-600';
+            },
+
+            getTableBorderClass(meja) {
+                if (this.reservasi.meja_id === meja.id) {
+                    return 'border-yellow-300';
+                }
+                
+                if (meja.is_available) {
+                    return 'border-green-300';
+                }
+                
+                const effectiveStatus = meja.effective_status;
+                
+                if (effectiveStatus === 'reserved_slot') {
+                    return 'border-red-300';
+                }
+                
+                if (meja.status === 'occupied') {
+                    return 'border-orange-300';
+                }
+                
+                if (meja.status === 'maintenance') {
+                    return 'border-purple-300';
+                }
+                
+                if (meja.status === 'reserved') {
+                    return 'border-red-300';
+                }
+                
+                return 'border-gray-300';
+            },
+
+            getTableStatusLabel(meja) {
+                if (this.reservasi.meja_id === meja.id) {
+                    return 'Dipilih';
+                }
+                
+                if (meja.is_capacity_insufficient && meja.status === 'available') {
+                    return 'Kapasitas Kurang';
+                }
+                
+                const effectiveStatus = meja.effective_status;
+                
+                if (effectiveStatus === 'reserved_slot') {
+                    return 'Sudah Dipesan';
+                }
+                
+                const statusLabels = {
+                    'available': 'Tersedia',
+                    'reserved': 'Sudah Dipesan',
+                    'occupied': 'Terisi',
+                    'maintenance': 'Maintenance'
+                };
+                
+                return statusLabels[meja.status] || meja.status;
             },
 
             async applyPromo() {
@@ -628,6 +863,8 @@
 
                     if (data.success) {
                         this.reservasi.promo_terpakai = data.promo;
+                        // Reset input kode promo setelah berhasil diterapkan
+                        this.reservasi.kode_promo = '';
                         await this.calculatePrice();
                         localStorage.setItem(`reservasi_data_${this.userId}`, JSON.stringify(this.reservasi));
                     } else {
@@ -637,6 +874,53 @@
                     console.error('Error:', error);
                     this.promoError = 'Terjadi kesalahan saat menerapkan promo';
                 }
+            },
+
+            async gantiPromo() {
+                this.promoError = null;
+                const kode = this.reservasi.kode_promo_baru.trim();
+                
+                if (!kode) {
+                    this.promoError = 'Masukkan kode promo baru';
+                    return;
+                }
+
+                try {
+                    const response = await fetch('{{ route("reservation.apply-promo") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            kode_promo: kode
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        this.reservasi.promo_terpakai = data.promo;
+                        // Reset input kode promo baru setelah berhasil diterapkan
+                        this.reservasi.kode_promo_baru = '';
+                        await this.calculatePrice();
+                        localStorage.setItem(`reservasi_data_${this.userId}`, JSON.stringify(this.reservasi));
+                    } else {
+                        this.promoError = data.message;
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    this.promoError = 'Terjadi kesalahan saat menerapkan promo';
+                }
+            },
+
+            hapusPromo() {
+                this.reservasi.promo_terpakai = null;
+                this.reservasi.kode_promo = '';
+                this.reservasi.kode_promo_baru = '';
+                this.promoError = null;
+                localStorage.setItem(`reservasi_data_${this.userId}`, JSON.stringify(this.reservasi));
+                this.calculatePrice();
             },
 
             async calculatePrice() {
@@ -651,7 +935,7 @@
                             pesan_menu: this.reservasi.pesan_menu,
                             menu_items: this.pesananMenu,
                             promo_id: this.reservasi.promo_terpakai?.id || null,
-                            promo_type: this.reservasi.promo_terpakai?.type || null,
+                            // HAPUS: promo_type karena tidak ada lagi
                             promo_discount: this.reservasi.promo_terpakai?.discount || null
                         })
                     });
@@ -803,13 +1087,6 @@
                 return meja ? meja.number : '';
             },
 
-            hapusPromo() {
-                this.reservasi.promo_terpakai = null;
-                this.reservasi.kode_promo = '';
-                localStorage.setItem(`reservasi_data_${this.userId}`, JSON.stringify(this.reservasi));
-                this.calculatePrice();
-            },
-
             async submitReservasiFinal() {
                 if (!this.konfirmasi.syarat || !this.konfirmasi.pembayaran) {
                     alert('Harap centang semua konfirmasi terlebih dahulu');
@@ -851,9 +1128,11 @@
                     const data = await response.json();
 
                     if (data.success) {
+                        // Hapus semua data dari localStorage setelah reservasi berhasil
                         localStorage.removeItem(`reservasi_data_${this.userId}`);
                         localStorage.removeItem(`pesananMenu_${this.userId}`);
                         localStorage.removeItem(`reservasi_step_${this.userId}`);
+                        localStorage.removeItem(`meja_tersedia_${this.userId}`);
                         
                         // Redirect ke success page
                         window.location.href = `/reservation/success/${data.reservation_id}`;
@@ -866,9 +1145,51 @@
                 } finally {
                     this.isLoading = false;
                 }
+            },
+
+            // Fungsi untuk refresh data meja jika diperlukan
+            async refreshMejaTersedia() {
+                if (!this.reservasi.tanggal || !this.reservasi.waktu || !this.reservasi.jumlah_tamu) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch('{{ route("reservation.check-availability") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            tanggal: this.reservasi.tanggal,
+                            waktu: this.reservasi.waktu,
+                            jumlah_tamu: this.reservasi.jumlah_tamu
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        this.mejaTersedia = data.all_tables;
+                        localStorage.setItem(`meja_tersedia_${this.userId}`, JSON.stringify(data.all_tables));
+                    }
+                } catch (error) {
+                    console.error('Error refresh meja:', error);
+                }
             }
         }
     }
+
+    // Tambahkan event listener untuk refresh data meja ketika page di-load
+    document.addEventListener('DOMContentLoaded', function() {
+        // Jika di step 2, coba refresh data meja setiap 30 detik
+        const app = document.querySelector('[x-data="reservasiApp()"]');
+        if (app && app.__x && app.__x.$data.step === 2) {
+            setInterval(() => {
+                app.__x.$data.refreshMejaTersedia();
+            }, 30000); // Refresh setiap 30 detik
+        }
+    });
 </script>
 <style>
     [x-cloak] { display: none !important; }

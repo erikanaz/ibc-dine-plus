@@ -57,11 +57,11 @@
             </div>
 
             <!-- Remember Me -->
-            <div class="flex items-center justify-between mb-6">
-                <label class="flex items-center">
+            <div class="flex items-center justify-end mb-6">
+                {{-- <label class="flex items-center">
                     <input type="checkbox" name="remember" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                     <span class="ml-2 text-sm text-gray-600">Ingat saya</span>
-                </label>
+                </label> --}}
                 @if (Route::has('password.request'))
                     <a href="{{ route('password.request') }}" class="text-sm text-blue-600 hover:underline">Lupa Password?</a>
                 @endif

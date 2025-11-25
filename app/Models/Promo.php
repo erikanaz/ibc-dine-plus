@@ -14,7 +14,6 @@ class Promo extends Model
         'promo_code',
         'description',
         'discount',
-        'type',
         'start_date',
         'end_date',
         'usage_limit',
@@ -23,8 +22,14 @@ class Promo extends Model
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
-        // 'discount' => 'decimal:2',
+        'discount' => 'decimal:2',
     ];
+
+    // Accessor untuk format diskon yang rapih
+    public function getDiscountFormattedAttribute()
+    {
+        return rtrim(rtrim(number_format($this->discount, 2), '0'), '.') . '%';
+    }
 
     // ✅ METHOD UNTUK CEK STATUS PROMO
     public function getIsActiveAttribute()

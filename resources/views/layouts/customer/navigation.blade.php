@@ -14,7 +14,7 @@
             <!-- Menu Desktop -->
             <div class="hidden md:flex items-center space-x-8">
                 @auth
-                    <a href="/homepage" class="font-medium {{ Request::is('homepage*') ? 'text-yellow-500' : 'hover:text-yellow-500' }} focus:outline-none focus:underline">Beranda</a>
+                    {{-- <a href="/homepage" class="font-medium {{ Request::is('homepage*') ? 'text-yellow-500' : 'hover:text-yellow-500' }} focus:outline-none focus:underline">Beranda</a> --}}
                     <a href="/member-dashboard" class="font-medium {{ Request::is('member-dashboard*') ? 'text-yellow-500' : 'hover:text-yellow-500' }} focus:outline-none focus:underline">Dashboard</a>
                     <a href="/reservation" class="font-medium {{ Request::is('reservation*') ? 'text-yellow-500' : 'hover:text-yellow-500' }} focus:outline-none focus:underline">Reservasi</a>
                     <!-- Tambahan Meja -->
@@ -46,8 +46,8 @@
                              x-transition:leave-end="opacity-0 translate-y-1"
                              class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 ring-1 ring-black ring-opacity-5"
                              x-cloak>
-                            <a href="/profile/edit" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-yellow-600 transition-colors focus:bg-gray-50 focus:text-yellow-600">Profil</a>
-                            <a href="/reservation/history" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-yellow-600 transition-colors focus:bg-gray-50 focus:text-yellow-600">Riwayat Reservasi</a>
+                            <a href="/profile/edit" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-yellow-600 transition-colors focus:bg-gray-50 focus:text-yellow-600">Akun Saya</a>
+                            <a href="/reservation/history" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-yellow-600 transition-colors focus:bg-gray-50 focus:text-yellow-600">Reservasi Saya</a>
                             {{-- <a href="/order-history" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-yellow-600 transition-colors focus:bg-gray-50 focus:text-yellow-600">Riwayat Pesanan</a> --}}
                             <div class="border-t border-gray-200 my-1"></div>
                             <form method="POST" action="{{ route('logout') }}">
@@ -121,7 +121,7 @@
              class="md:hidden mt-4 space-y-4 bg-white rounded-lg shadow-lg p-4 relative z-50"
              x-cloak>
             @auth
-                <a href="/homepage" class="block font-medium {{ Request::is('homepage*') ? 'text-yellow-500' : 'hover:text-yellow-500' }} px-4 py-2 rounded hover:bg-gray-50 focus:bg-gray-50">Beranda</a>
+                {{-- <a href="/homepage" class="block font-medium {{ Request::is('homepage*') ? 'text-yellow-500' : 'hover:text-yellow-500' }} px-4 py-2 rounded hover:bg-gray-50 focus:bg-gray-50">Beranda</a> --}}
                 <a href="/member-dashboard" class="block font-medium {{ Request::is('member-dashboard*') ? 'text-yellow-500' : 'hover:text-yellow-500' }} px-4 py-2 rounded hover:bg-gray-50 focus:bg-gray-50">Dashboard</a>
                 <a href="/reservation" class="block font-medium {{ Request::is('reservation*') ? 'text-yellow-500' : 'hover:text-yellow-500' }} px-4 py-2 rounded hover:bg-gray-50 focus:bg-gray-50">Reservasi</a>
                 <a href="/order" class="block font-medium {{ Request::is('order*') ? 'text-yellow-500' : 'hover:text-yellow-500' }} px-4 py-2 rounded hover:bg-gray-50 focus:bg-gray-50">Menu.</a>

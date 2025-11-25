@@ -40,33 +40,58 @@ class ReservationController extends Controller
     }
 
     public function checkAvailability(Request $request)
-    {
-        $request->validate([
-            'tanggal' => 'required|date',
-            'waktu' => 'required',
-            'jumlah_tamu' => 'required|integer|min:1'
-        ]);
+{
+    $request->validate([
+        'tanggal' => 'required|date',
+        'waktu' => 'required',
+        'jumlah_tamu' => 'required|integer|min:1'
+    ]);
 
-        $tanggal = $request->tanggal;
-        $waktu = $request->waktu;
-        $jumlahTamu = $request->jumlah_tamu;
+    $tanggal = $request->tanggal;
+    $waktu = $request->waktu;
+    $jumlahTamu = $request->jumlah_tamu;
 
-        // Cari meja yang tersedia pada tanggal dan waktu tertentu
-        $reservedTables = Reservation::where('reservation_date', $tanggal)
-            ->where('reservation_time', $waktu)
-            ->whereIn('status', ['pending', 'confirmed'])
-            ->pluck('table_id');
+    // Cari meja yang sudah direservasi pada tanggal dan waktu tertentu
+    $reservedTableIds = Reservation::where('reservation_date', $tanggal)
+        ->where('reservation_time', $waktu)
+        ->whereIn('status', ['pending', 'confirmed'])
+        ->pluck('table_id')
+        ->toArray();
 
-        $availableTables = Table::where('status', 'available')
-            ->where('capacity', '>=', $jumlahTamu)
-            ->whereNotIn('id', $reservedTables)
-            ->get();
+    // Ambil semua meja dengan tambahan info ketersediaan
+    $allTables = Table::all()->map(function ($table) use ($reservedTableIds, $jumlahTamu) {
+        $hasReservation = in_array($table->id, $reservedTableIds);
+        $isCapacitySufficient = $table->capacity >= $jumlahTamu;
+        
+        // Tentukan status efektif untuk UI
+        $effectiveStatus = $table->status;
+        if ($hasReservation) {
+            $effectiveStatus = 'reserved_slot'; // Reserved untuk waktu ini
+        }
+        
+        // Meja tersedia jika: status available, tidak ada reservasi, dan kapasitas cukup
+        $isAvailable = $table->status === 'available' && 
+                       !$hasReservation && 
+                       $isCapacitySufficient;
+        
+        return [
+            'id' => $table->id,
+            'number' => $table->number,
+            'capacity' => $table->capacity,
+            'status' => $table->status, // Status asli dari database
+            'effective_status' => $effectiveStatus, // Status untuk ditampilkan
+            'has_reservation' => $hasReservation,
+            'is_available' => $isAvailable,
+            'is_capacity_insufficient' => !$isCapacitySufficient,
+        ];
+    });
 
-        return response()->json([
-            'success' => true,
-            'available_tables' => $availableTables
-        ]);
-    }
+    return response()->json([
+        'success' => true,
+        'all_tables' => $allTables,
+        'guest_count' => $jumlahTamu
+    ]);
+}
 
     public function applyPromo(Request $request)
     {
@@ -109,11 +134,8 @@ class ReservationController extends Controller
                 'id' => $promo->id,
                 'nama' => $promo->promo_code,
                 'deskripsi' => $promo->description,
-                'type' => $promo->type,
                 'discount' => $promo->discount,
-                'diskon_text' => $promo->type === 'percent' ? 
-                    $promo->discount . '%' : 
-                    'Rp ' . number_format($promo->discount, 0, ',', '.')
+                'diskon_text' => $promo->discount . '%' // ✅ SELALU PERSENTASE
             ]
         ]);
     }
@@ -124,7 +146,6 @@ class ReservationController extends Controller
             'pesan_menu' => 'required|boolean',
             'menu_items' => 'nullable|array',
             'promo_id' => 'nullable|exists:promos,id',
-            'promo_type' => 'nullable|string',
             'promo_discount' => 'nullable|numeric'
         ]);
 
@@ -132,7 +153,6 @@ class ReservationController extends Controller
         $menuItems = $request->menu_items ?? [];
         $promo = $request->promo_id ? [
             'id' => $request->promo_id,
-            'type' => $request->promo_type,
             'discount' => $request->promo_discount
         ] : null;
 
@@ -150,14 +170,10 @@ class ReservationController extends Controller
             }
         }
 
-        // Hitung diskon promo untuk pesanan menu
+        // Hitung diskon promo (PERSENTASE)
         $diskonPromo = 0;
         if ($promo && $pesanMenu) {
-            if ($promo['type'] === 'percent') {
-                $diskonPromo = $subtotalPesanan * ($promo['discount'] / 100);
-            } else {
-                $diskonPromo = min($promo['discount'], $subtotalPesanan);
-            }
+            $diskonPromo = $subtotalPesanan * ($promo['discount'] / 100);
         }
 
         $totalPesanan = max(0, $subtotalPesanan - $diskonPromo);
@@ -169,14 +185,10 @@ class ReservationController extends Controller
             $dp = 300000; // DP fixed untuk reservasi tanpa makanan
         }
 
-        // Hitung diskon promo untuk DP (hanya jika tidak pesan menu)
+        // Hitung diskon DP (PERSENTASE)
         $diskonDP = 0;
         if ($promo && !$pesanMenu) {
-            if ($promo['type'] === 'percent') {
-                $diskonDP = $dp * ($promo['discount'] / 100);
-            } else {
-                $diskonDP = min($promo['discount'], $dp);
-            }
+            $diskonDP = $dp * ($promo['discount'] / 100);
         }
 
         $totalDP = max(0, $dp - $diskonDP);
@@ -216,7 +228,7 @@ class ReservationController extends Controller
         DB::beginTransaction();
 
         try {
-            // Hitung DP awal
+            // Hitung DP awal (untuk validasi)
             $dpAwal = 0;
             if ($validated['with_preorder'] && isset($validated['menu_items']) && !empty($validated['menu_items'])) {
                 $totalPesanan = 0;
@@ -229,21 +241,47 @@ class ReservationController extends Controller
                         $totalPesanan += $item['jumlah'] * $menu->price;
                     }
                 }
+                
+                // Apply promo discount jika ada
+                if ($validated['promo_id']) {
+                    $promo = Promo::find($validated['promo_id']);
+                    if ($promo) {
+                        $totalPesanan = $totalPesanan * (1 - ($promo->discount / 100));
+                    }
+                }
+                
                 $dpAwal = $totalPesanan * 0.3;
             } else {
                 $dpAwal = 300000;
+                
+                // Apply promo discount untuk DP fixed jika ada
+                if ($validated['promo_id']) {
+                    $promo = Promo::find($validated['promo_id']);
+                    if ($promo) {
+                        $dpAwal = max(0, $dpAwal - ($dpAwal * ($promo->discount / 100)));
+                    }
+                }
             }
 
-            // ✅ PERBAIKI: Gunakan format yang tepat untuk payment_deadline
+            // Validasi DP dari frontend dengan perhitungan backend
+            if (abs($validated['down_payment'] - $dpAwal) > 100) { // Toleransi 100 rupiah
+                Log::warning('DP mismatch', [
+                    'frontend_dp' => $validated['down_payment'],
+                    'backend_dp' => $dpAwal,
+                    'user_id' => Auth::id()
+                ]);
+            }
+
+            // Set payment deadline
             $paymentDeadline = now()->addHours(24);
             
             // Debug detail
             Log::info('=== RESERVATION CREATION DEBUG ===');
-            Log::info('Payment Deadline Carbon: ' . $paymentDeadline);
-            Log::info('Payment Deadline Format: ' . $paymentDeadline->format('Y-m-d H:i:s'));
-            Log::info('Payment Deadline ISO: ' . $paymentDeadline->toISOString());
-            Log::info('Payment Deadline Timestamp: ' . $paymentDeadline->timestamp);
-            Log::info('Created by: customer');
+            Log::info('Payment Deadline: ' . $paymentDeadline->format('Y-m-d H:i:s'));
+            Log::info('DP from Frontend: ' . $validated['down_payment']);
+            Log::info('DP Calculated: ' . $dpAwal);
+            Log::info('With Preorder: ' . ($validated['with_preorder'] ? 'Yes' : 'No'));
+            Log::info('Promo ID: ' . ($validated['promo_id'] ?? 'None'));
 
             // Data untuk create reservation
             $reservationData = [
@@ -257,9 +295,9 @@ class ReservationController extends Controller
                 'guest_count' => $validated['guest_count'],
                 'notes' => $validated['notes'] ?? null,
                 'promo_id' => $validated['promo_id'] ?? null,
-                'total_DP' => $validated['down_payment'],
+                'total_DP' => $validated['down_payment'], // Gunakan DP dari frontend
                 'status' => 'waiting_payment',
-                'payment_deadline' => $paymentDeadline, // Pastikan ini ada
+                'payment_deadline' => $paymentDeadline,
                 'created_by' => 'customer',
             ];
 
@@ -272,7 +310,6 @@ class ReservationController extends Controller
             Log::info('=== AFTER RESERVATION CREATION ===');
             Log::info('Reservation ID: ' . $reservation->id);
             Log::info('Payment Deadline from DB: ' . $reservation->payment_deadline);
-            Log::info('Raw Payment Deadline: ' . $reservation->getRawOriginal('payment_deadline'));
             Log::info('Status: ' . $reservation->status);
 
             // Update usage limit promo
@@ -280,25 +317,34 @@ class ReservationController extends Controller
                 $promo = Promo::find($validated['promo_id']);
                 if ($promo && $promo->usage_limit !== null) {
                     $promo->decrement('usage_limit');
+                    Log::info('Promo usage decremented', [
+                        'promo_id' => $promo->id,
+                        'new_usage_limit' => $promo->usage_limit
+                    ]);
                 }
             }
 
             // Buat payment untuk DP
-            // $payment = Payment::create([
-            //     'reservation_id' => $reservation->id,
-            //     'amount' => $validated['down_payment'],
-            //     'status' => 'pending',
-            //     'payment_proof' => null,
-            //     'bank_name' => 'BCA',
-            //     'account_number' => '1234567890',
-            //     'account_name' => 'IBC Batu Tulis',
-            //     'notes' => 'Down Payment (DP) Reservasi',
-            // ]);
+            $payment = Payment::create([
+                'reservation_id' => $reservation->id,
+                'amount' => $validated['down_payment'],
+                'status' => 'pending',
+                'payment_proof' => null,
+                'bank_name' => 'BCA',
+                'account_number' => '1234567890',
+                'account_name' => 'IBC Batu Tulis',
+                'notes' => 'Down Payment (DP) Reservasi',
+            ]);
 
-            // ✅ MEJA TETAP AVAILABLE UNTUK CUSTOMER
+            Log::info('Payment created', [
+                'payment_id' => $payment->id,
+                'amount' => $payment->amount,
+                'status' => $payment->status
+            ]);
+
+            // Meja tetap available untuk customer reservation
             Table::where('id', $validated['table_id'])->update(['status' => 'available']);
             Log::info("Meja {$validated['table_id']} tetap available (customer reservation)");
-
 
             // Jika ada pre-order menu, buat order
             if ($validated['with_preorder'] && isset($validated['menu_items']) && !empty($validated['menu_items'])) {
@@ -318,11 +364,14 @@ class ReservationController extends Controller
                 if ($validated['promo_id']) {
                     $promo = Promo::find($validated['promo_id']);
                     if ($promo) {
-                        if ($promo->type === 'percent') {
-                            $totalPriceAfterDiscount = $totalPriceBeforeDiscount * (1 - ($promo->discount / 100));
-                        } else {
-                            $totalPriceAfterDiscount = max(0, $totalPriceBeforeDiscount - $promo->discount);
-                        }
+                        // HANYA PERSENTASE
+                        $totalPriceAfterDiscount = $totalPriceBeforeDiscount * (1 - ($promo->discount / 100));
+                        Log::info('Promo applied to order', [
+                            'promo_id' => $promo->id,
+                            'discount_percent' => $promo->discount,
+                            'total_before' => $totalPriceBeforeDiscount,
+                            'total_after' => $totalPriceAfterDiscount
+                        ]);
                     }
                 }
 
@@ -331,6 +380,11 @@ class ReservationController extends Controller
                     'reservation_id' => $reservation->id,
                     'total_price' => $totalPriceAfterDiscount,
                     'notes' => 'Pre-order dari reservasi',
+                ]);
+
+                Log::info('Order created', [
+                    'order_id' => $order->id,
+                    'total_price' => $order->total_price
                 ]);
 
                 foreach ($validated['menu_items'] as $item) {
@@ -344,6 +398,10 @@ class ReservationController extends Controller
                         ]);
                     }
                 }
+
+                Log::info('Order items created', [
+                    'count' => count($validated['menu_items'])
+                ]);
             }
 
             DB::commit();
@@ -352,7 +410,7 @@ class ReservationController extends Controller
             Log::info('=== FINAL CHECK ===');
             $finalReservation = Reservation::find($reservation->id);
             Log::info('Final Payment Deadline: ' . $finalReservation->payment_deadline);
-            Log::info('Final Raw Payment Deadline: ' . $finalReservation->getRawOriginal('payment_deadline'));
+            Log::info('Final Status: ' . $finalReservation->status);
 
             return response()->json([
                 'success' => true,

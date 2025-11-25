@@ -10,48 +10,43 @@ use Illuminate\Support\Carbon;
 class PromoController extends Controller
 {
     public function index(Request $request)
-{
-    $query = Promo::query()->orderBy('created_at', 'desc');
+    {
+        $query = Promo::query()->orderBy('created_at', 'desc');
 
-    // Apply search filter
-    if ($request->has('search') && $request->search != '') {
-        $search = $request->search;
-        $query->where(function($q) use ($search) {
-            $q->where('promo_code', 'like', "%{$search}%")
-              ->orWhere('description', 'like', "%{$search}%");
-        });
+        // Apply search filter
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('promo_code', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        // Apply status filter jika ada
+        if ($request->has('status') && $request->status != '') {
+            $query->where('status', $request->status);
+        }
+
+        $promos = $query->paginate(10);
+
+        // Hitung statistik dari semua data
+        $allPromos = Promo::all();
+        
+        $activePromosCount = $allPromos->filter(function($promo) {
+            return $promo->status === 'active' && $promo->can_be_used;
+        })->count();
+
+        $expiredPromosCount = $allPromos->where('status', 'expired')->count();
+        $upcomingPromosCount = $allPromos->where('status', 'upcoming')->count();
+
+        return view('admin.promos.index', compact(
+            'promos', 
+            'activePromosCount',
+            'expiredPromosCount',
+            'upcomingPromosCount'
+        ));
     }
 
-    // Apply status filter jika ada
-    if ($request->has('status') && $request->status != '') {
-        $query->where('status', $request->status);
-    }
-
-    // Apply type filter jika ada
-    if ($request->has('type') && $request->type != '') {
-        $query->where('type', $request->type);
-    }
-
-    $promos = $query->paginate(10);
-
-    // Hitung statistik dari semua data (bukan hanya yang dipaginasi)
-    $allPromos = Promo::all();
-    
-    $activePromosCount = $allPromos->filter(function($promo) {
-        return $promo->status === 'active';
-    })->count();
-    
-    $percentPromosCount = $allPromos->where('type', 'percent')->count();
-    $fixedPromosCount = $allPromos->where('type', 'fixed')->count();
-
-    return view('admin.promos.index', compact(
-        'promos', 
-        'activePromosCount',
-        'percentPromosCount', 
-        'fixedPromosCount'
-    ));
-}
-    // Method lainnya tetap sama...
     public function create()
     {
         return view('admin.promos.create');
@@ -62,8 +57,7 @@ class PromoController extends Controller
         $validated = $request->validate([
             'promo_code' => 'required|string|max:50|unique:promos,promo_code',
             'description' => 'nullable|string',
-            'discount' => 'required|numeric|min:0',
-            'type' => 'required|in:percent,fixed',
+            'discount' => 'required|numeric|min:0|max:100', // ✅ UBAH DI SINI
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'usage_limit' => 'nullable|integer|min:1',
@@ -85,8 +79,7 @@ class PromoController extends Controller
         $validated = $request->validate([
             'promo_code' => 'required|string|max:50|unique:promos,promo_code,' . $promo->id,
             'description' => 'nullable|string',
-            'discount' => 'required|numeric|min:0',
-            'type' => 'required|in:percent,fixed',
+            'discount' => 'required|numeric|min:0|max:100', // ✅ UBAH DI SINI
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'usage_limit' => 'nullable|integer|min:1',
@@ -101,7 +94,7 @@ class PromoController extends Controller
     public function destroy(Promo $promo)
     {
         // Cek apakah promo sudah digunakan
-        if ($promo->reservations()->count() > 0) {
+        if ($promo->used_count > 0) {
             return redirect()->route('admin.promos.index')
                 ->with('error', 'Tidak dapat menghapus promo yang sudah digunakan dalam reservasi.');
         }
