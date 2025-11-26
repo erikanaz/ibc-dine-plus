@@ -38,8 +38,11 @@ class DashboardController extends Controller
             })
             ->count();
         
-        // Poin Member (jika ada sistem poin)
-        $memberPoints = $user->points ?? 0;
+        // RESERVASI BULAN INI - GANTI POIN MEMBER
+        $monthlyReservations = Reservation::where('user_id', $user->id)
+            ->whereYear('reservation_date', now()->year)
+            ->whereMonth('reservation_date', now()->month)
+            ->count();
         
         // Reservasi Completed
         $completedReservations = Reservation::where('user_id', $user->id)
@@ -130,12 +133,10 @@ class DashboardController extends Controller
                 return $promo;
             });
 
-        
-        
         return view('customer.member-dashboard', compact(
             'totalReservations',
             'activeReservations',
-            'memberPoints',
+            'monthlyReservations', // GANTI: monthlyReservations bukan memberPoints
             'completedReservations',
             'totalSpent',
             'upcomingReservations',
@@ -221,7 +222,10 @@ class DashboardController extends Controller
                         });
                 })
                 ->count(),
-            'member_points' => $user->points ?? 0,
+            'monthly_reservations' => Reservation::where('user_id', $user->id)
+                ->whereYear('reservation_date', now()->year)
+                ->whereMonth('reservation_date', now()->month)
+                ->count(), // GANTI: monthly_reservations bukan member_points
             'completed_reservations' => Reservation::where('user_id', $user->id)
                 ->where('status', 'completed')
                 ->count(),
