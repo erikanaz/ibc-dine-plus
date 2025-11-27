@@ -104,6 +104,14 @@ class Promo extends Model
         });
     }
 
+    public function scopeAvailable($query)
+    {
+        return $query->active()->where(function($q) {
+            $q->where('usage_limit', '>', 0)
+            ->orWhereNull('usage_limit');
+        });
+    }
+
 
     // Relasi dengan reservations (jika ada)
     public function reservations()

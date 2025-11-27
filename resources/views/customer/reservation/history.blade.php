@@ -209,10 +209,10 @@
                         <div>
                             <p class="text-sm font-medium text-gray-500">Pembayaran DP</p>
                             <p class="text-gray-800 font-semibold" 
-                               x-text="'Rp ' + formatCurrency(reservation.total_DP)"></p>
-                            <p class="text-sm" 
-                               :class="getPaymentStatusClass(reservation.payments[0]?.status)">
-                                <span x-text="getPaymentStatusText(reservation.payments[0]?.status)"></span>
+                            x-text="'Rp ' + formatCurrency(reservation.total_DP)"></p>
+                            <p class="text-sm font-medium" 
+                            :class="getPaymentStatusClass(reservation)">
+                                <span x-text="getPaymentStatusText(reservation)"></span>
                             </p>
                         </div>
 
@@ -480,22 +480,83 @@
                         </template>
 
                         <!-- Pembayaran -->
+                        <!-- Pembayaran -->
                         <div class="border-t pt-4">
                             <p class="text-sm font-medium text-gray-700 mb-2">Pembayaran DP:</p>
                             <div class="grid md:grid-cols-2 gap-4">
                                 <div>
                                     <p class="text-sm text-gray-500">Total DP</p>
                                     <p class="font-medium text-gray-800" 
-                                       x-text="'Rp ' + formatCurrency(selectedReservation.total_DP)"></p>
+                                    x-text="'Rp ' + formatCurrency(selectedReservation.total_DP)"></p>
                                 </div>
                                 <div>
                                     <p class="text-sm text-gray-500">Status Pembayaran</p>
                                     <span class="px-2 py-1 rounded-full text-xs font-medium" 
-                                          :class="getPaymentStatusClass(selectedReservation.payments[0]?.status)"
-                                          x-text="getPaymentStatusText(selectedReservation.payments[0]?.status)"></span>
+                                        :class="getPaymentStatusClass(selectedReservation)"
+                                        x-text="getPaymentStatusText(selectedReservation)"></span>
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </template>
+
+                <!-- Di dalam MODAL DETAIL - Tambahkan setelah section Pembayaran -->
+
+                <!-- Bukti Pembayaran - Versi Minimalis -->
+                <template x-if="selectedReservation.payments && selectedReservation.payments.length > 0">
+                    <div class="border-t pt-4 mt-4">
+                        <p class="text-sm font-medium text-gray-700 mb-2">Bukti Pembayaran:</p>
+                        
+                        <!-- Sudah Upload Bukti -->
+                        <template x-if="selectedReservation.payments[0].payment_proof">
+                            <div class="flex items-center justify-between bg-green-50 rounded-lg p-3 border border-green-200">
+                                <div class="flex items-center space-x-3">
+                                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                    <span class="text-sm text-green-700">Bukti transfer tersedia</span>
+                                </div>
+                                <a :href="'/storage/' + selectedReservation.payments[0].payment_proof" 
+                                target="_blank"
+                                class="inline-flex items-center text-sm text-green-600 hover:text-green-800 font-medium transition">
+                                    Lihat
+                                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                    </svg>
+                                </a>
+                            </div>
+                        </template>
+                        
+                        <!-- Belum Upload Bukti (Waiting Payment) -->
+                        <template x-if="!selectedReservation.payments[0].payment_proof && selectedReservation.status === 'waiting_payment'">
+                            <div class="flex items-center justify-between bg-orange-50 rounded-lg p-3 border border-orange-200">
+                                <div class="flex items-center space-x-3">
+                                    <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <span class="text-sm text-orange-700">Belum upload bukti transfer</span>
+                                </div>
+                                <a :href="'/reservation/payment/' + selectedReservation.id" 
+                                class="inline-flex items-center text-sm text-orange-600 hover:text-orange-800 font-medium transition">
+                                    Upload
+                                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                    </svg>
+                                </a>
+                            </div>
+                        </template>
+
+                        <!-- Tidak Perlu Upload (Status Lain) -->
+                        <template x-if="!selectedReservation.payments[0].payment_proof && selectedReservation.status !== 'waiting_payment'">
+                            <div class="flex items-center justify-between bg-gray-50 rounded-lg p-3 border border-gray-200">
+                                <div class="flex items-center space-x-3">
+                                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <span class="text-sm text-gray-600">Tidak diperlukan bukti transfer</span>
+                                </div>
+                            </div>
+                        </template>
                     </div>
                 </template>
             </div>
@@ -666,25 +727,85 @@ function reservationHistory() {
             return texts[status] || status;
         },
 
-        getPaymentStatusClass(status) {
-            const classes = {
-                'verifying': 'text-yellow-600',
-                'verified': 'text-blue-600',
-                'paid': 'text-green-600',
-                'failed': 'text-red-600'
-            };
-            return classes[status] || 'text-gray-600';
-        },
+        // getPaymentStatusClass(status) {
+        //     const classes = {
+        //         'verifying': 'text-yellow-600',
+        //         'verified': 'text-blue-600',
+        //         'paid': 'text-green-600',
+        //         'failed': 'text-red-600'
+        //     };
+        //     return classes[status] || 'text-gray-600';
+        // },
 
-        getPaymentStatusText(status) {
+        // getPaymentStatusText(status) {
+        //     const texts = {
+        //         'pending': 'Belum Bayar',
+        //         'verifying': 'Menunggu Verifikasi',
+        //         'verified': 'Terverifikasi',
+        //         'paid': 'Lunas',
+        //         'failed': 'Gagal'
+        //     };
+        //     return texts[status] || 'Belum Bayar';
+        // },
+
+        getPaymentStatusText(reservation) {
+            // ✅ PRIORITAS: Gunakan latest_payment_status dari backend
+            if (reservation.latest_payment_status) {
+                const texts = {
+                    'pending': 'Belum Bayar',
+                    'verifying': 'Menunggu Verifikasi',
+                    'verified': 'DP Terverifikasi', 
+                    'paid': 'Lunas', // ✅ INI YANG AKAN DITAMPILKAN
+                    'failed': 'Gagal'
+                };
+                return texts[reservation.latest_payment_status] || 'Belum Bayar';
+            }
+            
+            // ✅ FALLBACK: Jika reservasi confirmed/completed, asumsikan lunas
+            if (['confirmed', 'completed'].includes(reservation.status)) {
+                return 'Lunas';
+            }
+            
+            // ✅ FALLBACK 2: Gunakan payment array lama
+            const paymentStatus = reservation.payments[0]?.status;
             const texts = {
                 'pending': 'Belum Bayar',
                 'verifying': 'Menunggu Verifikasi',
-                'verified': 'Terverifikasi',
-                'paid': 'Lunas',
+                'verified': 'DP Terverifikasi',
+                'paid': 'Lunas', // ✅ INI YANG AKAN DITAMPILKAN
                 'failed': 'Gagal'
             };
-            return texts[status] || 'Belum Bayar';
+            return texts[paymentStatus] || 'Belum Bayar';
+        },
+
+        getPaymentStatusClass(reservation) {
+            // ✅ PRIORITAS: Gunakan latest_payment_status dari backend
+            if (reservation.latest_payment_status) {
+                const classes = {
+                    'verifying': 'text-yellow-600 font-medium',
+                    'verified': 'text-blue-600 font-medium',
+                    'paid': 'text-green-600 font-medium', // ✅ HIJAU UNTUK LUNAS
+                    'failed': 'text-red-600 font-medium',
+                    'pending': 'text-gray-600 font-medium'
+                };
+                return classes[reservation.latest_payment_status] || 'text-gray-600 font-medium';
+            }
+            
+            // ✅ FALLBACK: Jika reservasi confirmed/completed, hijau (lunas)
+            if (['confirmed', 'completed'].includes(reservation.status)) {
+                return 'text-green-600 font-medium';
+            }
+            
+            // ✅ FALLBACK 2: Gunakan payment array lama
+            const paymentStatus = reservation.payments[0]?.status;
+            const classes = {
+                'verifying': 'text-yellow-600 font-medium',
+                'verified': 'text-blue-600 font-medium',
+                'paid': 'text-green-600 font-medium', // ✅ HIJAU UNTUK LUNAS
+                'failed': 'text-red-600 font-medium',
+                'pending': 'text-gray-600 font-medium'
+            };
+            return classes[paymentStatus] || 'text-gray-600 font-medium';
         },
 
         formatDate(dateString) {

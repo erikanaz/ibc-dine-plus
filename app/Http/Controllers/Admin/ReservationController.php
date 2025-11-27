@@ -83,58 +83,82 @@ class ReservationController extends Controller
     }
 
     public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'customer_name' => 'required|string|max:255',
-            'customer_phone' => 'required|string|max:20',
-            'customer_email' => 'required|email|max:255',
-            'table_id' => 'required|exists:tables,id',
-            'reservation_date' => 'required|date',
-            'reservation_time' => 'required',
-            'guest_count' => 'required|integer|min:1',
-            'notes' => 'nullable|string',
-            'promo_id' => 'nullable|exists:promos,id',
-            'total_DP' => 'required|numeric|min:0',
-            'status' => 'required|in:pending,confirmed,cancelled,completed',
-            'menus' => 'required|array|min:1',
-            'menus.*.menu_id' => 'required|exists:menus,id',
-            'menus.*.quantity' => 'required|integer|min:1',
+{
+    $validated = $request->validate([
+        'customer_name' => 'required|string|max:255',
+        'customer_phone' => 'required|string|max:20',
+        'customer_email' => 'required|email|max:255',
+        'table_id' => 'required|exists:tables,id',
+        'reservation_date' => 'required|date',
+        'reservation_time' => 'required',
+        'guest_count' => 'required|integer|min:1',
+        'notes' => 'nullable|string',
+        'promo_id' => 'nullable|exists:promos,id',
+        'total_DP' => 'required|numeric|min:0',
+        'status' => 'required|in:pending,confirmed,cancelled,completed',
+        'menus' => 'sometimes|array', // Ubah dari required menjadi sometimes
+        'menus.*.menu_id' => 'required_with:menus|exists:menus,id',
+        'menus.*.quantity' => 'required_with:menus|integer|min:1',
+        'payment_proof' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048', // Tambah validasi file
+    ]);
+
+    DB::transaction(function () use ($validated, $request) {
+        // 1. CREATE RESERVASI
+        $reservation = Reservation::create([
+            'customer_name' => $validated['customer_name'],
+            'customer_phone' => $validated['customer_phone'],
+            'customer_email' => $validated['customer_email'],
+            'table_id' => $validated['table_id'],
+            'reservation_date' => $validated['reservation_date'],
+            'reservation_time' => $validated['reservation_time'],
+            'guest_count' => $validated['guest_count'],
+            'notes' => $validated['notes'] ?? null,
+            'promo_id' => $validated['promo_id'] ?? null,
+            'total_DP' => $validated['total_DP'],
+            'status' => $validated['status'],
+            'user_id' => null,
+            'created_by' => 'admin',
         ]);
 
-        DB::transaction(function () use ($validated) {
-            // Tentukan created_by - admin area pasti dibuat oleh admin
-            $createdBy = 'admin';
-            $status = 'confirmed'; // Admin langsung confirm
-
-            // 1. CREATE RESERVASI
-            $reservation = Reservation::create([
-                'customer_name' => $validated['customer_name'],
-                'customer_phone' => $validated['customer_phone'],
-                'customer_email' => $validated['customer_email'],
-                'table_id' => $validated['table_id'],
-                'reservation_date' => $validated['reservation_date'],
-                'reservation_time' => $validated['reservation_time'],
-                'guest_count' => $validated['guest_count'],
-                'notes' => $validated['notes'],
-                'promo_id' => $validated['promo_id'],
-                'total_DP' => $validated['total_DP'],
-                'status' => $validated['status'],
-                'user_id' => null,
-                'created_by' => 'admin',
-                // 'user_id' => auth()->id(),
-                'created_by' => $createdBy, // 'admin'
+        // 2. HANDLE PAYMENT PROOF UPLOAD
+        if ($request->hasFile('payment_proof')) {
+            $paymentProofPath = $request->file('payment_proof')->store('payment-proofs', 'public');
+            
+            // Create payment record
+            $reservation->payments()->create([
+                'amount' => $validated['total_DP'],
+                'payment_method' => 'transfer',
+                // ✅ PERBAIKAN: GUNAKAN 'paid' UNTUK STATUS CONFIRMED
+                'status' => $validated['status'] == 'confirmed' ? 'paid' : 'verifying',
+                'proof_image' => $paymentProofPath,
+                'paid_at' => $validated['total_DP'] > 0 ? now() : null,
+                'verified_at' => $validated['status'] == 'confirmed' ? now() : null,
+                // 'verified_by' => $validated['status'] == 'confirmed' ? auth()->id() : null,
             ]);
+        } else if ($validated['total_DP'] > 0) {
+            // Create payment record without proof
+            $reservation->payments()->create([
+                'amount' => $validated['total_DP'],
+                'payment_method' => 'transfer',
+                // ✅ PERBAIKAN: GUNAKAN 'paid' UNTUK STATUS CONFIRMED
+                'status' => $validated['status'] == 'confirmed' ? 'paid' : 'verifying',
+                'paid_at' => now(),
+                'verified_at' => $validated['status'] == 'confirmed' ? now() : null,
+                // 'verified_by' => $validated['status'] == 'confirmed' ? auth()->id() : null,
+            ]);
+        }
 
-            // 2. HITUNG TOTAL HARGA DARI MENU
+        // 3. HANDLE MENU ORDER JIKA ADA
+        if (!empty($validated['menus'])) {
             $totalPrice = 0;
             foreach ($validated['menus'] as $menuItem) {
                 $menu = Menu::find($menuItem['menu_id']);
                 $totalPrice += $menu->price * $menuItem['quantity'];
             }
 
-            // 3. APPLY PROMO JIKA ADA
+            // 4. APPLY PROMO JIKA ADA
             $finalTotal = $totalPrice;
-            if ($validated['promo_id']) {
+            if (!empty($validated['promo_id'])) {
                 $promo = Promo::find($validated['promo_id']);
                 if ($promo) {
                     if ($promo->type == 'percent') {
@@ -143,18 +167,20 @@ class ReservationController extends Controller
                     } else {
                         $finalTotal = $totalPrice - $promo->discount;
                     }
+                    // Ensure final total is not negative
+                    $finalTotal = max(0, $finalTotal);
                 }
             }
 
-            // 4. CREATE ORDER
+            // 5. CREATE ORDER
             $order = Order::create([
                 'reservation_id' => $reservation->id,
                 'user_id' => null,
                 'total_price' => $finalTotal,
-                'notes' => $validated['notes'],
+                'notes' => $validated['notes'] ?? null,
             ]);
 
-            // 5. CREATE ORDER ITEMS
+            // 6. CREATE ORDER ITEMS
             foreach ($validated['menus'] as $menuItem) {
                 $menu = Menu::find($menuItem['menu_id']);
                 
@@ -165,18 +191,17 @@ class ReservationController extends Controller
                     'price' => $menu->price,
                 ]);
             }
+        }
 
-            // 6. UPDATE TABLE STATUS JIKA RESERVASI CONFIRMED
-            if ($validated['status'] == 'confirmed') {
-                Table::where('id', $validated['table_id'])->update(['status' => 'reserved']);
-            } else {
-                Table::where('id', $validated['table_id'])->update(['status' => 'available']);
-            }
-        });
+        // 7. UPDATE TABLE STATUS JIKA RESERVASI CONFIRMED
+        if ($validated['status'] == 'confirmed') {
+            Table::where('id', $validated['table_id'])->update(['status' => 'reserved']);
+        }
+    });
 
-        return redirect()->route('admin.reservations.index')
-            ->with('success', 'Reservasi beserta pesanan berhasil dibuat.');
-    }
+    return redirect()->route('admin.reservations.index')
+        ->with('success', 'Reservasi berhasil dibuat.');
+}
 
     public function show(Reservation $reservation)
     {
@@ -258,19 +283,28 @@ class ReservationController extends Controller
                 if ($payment) {
                     switch ($newStatus) {
                         case 'confirmed':
-                            if ($payment->status === 'verifying') {
-                                $payment->update(['status' => 'verified']);
-                            }
+                            // ✅ GUNAKAN 'paid' BUKAN 'verified'
+                            $payment->update([
+                                'status' => 'paid',
+                                'verified_at' => now(),
+                                // 'verified_by' => auth()->id()
+                            ]);
                             break;
                         case 'completed':
-                        if (in_array($payment->status, ['verifying', 'verified'])) {
-                            $payment->update(['status' => 'paid']);
-                        }
-                        break;
-                        
+                            // ✅ GUNAKAN 'paid' UNTUK STATUS COMPLETED JUGA
+                            if (in_array($payment->status, ['verifying', 'verified'])) {
+                                $payment->update(['status' => 'paid']);
+                            }
+                            break;
                         case 'cancelled':
                         case 'expired':
                             $payment->update(['status' => 'failed']);
+                            break;
+                        case 'pending':
+                            // Jika kembali ke pending, payment kembali ke verifying
+                            if ($payment->status === 'paid') {
+                                $payment->update(['status' => 'verifying']);
+                            }
                             break;
                     }
                 }
@@ -412,30 +446,31 @@ class ReservationController extends Controller
             $payment = $reservation->payments()->first();
 
             if ($payment) {
-            switch ($newStatus) {
-                case 'confirmed':
-                    // Jika reservasi dikonfirmasi, payment dianggap verified
-                    if ($payment->status === 'verifying') {
-                        $payment->update(['status' => 'verified']);
-                    }
-                    break;
-                case 'completed':
-                    // Jika reservasi completed, payment dianggap paid
-                    if (in_array($payment->status, ['verifying', 'verified'])) {
-                        $payment->update(['status' => 'paid']);
-                    }
-                    break;
-                case 'cancelled':
-                case 'expired':
-                    // Jika reservasi dibatalkan/expired, payment dianggap failed
-                    $payment->update(['status' => 'failed']);
-                    break;
-                case 'pending':
-                    // Jika kembali ke pending, payment kembali ke verifying
-                    if ($payment->status === 'verified') {
-                        $payment->update(['status' => 'verifying']);
-                    }
-                    break;
+                switch ($newStatus) {
+                    case 'confirmed':
+                        // ✅ GUNAKAN 'paid' BUKAN 'verified'
+                        $payment->update([
+                            'status' => 'paid',
+                            'verified_at' => now(),
+                            // 'verified_by' => auth()->id()
+                        ]);
+                        break;
+                    case 'completed':
+                        // ✅ GUNAKAN 'paid' UNTUK STATUS COMPLETED JUGA
+                        if (in_array($payment->status, ['verifying', 'verified'])) {
+                            $payment->update(['status' => 'paid']);
+                        }
+                        break;
+                    case 'cancelled':
+                    case 'expired':
+                        $payment->update(['status' => 'failed']);
+                        break;
+                    case 'pending':
+                        // Jika kembali ke pending, payment kembali ke verifying
+                        if ($payment->status === 'paid') {
+                            $payment->update(['status' => 'verifying']);
+                        }
+                        break;
                 }
             }
 

@@ -394,7 +394,7 @@
                                     @endif
 
                                     <!-- Admin Actions untuk Payment -->
-                                    @if($payment->status === 'pending')
+                                    {{-- @if($payment->status === 'pending')
                                     <div class="flex space-x-2 mt-3 pt-3 border-t border-gray-200">
                                         <form action="{{ route('admin.payments.approve', $payment->id) }}" method="POST" class="flex-1">
                                             @csrf
@@ -414,7 +414,7 @@
                                             </button>
                                         </form>
                                     </div>
-                                    @endif
+                                    @endif --}}
                                 </div>
                                 @endforeach
                             </div>
