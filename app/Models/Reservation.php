@@ -25,6 +25,7 @@ class Reservation extends Model
         'status',
         'payment_deadline',
         'created_by',
+        'fully_paid_at',
     ];
 
     protected $casts = [
@@ -33,6 +34,7 @@ class Reservation extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'total_DP' => 'decimal:2',
+        'fully_paid_at' => 'datetime'
     ];
 
     protected $attributes = [
@@ -51,7 +53,12 @@ class Reservation extends Model
         'can_cancel',
         'can_complete',
         'initial_dp',
-        'discount_amount'
+        'discount_amount',
+        'remaining_payment',
+        'total_amount',
+        'is_fully_paid',
+        'order_subtotal', // ✅ TAMBAH INI
+        'calculated_discount' // ✅ TAMBAH INI
     ];
 
     // Relasi ke user
@@ -94,7 +101,7 @@ class Reservation extends Model
         return $total;
     }
 
-    // Accessor untuk total_price
+    // Accessor untuk total_price (AMBIL DARI DATABASE - SUDAH DISKON)
     public function getTotalPriceAttribute()
     {
         return $this->orders->sum('total_price');
@@ -185,9 +192,26 @@ class Reservation extends Model
     }
 
     /**
-     * Hitung jumlah diskon yang diberikan
+     * ✅ ACCESSOR BARU: Hitung subtotal order (sebelum diskon)
      */
-    public function getDiscountAmountAttribute()
+    public function getOrderSubtotalAttribute()
+    {
+        if ($this->orders->count() > 0) {
+            $subtotal = 0;
+            foreach ($this->orders as $order) {
+                foreach ($order->orderItems as $item) {
+                    $subtotal += $item->price * $item->qty;
+                }
+            }
+            return $subtotal;
+        }
+        return 0;
+    }
+
+    /**
+     * ✅ ACCESSOR BARU: Hitung diskon yang sebenarnya
+     */
+    public function getCalculatedDiscountAttribute()
     {
         if (!$this->promo_id) {
             return 0;
@@ -198,35 +222,33 @@ class Reservation extends Model
             return 0;
         }
 
-        // Hitung DP awal (sebelum diskon)
-        $dpAwal = $this->calculateInitialDP();
+        $subtotal = $this->order_subtotal;
 
-        // Hitung diskon berdasarkan type promo
         if ($promo->type === 'percent') {
-            return $dpAwal * ($promo->discount / 100);
+            return $subtotal * ($promo->discount / 100);
         } else {
-            return min($promo->discount, $dpAwal);
+            return min($promo->discount, $subtotal);
         }
     }
 
     /**
-     * Hitung DP awal sebelum diskon
+     * ❌ DEPRECATED: Method lama - diganti dengan calculated_discount
+     */
+    public function getDiscountAmountAttribute()
+    {
+        return $this->calculated_discount;
+    }
+
+    /**
+     * ❌ DEPRECATED: Method lama yang menyebabkan masalah
      */
     public function calculateInitialDP()
     {
-        // Jika ada pre-order, hitung dari total pesanan
+        // JANGAN gunakan ini untuk perhitungan diskon
+        // Hanya untuk keperluan display saja
         if ($this->orders->count() > 0) {
-            $order = $this->orders->first();
-            
-            // Hitung total pesanan sebelum diskon dari order items
-            $totalBeforeDiscount = 0;
-            foreach ($order->orderItems as $item) {
-                $totalBeforeDiscount += $item->qty * $item->price;
-            }
-            
-            return $totalBeforeDiscount * 0.3; // 30% dari total pesanan
+            return $this->order_subtotal * 0.3;
         } else {
-            // Untuk reservasi tanpa pre-order
             return 300000;
         }
     }
@@ -239,7 +261,7 @@ class Reservation extends Model
         return $this->calculateInitialDP();
     }
 
-    // Di model Reservation.php
+    // Auto cancel jika expired
     public function checkAndCancelIfExpired()
     {
         if ($this->status === 'waiting_payment' && 
@@ -251,5 +273,55 @@ class Reservation extends Model
             return true;
         }
         return false;
+    }
+
+    /**
+     * ✅ ACCESSOR BARU: Hitung sisa pembayaran (FIXED)
+     */
+    public function getRemainingPaymentAttribute()
+    {
+        // ✅ GUNAKAN TOTAL_PRICE YANG SUDAH DISKON DARI DATABASE
+        $totalAfterDiscount = $this->total_price;
+        
+        return max(0, $totalAfterDiscount - $this->total_DP);
+    }
+
+    /**
+     * ✅ ACCESSOR BARU: Hitung total amount (setelah promo) - FIXED
+     */
+    public function getTotalAmountAttribute()
+    {
+        // ✅ GUNAKAN TOTAL_PRICE YANG SUDAH DISKON DARI DATABASE
+        return $this->total_price;
+    }
+
+    /**
+     * ✅ ACCESSOR BARU: Cek apakah sudah lunas
+     */
+    public function getIsFullyPaidAttribute()
+    {
+        return $this->remaining_payment <= 0 && $this->fully_paid_at !== null;
+    }
+
+    /**
+     * ✅ METHOD BARU: Untuk debug perhitungan
+     */
+    public function getCalculationDetails()
+    {
+        $order = $this->orders->first();
+        
+        return [
+            'order_subtotal' => $this->order_subtotal,
+            'calculated_discount' => $this->calculated_discount,
+            'total_price_from_db' => $order ? $order->total_price : 0,
+            'total_DP' => $this->total_DP,
+            'remaining_payment' => $this->remaining_payment,
+            'total_amount' => $this->total_amount,
+            'promo_applied' => $this->promo ? [
+                'name' => $this->promo->name,
+                'type' => $this->promo->type,
+                'discount' => $this->promo->discount
+            ] : null
+        ];
     }
 }

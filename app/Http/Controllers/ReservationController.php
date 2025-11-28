@@ -172,23 +172,29 @@ class ReservationController extends Controller
 
         // Hitung diskon promo (PERSENTASE)
         $diskonPromo = 0;
-        if ($promo && $pesanMenu) {
-            $diskonPromo = $subtotalPesanan * ($promo->discount / 100);
+        if ($promo) {
+            if ($pesanMenu) {
+                // ✅ DISKON DITERAPKAN KE SUBTOTAL PESANAN
+                $diskonPromo = $subtotalPesanan * ($promo->discount / 100);
+            } else {
+                // ✅ DISKON DITERAPKAN KE DP FIXED
+                $diskonPromo = 300000 * ($promo->discount / 100);
+            }
         }
 
         $totalPesanan = max(0, $subtotalPesanan - $diskonPromo);
 
         // Hitung DP
         if ($pesanMenu) {
-            $dp = $totalPesanan * 0.3; // 30% dari total pesanan
+            $dp = $totalPesanan * 0.3; // 30% dari total pesanan SETELAH DISKON
         } else {
             $dp = 300000; // DP fixed untuk reservasi tanpa makanan
         }
 
-        // Hitung diskon DP (PERSENTASE)
+        // Hitung diskon DP - PERBAIKAN: HANYA untuk reservasi TANPA makanan
         $diskonDP = 0;
         if ($promo && !$pesanMenu) {
-            $diskonDP = $dp * ($promo->discount / 100); // PERBAIKAN: $promo->discount bukan $promo['discount']
+            $diskonDP = $dp * ($promo->discount / 100);
         }
 
         $totalDP = max(0, $dp - $diskonDP);

@@ -81,6 +81,15 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'role:admin']], func
 
     Route::patch('/reservations/{reservation}/status', [AdminReservationController::class, 'updateStatus'])->name('admin.reservations.update-status');
 
+    // ✅ TAMBAH ROUTE BARU INI
+    Route::post('/reservations/{reservation}/record-full-payment', [AdminReservationController::class, 'recordFullPayment'])->name('admin.reservations.record-full-payment');
+    // Tambah route baru
+    // Route::post('/reservations/{reservation}/add-on-site-order', [AdminReservationController::class, 'addOnSiteOrder'])->name('admin.reservations.add-on-site-order');
+    // ✅ ADD THESE MISSING ROUTES FOR ON-SITE ORDER MANAGEMENT
+    Route::post('/reservations/{reservation}/add-on-site-order', [AdminReservationController::class, 'addOnSiteOrder'])->name('admin.reservations.add-on-site-order');
+    Route::put('/reservations/{reservation}/order-items/{orderItem}/edit', [AdminReservationController::class, 'editOnSiteOrder'])->name('admin.reservations.edit-order-item');
+    Route::delete('/reservations/{reservation}/order-items/{orderItem}', [AdminReservationController::class, 'deleteOnSiteOrder'])->name('admin.reservations.delete-order-item');
+
     // Order
     // Route::resource('orders', OrderController::class);
     // Route::get('/orders/{order}/print', [OrderController::class, 'printInvoice'])->name('orders.print');    

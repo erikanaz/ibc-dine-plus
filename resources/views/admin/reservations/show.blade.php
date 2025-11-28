@@ -38,8 +38,6 @@
                     </div>
                 </div>
                 <div class="flex space-x-3">
-                    {{-- TOMBOL EDIT DIHAPUS UNTUK ADMIN --}}
-                    
                     <a href="{{ route('admin.reservations.invoice', $reservation->id) }}" 
                     target="_blank"
                     class="btn-secondary flex items-center">
@@ -143,7 +141,7 @@
                                     <i class="fas fa-tag text-green-500"></i>
                                     <span class="font-medium text-gray-900">{{ $reservation->promo->promo_code }}</span>
                                     <span class="text-sm text-green-600">
-                                        ({{ $reservation->promo->type == 'percent' ? $reservation->promo->discount . '%' : 'Rp ' . number_format($reservation->promo->discount, 0, ',', '.') }})
+                                        ({{ $reservation->promo->discount }}%)
                                     </span>
                                 </div>
                                 <p class="text-xs text-gray-500 mt-1">{{ $reservation->promo->description }}</p>
@@ -169,7 +167,85 @@
                             <i class="fas fa-utensils text-orange-500 mr-2"></i>
                             Pesanan Menu
                         </h3>
-                        {{-- TOMBOL TAMBAH MENU DIHAPUS UNTUK ADMIN --}}
+                        
+                        <!-- Tombol Tambah Pesanan -->
+                        @if(in_array($reservation->status, ['confirmed', 'pending']))
+                        <button type="button" 
+                                onclick="openAddMenuModal()"
+                                class="bg-primary text-white py-2 px-4 rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center">
+                            <i class="fas fa-plus mr-2"></i>
+                            Tambah Pesanan
+                        </button>
+                        @endif
+                    </div>
+                    
+                    <!-- Modal Tambah Pesanan -->
+                    <div id="addMenuModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
+                        <div class="bg-white rounded-xl shadow-lg max-w-md w-full">
+                            <div class="p-6">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h3 class="text-lg font-bold text-gray-800">Tambah Pesanan Menu</h3>
+                                    <button type="button" 
+                                            onclick="closeAddMenuModal()"
+                                            class="text-gray-400 hover:text-gray-600">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                
+                                <form action="{{ route('admin.reservations.add-on-site-order', $reservation->id) }}" method="POST">
+                                    @csrf
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Pilih Menu</label>
+                                            <select name="menu_id" 
+                                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" required>
+                                                <option value="">-- Pilih Menu --</option>
+                                                @foreach($menus as $menu)
+                                                    <option value="{{ $menu->id }}" 
+                                                            data-price="{{ $menu->price }}">
+                                                        {{ $menu->name }} - Rp {{ number_format($menu->price, 0, ',', '.') }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Jumlah</label>
+                                            <input type="number" 
+                                                   name="quantity" 
+                                                   value="1" 
+                                                   min="1" 
+                                                   max="20"
+                                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" 
+                                                   required>
+                                        </div>
+                                        
+                                        <div class="bg-gray-50 rounded-lg p-3">
+                                            <div class="flex justify-between text-sm">
+                                                <span class="text-gray-600">Harga per item:</span>
+                                                <span id="pricePreview" class="font-medium">Rp 0</span>
+                                            </div>
+                                            <div class="flex justify-between text-sm mt-1">
+                                                <span class="text-gray-600">Subtotal:</span>
+                                                <span id="subtotalPreview" class="font-bold text-primary">Rp 0</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex space-x-3 mt-6">
+                                        <button type="button"
+                                                onclick="closeAddMenuModal()"
+                                                class="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors">
+                                            Batal
+                                        </button>
+                                        <button type="submit" 
+                                                class="flex-1 bg-primary text-white py-2 px-4 rounded-lg font-medium hover:bg-primary/90 transition-colors">
+                                            Tambah ke Pesanan
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
                     </div>
                     
                     @php
@@ -179,7 +255,7 @@
                     @if($order && $order->orderItems->count() > 0)
                         <div class="space-y-3">
                             @foreach($order->orderItems as $item)
-                                <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                                <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors group">
                                     <div class="flex items-center space-x-4 flex-1">
                                         <div class="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
                                             <i class="fas fa-utensil-spoon text-white"></i>
@@ -190,20 +266,64 @@
                                             @if($item->menu->description)
                                                 <p class="text-xs text-gray-400 mt-1">{{ Str::limit($item->menu->description, 50) }}</p>
                                             @endif
+                                            <div class="flex items-center space-x-2 mt-2">
+                                                <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                                    <i class="fas fa-clock mr-1"></i>
+                                                    @if($item->created_at->diffInMinutes(now()) < 5)
+                                                        Baru ditambahkan
+                                                    @else
+                                                        Ditambahkan: {{ $item->created_at->format('H:i') }}
+                                                    @endif
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                     
                                     <div class="flex items-center space-x-4">
-                                        <div class="text-right">
-                                            <div class="text-sm text-gray-600">
-                                                {{ $item->qty }} × Rp {{ number_format($item->price, 0, ',', '.') }}
-                                            </div>
-                                            <div class="font-bold text-primary text-lg">
-                                                Rp {{ number_format($item->price * $item->qty, 0, ',', '.') }}
+                                        <!-- Quantity & Edit -->
+                                        <div class="flex items-center space-x-2">
+                                            <div class="text-right">
+                                                <div class="text-sm text-gray-600 mb-1">
+                                                    <form action="{{ route('admin.reservations.edit-order-item', [$reservation->id, $item->id]) }}" 
+                                                          method="POST" 
+                                                          class="inline"
+                                                          onsubmit="return confirm('Update quantity {{ $item->menu->name }}?')">
+                                                        @csrf
+                                                        @method('PUT')
+                                                        <div class="flex items-center space-x-2">
+                                                            <span class="text-xs text-gray-500">Qty:</span>
+                                                            <input type="number" 
+                                                                   name="quantity" 
+                                                                   value="{{ $item->qty }}" 
+                                                                   min="1" 
+                                                                   max="20"
+                                                                   class="w-16 border border-gray-300 rounded px-2 py-1 text-sm text-center focus:outline-none focus:ring-1 focus:ring-primary">
+                                                            <button type="submit" 
+                                                                    class="text-blue-600 hover:text-blue-800 transition-colors p-1 rounded hover:bg-blue-50"
+                                                                    title="Update Quantity">
+                                                                <i class="fas fa-check text-xs"></i>
+                                                            </button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                                <div class="font-bold text-primary text-lg">
+                                                    Rp {{ number_format($item->price * $item->qty, 0, ',', '.') }}
+                                                </div>
                                             </div>
                                         </div>
                                         
-                                        {{-- TOMBOL EDIT/HAPUS MENU DIHAPUS UNTUK ADMIN --}}
+                                        <!-- Tombol Hapus -->
+                                        <form action="{{ route('admin.reservations.delete-order-item', [$reservation->id, $item->id]) }}" 
+                                              method="POST"
+                                              onsubmit="return confirm('Hapus {{ $item->menu->name }} dari pesanan?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" 
+                                                    class="text-red-600 hover:text-red-800 transition-colors p-2 rounded-full hover:bg-red-50"
+                                                    title="Hapus Pesanan">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
                                     </div>
                                 </div>
                             @endforeach
@@ -219,12 +339,23 @@
                                 <div class="text-xs text-gray-500 mt-1 text-right">
                                     {{ $order->orderItems->sum('qty') }} porsi total
                                 </div>
+                                
+                                <!-- Info Actions -->
+                                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3">
+                                    <div class="flex items-center text-blue-800">
+                                        <i class="fas fa-info-circle mr-2"></i>
+                                        <span class="text-sm">Klik quantity untuk edit, atau tombol trash untuk hapus pesanan</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     @else
                         <div class="text-center py-8 text-gray-500">
                             <i class="fas fa-shopping-cart text-4xl mb-3 text-gray-300"></i>
                             <p class="text-gray-400">Belum ada pesanan menu</p>
+                            @if(in_array($reservation->status, ['confirmed', 'pending']))
+                            <p class="text-sm text-gray-500 mt-2">Klik "Tambah Pesanan" untuk menambah menu</p>
+                            @endif
                         </div>
                     @endif
                 </div>
@@ -242,77 +373,90 @@
                     <div class="space-y-4">
                         <!-- Ringkasan Biaya -->
                         <div class="space-y-3">
-                            @if($order)
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600">Total Pesanan:</span>
-                                    <span class="font-medium">
-                                        Rp {{ number_format($order->total_price, 0, ',', '.') }}
-                                    </span>
-                                </div>
+                            @php
+                                $order = $reservation->orders->first();
                                 
-                                @if($reservation->promo)
-                                <div class="flex justify-between text-green-600">
-                                    <span>Diskon Promo:</span>
-                                    <span class="font-medium">
-                                        -Rp 
-                                        @if($reservation->promo->type == 'percent')
-                                            {{ number_format(($order->total_price * $reservation->promo->discount / 100), 0, ',', '.') }}
-                                        @else
-                                            {{ number_format($reservation->promo->discount, 0, ',', '.') }}
-                                        @endif
-                                    </span>
-                                </div>
+                                // ✅ BENAR: Hitung subtotal dari item (sebelum diskon)
+                                $subtotal = 0;
+                                if ($order && $order->orderItems->count() > 0) {
+                                    foreach ($order->orderItems as $item) {
+                                        $subtotal += $item->price * $item->qty;
+                                    }
+                                }
                                 
-                                <div class="flex justify-between border-t border-gray-200 pt-2">
-                                    <span class="font-medium">Total Setelah Diskon:</span>
-                                    <span class="font-medium">
-                                        @php
-                                            $discountedTotal = $reservation->promo->type == 'percent' 
-                                                ? $order->total_price * (1 - $reservation->promo->discount / 100)
-                                                : max(0, $order->total_price - $reservation->promo->discount);
-                                        @endphp
-                                        Rp {{ number_format($discountedTotal, 0, ',', '.') }}
-                                    </span>
-                                </div>
-                                @endif
+                                // ✅ BENAR: Total setelah diskon (ambil dari database)
+                                $totalAfterDiscount = $order ? $order->total_price : 0;
                                 
-                                <div class="flex justify-between text-orange-600 border-t border-gray-200 pt-2">
-                                    <span>DP Dibayar:</span>
-                                    <span class="font-medium">-Rp {{ number_format($reservation->total_DP, 0, ',', '.') }}</span>
-                                </div>
+                                // ✅ BENAR: Hitung diskon yang sebenarnya
+                                $actualDiscount = $subtotal - $totalAfterDiscount;
                                 
-                                <div class="flex justify-between border-t border-gray-200 pt-2 font-bold">
-                                    @php
-                                        $finalTotal = $discountedTotal ?? $order->total_price;
-                                        $remaining = $finalTotal - $reservation->total_DP;
-                                    @endphp
-                                    <span>Sisa Pembayaran:</span>
-                                    <span class="text-lg 
-                                        @if($remaining <= 0) text-green-600 
-                                        @else text-red-600 @endif">
-                                        Rp {{ number_format($remaining, 0, ',', '.') }}
-                                    </span>
-                                </div>
+                                // ✅ BENAR: Sisa pembayaran
+                                $remaining = $totalAfterDiscount - $reservation->total_DP;
+                            @endphp
 
-                                @if($remaining <= 0)
-                                    <div class="bg-green-50 border border-green-200 rounded-lg p-3 mt-2">
-                                        <div class="flex items-center text-green-800">
-                                            <i class="fas fa-check-circle mr-2"></i>
-                                            <span class="text-sm font-medium">Lunas</span>
-                                        </div>
-                                    </div>
-                                @else
-                                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-2">
-                                        <div class="flex items-center text-yellow-800">
-                                            <i class="fas fa-exclamation-triangle mr-2"></i>
-                                            <span class="text-sm font-medium">Belum Lunas</span>
-                                        </div>
-                                    </div>
-                                @endif
-                            @else
-                                <div class="text-center py-4 text-gray-500">
-                                    <i class="fas fa-receipt text-2xl mb-2 text-gray-300"></i>
-                                    <p>Belum ada pesanan</p>
+                            <!-- Tampilkan subtotal (sebelum diskon) -->
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">
+                                    @if($order && $order->orderItems->count() > 0)
+                                        Subtotal Pesanan:
+                                    @else
+                                        Biaya Reservasi:
+                                    @endif
+                                </span>
+                                <span class="font-medium">
+                                    Rp {{ number_format($subtotal, 0, ',', '.') }}
+                                </span>
+                            </div>
+                            
+                            <!-- Diskon Promo -->
+                            @if($reservation->promo && $actualDiscount > 0)
+                            <div class="flex justify-between text-green-600">
+                                <span>Diskon {{ $reservation->promo->name }} ({{ $reservation->promo->discount }}%):</span>
+                                <span class="font-medium">
+                                    -Rp {{ number_format($actualDiscount, 0, ',', '.') }}
+                                </span>
+                            </div>
+                            @endif
+                            
+                            <!-- Total Setelah Diskon -->
+                            <div class="flex justify-between border-t border-gray-200 pt-2 font-medium">
+                                <span>Total Setelah Diskon:</span>
+                                <span class="text-primary">
+                                    Rp {{ number_format($totalAfterDiscount, 0, ',', '.') }}
+                                </span>
+                            </div>
+                            
+                            <!-- DP yang sudah dibayar -->
+                            <div class="flex justify-between text-orange-600">
+                                <span>DP Dibayar (30%):</span>
+                                <span class="font-medium">-Rp {{ number_format($reservation->total_DP, 0, ',', '.') }}</span>
+                            </div>
+                            
+                            <!-- Sisa Pembayaran -->
+                            <div class="flex justify-between border-t border-gray-200 pt-2 font-bold text-lg">
+                                <span>Sisa Pembayaran:</span>
+                                <span class="@if($remaining <= 0) text-green-600 @else text-red-600 @endif">
+                                    Rp {{ number_format($remaining, 0, ',', '.') }}
+                                </span>
+                            </div>
+
+                            <!-- Status Lunas/Belum -->
+                            @if($reservation->is_fully_paid)
+                                <div class="bg-green-50 border border-green-200 rounded-lg p-3 mt-2 text-center">
+                                    <p class="text-sm text-green-700">
+                                        <i class="fas fa-check-circle mr-1"></i>
+                                        <strong>LUNAS</strong>
+                                        @if($reservation->fully_paid_at)
+                                            - Dibayar pada: {{ $reservation->fully_paid_at->format('d M Y H:i') }}
+                                        @endif
+                                    </p>
+                                </div>
+                            @elseif($remaining > 0)
+                                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-2 text-center">
+                                    <p class="text-sm text-yellow-700">
+                                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                                        Belum lunas. Sisa bayar: <strong>Rp {{ number_format($remaining, 0, ',', '.') }}</strong>
+                                    </p>
                                 </div>
                             @endif
                         </div>
@@ -322,7 +466,7 @@
                         <div class="border-t border-gray-200 pt-4 mt-4">
                             <h4 class="font-bold mb-3 flex items-center text-gray-800">
                                 <i class="fas fa-file-invoice-dollar text-blue-500 mr-2"></i>
-                                Bukti Pembayaran DP
+                                Bukti Pembayaran
                             </h4>
                             
                             <div class="space-y-3">
@@ -337,6 +481,15 @@
                                             <p class="text-lg font-bold text-primary">
                                                 Rp {{ number_format($payment->amount, 0, ',', '.') }}
                                             </p>
+                                            @if($payment->payment_type === 'final')
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                    Pembayaran Final
+                                                </span>
+                                            @else
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                                    DP
+                                                </span>
+                                            @endif
                                         </div>
                                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium 
                                             @if($payment->status === 'verifying') bg-yellow-100 text-yellow-800
@@ -385,36 +538,6 @@
                                         </div>
                                     </div>
                                     @endif
-
-                                    <!-- Catatan -->
-                                    @if($payment->notes)
-                                    <div class="p-2 bg-blue-50 rounded border border-blue-200">
-                                        <p class="text-xs text-blue-700">{{ $payment->notes }}</p>
-                                    </div>
-                                    @endif
-
-                                    <!-- Admin Actions untuk Payment -->
-                                    {{-- @if($payment->status === 'pending')
-                                    <div class="flex space-x-2 mt-3 pt-3 border-t border-gray-200">
-                                        <form action="{{ route('admin.payments.approve', $payment->id) }}" method="POST" class="flex-1">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button type="submit" 
-                                                    class="w-full bg-green-100 text-green-700 py-2 px-3 rounded text-sm font-medium hover:bg-green-200 transition-colors flex items-center justify-center">
-                                                <i class="fas fa-check mr-2"></i> Setujui
-                                            </button>
-                                        </form>
-                                        <form action="{{ route('admin.payments.reject', $payment->id) }}" method="POST" class="flex-1">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button type="submit" 
-                                                    onclick="return confirm('Yakin ingin menolak pembayaran ini?')"
-                                                    class="w-full bg-red-100 text-red-700 py-2 px-3 rounded text-sm font-medium hover:bg-red-200 transition-colors flex items-center justify-center">
-                                                <i class="fas fa-times mr-2"></i> Tolak
-                                            </button>
-                                        </form>
-                                    </div>
-                                    @endif --}}
                                 </div>
                                 @endforeach
                             </div>
@@ -433,36 +556,6 @@
                         @endif
                     </div>
                 </div>
-
-                <!-- Informasi Sistem -->
-                {{-- <div class="bg-white rounded-xl shadow p-6">
-                    <h3 class="text-lg font-bold mb-4 flex items-center text-gray-800">
-                        <i class="fas fa-cog text-gray-500 mr-2"></i>
-                        Informasi Sistem
-                    </h3>
-                    
-                    <div class="space-y-3 text-sm">
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Dibuat:</span>
-                            <span class="text-gray-900">{{ $reservation->created_at->format('d M Y H:i') }}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Diupdate:</span>
-                            <span class="text-gray-900">{{ $reservation->updated_at->format('d M Y H:i') }}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Status Sistem:</span>
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                                @if($reservation->status === 'waiting_payment') bg-blue-100 text-blue-800
-                                @elseif($reservation->status === 'pending') bg-yellow-100 text-yellow-800
-                                @elseif($reservation->status === 'confirmed') bg-green-100 text-green-800
-                                @elseif($reservation->status === 'completed') bg-blue-100 text-blue-800
-                                @elseif(in_array($reservation->status, ['cancelled', 'expired'])) bg-red-100 text-red-800 @endif">
-                                {{ $reservation->status_label }}
-                            </span>
-                        </div>
-                    </div>
-                </div> --}}
 
                 <!-- Quick Actions -->
                 <div class="bg-white rounded-xl shadow p-6">
@@ -542,6 +635,51 @@
                                 </button>
                             </form>
                         @endif
+
+                        <!-- Pembayaran Final Section -->
+                        @if(in_array($reservation->status, ['confirmed', 'pending']) && $reservation->remaining_payment > 0)
+                        <div class="border-t border-gray-200 pt-4 mt-4">
+                            <h4 class="font-bold mb-3 flex items-center text-gray-800">
+                                <i class="fas fa-cash-register text-green-500 mr-2"></i>
+                                Pembayaran Final
+                            </h4>
+                            
+                            <form action="{{ route('admin.reservations.record-full-payment', $reservation->id) }}" 
+                                method="POST" 
+                                onsubmit="return confirm('Konfirmasi: Reservasi #{{ $reservation->id }} sudah bayar lunas?\n\nMeja {{ $reservation->table->number }} akan dikosongkan.\nTotal: Rp {{ number_format($reservation->remaining_payment, 0, ',', '.') }}')">
+                                @csrf
+                                <button type="submit" 
+                                        class="w-full bg-green-100 text-green-700 py-3 rounded-lg font-medium hover:bg-green-200 transition-colors flex items-center justify-center mb-2">
+                                    <i class="fas fa-check-circle mr-2"></i>
+                                    Tandai Sudah Bayar Lunas
+                                </button>
+                            </form>
+                            
+                            <div class="text-center text-xs text-gray-500 bg-gray-50 rounded-lg p-2">
+                                <div class="font-medium">Detail Pembayaran:</div>
+                                <div>DP: Rp {{ number_format($reservation->total_DP, 0, ',', '.') }}</div>
+                                <div>Sisa: Rp {{ number_format($reservation->remaining_payment, 0, ',', '.') }}</div>
+                                <div class="font-bold mt-1">Total: Rp {{ number_format($totalAfterDiscount, 0, ',', '.') }}</div>
+                            </div>
+                        </div>
+                        @endif
+
+                        @if($reservation->is_fully_paid)
+                        <div class="border-t border-gray-200 pt-4 mt-4">
+                            <div class="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                                <i class="fas fa-check-circle text-green-500 text-2xl mb-2"></i>
+                                <p class="font-bold text-green-800 text-lg">LUNAS</p>
+                                <p class="text-sm text-green-600 mt-1">
+                                    <i class="fas fa-calendar mr-1"></i>
+                                    Dibayar pada: {{ $reservation->fully_paid_at->format('d M Y H:i') }}
+                                </p>
+                                <p class="text-xs text-green-500 mt-2">
+                                    <i class="fas fa-table mr-1"></i>
+                                    Meja {{ $reservation->table->number }} sudah dikosongkan
+                                </p>
+                            </div>
+                        </div>
+                        @endif
                         
                         <!-- Hapus Reservasi -->
                         <form action="{{ route('admin.reservations.destroy', $reservation->id) }}" method="POST" class="w-full"
@@ -557,6 +695,23 @@
                 </div>
             </div>
         </div>
+
+        <!-- Debug Info (Optional) -->
+        {{-- @if(env('APP_DEBUG'))
+        <div class="bg-gray-100 border border-gray-300 rounded-lg p-4 mt-6">
+            <h4 class="font-bold mb-2 text-gray-700">Debug Info:</h4>
+            <div class="text-xs font-mono space-y-1">
+                <div>Subtotal (before discount): Rp {{ number_format($subtotal, 0, ',', '.') }}</div>
+                <div>Total from DB (after discount): Rp {{ number_format($totalAfterDiscount, 0, ',', '.') }}</div>
+                <div>Actual Discount: Rp {{ number_format($actualDiscount, 0, ',', '.') }}</div>
+                <div>DP Paid: Rp {{ number_format($reservation->total_DP, 0, ',', '.') }}</div>
+                <div>Remaining: Rp {{ number_format($remaining, 0, ',', '.') }}</div>
+                @if($reservation->promo)
+                <div>Promo: {{ $reservation->promo->name }} ({{ $reservation->promo->discount }}%)</div>
+                @endif
+            </div>
+        </div>
+        @endif --}}
     </div>
 
     <!-- Modal untuk gambar bukti pembayaran -->
@@ -599,18 +754,89 @@
         document.body.style.overflow = 'auto';
     }
 
-    // Close modal dengan ESC key
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            closeImageModal();
-        }
-    });
+    // Modal Tambah Pesanan
+    function openAddMenuModal() {
+        document.getElementById('addMenuModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        updatePricePreview();
+    }
 
-    // Close modal ketika klik di luar gambar
-    document.getElementById('imageModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeImageModal();
+    function closeAddMenuModal() {
+        document.getElementById('addMenuModal').classList.add('hidden');
+        document.body.style.overflow = 'auto';
+    }
+
+    // Update price preview
+    function updatePricePreview() {
+        const menuSelect = document.querySelector('select[name="menu_id"]');
+        const quantityInput = document.querySelector('input[name="quantity"]');
+        const pricePreview = document.getElementById('pricePreview');
+        const subtotalPreview = document.getElementById('subtotalPreview');
+        
+        const selectedOption = menuSelect.options[menuSelect.selectedIndex];
+        const price = selectedOption ? selectedOption.getAttribute('data-price') : 0;
+        const quantity = quantityInput ? quantityInput.value : 1;
+        
+        pricePreview.textContent = 'Rp ' + parseInt(price).toLocaleString('id-ID');
+        subtotalPreview.textContent = 'Rp ' + (price * quantity).toLocaleString('id-ID');
+    }
+
+    // Auto submit quantity form on Enter
+    function setupQuantityForms() {
+        document.querySelectorAll('input[name="quantity"]').forEach(input => {
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.closest('form').submit();
+                }
+            });
+            
+            // Auto select text when focused
+            input.addEventListener('focus', function() {
+                this.select();
+            });
+        });
+    }
+
+    // Event listeners untuk update preview
+    document.addEventListener('DOMContentLoaded', function() {
+        const menuSelect = document.querySelector('select[name="menu_id"]');
+        const quantityInput = document.querySelector('input[name="quantity"]');
+        
+        if (menuSelect) {
+            menuSelect.addEventListener('change', updatePricePreview);
         }
+        if (quantityInput) {
+            quantityInput.addEventListener('input', updatePricePreview);
+        }
+
+        // Setup quantity forms
+        setupQuantityForms();
+
+        // Close modal dengan ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                if (!document.getElementById('imageModal').classList.contains('hidden')) {
+                    closeImageModal();
+                }
+                if (!document.getElementById('addMenuModal').classList.contains('hidden')) {
+                    closeAddMenuModal();
+                }
+            }
+        });
+
+        // Close modal ketika klik di luar
+        document.getElementById('imageModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeImageModal();
+            }
+        });
+
+        document.getElementById('addMenuModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeAddMenuModal();
+            }
+        });
     });
 
     document.addEventListener('DOMContentLoaded', function() {

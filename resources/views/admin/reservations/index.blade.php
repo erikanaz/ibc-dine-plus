@@ -5,7 +5,7 @@
 
 @section('content')
     <!-- Header Section -->
-    <div class="mb-6">
+    {{-- <div class="mb-6">
         <div class="flex justify-between items-center">
             <div>
                 <h2 class="text-3xl font-bold text-gray-800 mb-1">Manajemen Reservasi</h2>
@@ -18,12 +18,12 @@
                 </a>
             </div>
         </div>
-    </div>
+    </div> --}}
 
     <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-6">
         <!-- Total Reservations -->
-        <div class="dashboard-card bg-white rounded-xl shadow p-6 border-l-4 border-primary transition-all">
+        {{-- <div class="dashboard-card bg-white rounded-xl shadow p-6 border-l-4 border-primary transition-all">
             <div class="flex justify-between items-start">
                 <div>
                     <p class="text-gray-500">Total Reservasi</p>
@@ -38,7 +38,7 @@
                     <i class="fas fa-calendar-alt text-primary text-2xl"></i>
                 </div>
             </div>
-        </div>
+        </div> --}}
         
         <!-- Waiting Payment -->
         <div class="dashboard-card bg-white rounded-xl shadow p-6 border-l-4 border-blue-500 transition-all">
@@ -57,7 +57,7 @@
         <div class="dashboard-card bg-white rounded-xl shadow p-6 border-l-4 border-warning transition-all">
             <div class="flex justify-between items-start">
                 <div>
-                    <p class="text-gray-500">Menunggu</p>
+                    <p class="text-gray-500">Menunggu Konfirmasi</p>
                     <p class="text-3xl font-bold mt-2">{{ $statusCounts['pending'] }}</p>
                 </div>
                 <div class="bg-warning/10 p-3 rounded-lg">

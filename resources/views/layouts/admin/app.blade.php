@@ -68,6 +68,9 @@
         </div>
     </div>
     <script src="//unpkg.com/alpinejs" defer></script>
+
+    <!-- ✅ TAMBAH INI: Yield untuk scripts -->
+    @yield('scripts')
     
 </body>
 </html>

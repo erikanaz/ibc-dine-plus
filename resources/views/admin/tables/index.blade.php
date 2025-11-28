@@ -129,6 +129,8 @@
                 <span class="text-2xl font-bold text-secondary">{{ $reservedTables }}</span>
             </div>
         </div>
+
+        
         
     </div>
 
@@ -276,9 +278,9 @@
                             <a href="{{ route('admin.tables.edit', $selectedTable->id) }}" class="w-full bg-primary text-white py-2 rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center justify-center">
                                 <i class="fas fa-edit mr-2"></i>Edit Meja
                             </a>
-                            <button class="w-full bg-warning text-white py-2 rounded-lg font-medium hover:bg-warning/90 transition-colors flex items-center justify-center">
+                            {{-- <button class="w-full bg-warning text-white py-2 rounded-lg font-medium hover:bg-warning/90 transition-colors flex items-center justify-center">
                                 <i class="fas fa-calendar-plus mr-2"></i>Buat Reservasi
-                            </button>
+                            </button> --}}
                             <!-- <button class="w-full bg-gray-100 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors flex items-center justify-center">
                                 <i class="fas fa-history mr-2"></i>Riwayat Penggunaan
                             </button> -->
