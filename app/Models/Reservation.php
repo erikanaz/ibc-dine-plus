@@ -300,7 +300,9 @@ class Reservation extends Model
      */
     public function getIsFullyPaidAttribute()
     {
-        return $this->remaining_payment <= 0 && $this->fully_paid_at !== null;
+        // return $this->remaining_payment <= 0 && $this->fully_paid_at !== null;
+        // Jika sudah ada fully_paid_at, berarti sudah lunas
+        return $this->fully_paid_at !== null;
     }
 
     /**
