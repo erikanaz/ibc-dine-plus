@@ -26,7 +26,8 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             MenuSeeder::class,
             TableSeeder::class,
-            PromoSeeder::class
+            PromoSeeder::class,
+            FacilitySeeder::class,
         ]);
     }
 }
