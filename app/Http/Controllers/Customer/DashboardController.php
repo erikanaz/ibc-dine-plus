@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
+use App\Models\Facility;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Reservation;
@@ -133,6 +134,13 @@ class DashboardController extends Controller
                 return $promo;
             });
 
+        // ================================================
+        // TAMBAHKAN INI: Get available facilities
+        // ================================================
+        $facilities = Facility::where('is_available', true)
+            ->orderBy('icon') // Urutkan berdasarkan jenis
+            ->get();
+
         return view('customer.member-dashboard', compact(
             'totalReservations',
             'activeReservations',
@@ -141,7 +149,8 @@ class DashboardController extends Controller
             'totalSpent',
             'upcomingReservations',
             'recentReservations',
-            'activePromos'
+            'activePromos',
+            'facilities'
         ));
     }
     

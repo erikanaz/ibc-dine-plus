@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\FacilityController;
 use App\Http\Controllers\Admin\MenuController;
 use App\Http\Controllers\Admin\PromoController;
 use App\Http\Controllers\Admin\ReservationController as AdminReservationController;
@@ -65,6 +66,12 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'role:admin']], func
     // Menu
     Route::resource('/menus', MenuController::class, ['as' => 'admin']);
     Route::patch('/menus/{id}/update-status', [MenuController::class, 'updateStatus'])->name('admin.menus.update-status');
+
+    //facilities
+    Route::resource('/facilities', FacilityController::class, ['as' => 'admin']);
+    Route::patch('/facilities/{id}/update-status', [FacilityController::class, 'updateStatus'])->name('admin.facilities.update-status');
+    Route::post('/facilities/seed', [FacilityController::class, 'seed'])->name('admin.facilities.seed');
+
 
     // Table
     Route::resource('/tables', TableController::class, ['as' => 'admin']);

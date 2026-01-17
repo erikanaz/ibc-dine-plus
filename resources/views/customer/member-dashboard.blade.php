@@ -317,12 +317,114 @@
             </div>
         </div>
     </div>
+    <!-- ====================================================== -->
+    <!-- FACILITIES SECTION - TAMBAHKAN DI SINI -->
+    <!-- ====================================================== -->
+    @if($facilities->isNotEmpty())
+    <div class="mb-12">
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-6">
+            <div class="bg-gradient-to-r from-emerald-600 to-teal-700 px-6 py-4 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-white flex items-center">
+                    <i class="fas fa-concierge-bell mr-3 text-white"></i>
+                    Fasilitas Restoran
+                </h2>
+                <span class="text-white text-sm font-medium bg-white/20 px-3 py-1 rounded-full">
+                    {{ $facilities->count() }} Fasilitas
+                </span>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    @foreach($facilities as $facility)
+                    <div class="bg-gray-50 rounded-xl border border-gray-200 hover:shadow-md transition-all duration-300 overflow-hidden hover:{{ $facility->icon_border_class }} group">
+                        <div class="p-5">
+                            <!-- Header dengan icon dan status -->
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="p-3 rounded-lg {{ $facility->icon_color_class }} group-hover:scale-110 transition-transform duration-300">
+                                    <i class="{{ $facility->icon_class }} text-lg"></i>
+                                </div>
+                                <span class="status-badge {{ $facility->status_badge_class }} text-xs">
+                                    {{ $facility->status_text }}
+                                </span>
+                            </div>
+                            
+                            <!-- Nama dan deskripsi -->
+                            <h3 class="font-bold text-gray-800 mb-2 group-hover:{{ str_replace('text-', 'hover:', $facility->icon_text_class) }} transition-colors">
+                                {{ $facility->name }}
+                            </h3>
+                            <p class="text-sm text-gray-600 mb-3 line-clamp-2">
+                                {{ $facility->description }}
+                            </p>
+                            
+                            <!-- Lokasi -->
+                            @if($facility->location)
+                            <div class="flex items-center text-gray-500 text-sm pt-3 border-t border-gray-100">
+                                <i class="fas fa-map-marker-alt mr-2 text-gray-400"></i>
+                                <span>{{ $facility->location }}</span>
+                            </div>
+                            @endif
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+    <!-- ====================================================== -->
 </div>
+<style>
+    /* CSS tambahan untuk fasilitas */
+    .status-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.375rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        display: inline-block;
+    }
+    
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    /* Warna untuk icon */
+    .text-blue-600 { color: #2563eb; }
+    .bg-blue-100 { background-color: #dbeafe; }
+    .text-yellow-600 { color: #d97706; }
+    .bg-yellow-100 { background-color: #fef3c7; }
+    .text-pink-600 { color: #db2777; }
+    .bg-pink-100 { background-color: #fce7f3; }
+    .text-cyan-600 { color: #0891b2; }
+    .bg-cyan-100 { background-color: #cffafe; }
+    .text-purple-600 { color: #9333ea; }
+    .bg-purple-100 { background-color: #f3e8ff; }
+    .text-orange-600 { color: #ea580c; }
+    .bg-orange-100 { background-color: #ffedd5; }
+    .text-gray-600 { color: #4b5563; }
+    .bg-gray-100 { background-color: #f3f4f6; }
+</style>
 @endsection
 
 @push('scripts')
 <script>
     // Add any interactive features here if needed
+    // console.log('Customer Dashboard Loaded');
+    // Add any interactive features here if needed
     console.log('Customer Dashboard Loaded');
+    
+    // Smooth scroll to facilities section
+    document.querySelectorAll('a[href="#facilities-section"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const facilitiesSection = document.getElementById('facilities-section');
+            if (facilitiesSection) {
+                facilitiesSection.scrollIntoView({ 
+                    behavior: 'smooth' 
+                });
+            }
+        });
+    });
 </script>
 @endpush

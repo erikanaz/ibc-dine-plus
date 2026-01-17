@@ -140,4 +140,93 @@ class Facility extends Model
     {
         return $query->where('icon', $type);
     }
+
+    // Tambahkan ini di class Facility (setelah method getTypeNameAttribute())
+
+/**
+ * Get icon color for CSS (untuk digunakan di dashboard customer)
+ */
+public function getIconCssAttribute()
+{
+    $colors = [
+        'wifi' => [
+            'bg' => 'bg-blue-100',
+            'text' => 'text-blue-600',
+            'border' => 'border-blue-200'
+        ],
+        'socket' => [
+            'bg' => 'bg-yellow-100',
+            'text' => 'text-yellow-600',
+            'border' => 'border-yellow-200'
+        ],
+        'baby-chair' => [
+            'bg' => 'bg-pink-100',
+            'text' => 'text-pink-600',
+            'border' => 'border-pink-200'
+        ],
+        'ac' => [
+            'bg' => 'bg-cyan-100',
+            'text' => 'text-cyan-600',
+            'border' => 'border-cyan-200'
+        ],
+        'toilet' => [
+            'bg' => 'bg-purple-100',
+            'text' => 'text-purple-600',
+            'border' => 'border-purple-200'
+        ],
+        'smoking-area' => [
+            'bg' => 'bg-orange-100',
+            'text' => 'text-orange-600',
+            'border' => 'border-orange-200'
+        ],
+        'parking' => [
+            'bg' => 'bg-gray-100',
+            'text' => 'text-gray-600',
+            'border' => 'border-gray-200'
+        ],
+    ];
+
+    return $colors[$this->icon] ?? [
+        'bg' => 'bg-gray-100',
+        'text' => 'text-gray-600',
+        'border' => 'border-gray-200'
+    ];
 }
+
+/**
+ * Get icon color class for background
+ */
+public function getIconBgClassAttribute()
+{
+    $colors = [
+        'wifi' => 'bg-blue-100',
+        'socket' => 'bg-yellow-100',
+        'baby-chair' => 'bg-pink-100',
+        'ac' => 'bg-cyan-100',
+        'toilet' => 'bg-purple-100',
+        'smoking-area' => 'bg-orange-100',
+        'parking' => 'bg-gray-100',
+    ];
+
+    return $colors[$this->icon] ?? 'bg-gray-100';
+}
+
+/**
+ * Get icon color class for text
+ */
+public function getIconTextClassAttribute()
+{
+    $colors = [
+        'wifi' => 'text-blue-600',
+        'socket' => 'text-yellow-600',
+        'baby-chair' => 'text-pink-600',
+        'ac' => 'text-cyan-600',
+        'toilet' => 'text-purple-600',
+        'smoking-area' => 'text-orange-600',
+        'parking' => 'text-gray-600',
+    ];
+
+    return $colors[$this->icon] ?? 'text-gray-600';
+}
+}
+

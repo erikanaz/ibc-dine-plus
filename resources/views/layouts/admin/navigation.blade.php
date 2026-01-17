@@ -59,6 +59,15 @@
             <i class="fas fa-tags mr-3"></i>
             Promo
         </a>
+
+        <a href="{{ route('admin.facilities.index') }}" 
+            class="sidebar-item flex items-center px-6 py-3 
+                    {{ request()->routeIs('admin.facilities.*') 
+                        ? 'text-white bg-slate-800 border-l-4 border-primary' 
+                        : 'text-slate-300 hover:text-white' }}">
+            <i class="fas fa-concierge-bell mr-3"></i>
+            Fasilitas
+        </a>
         
         <!-- <a href="#" class="sidebar-item flex items-center px-6 py-3 text-slate-300 hover:text-white">
             <i class="fas fa-chart-bar mr-3"></i>
