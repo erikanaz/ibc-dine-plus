@@ -197,21 +197,46 @@
                             <p class="text-gray-600" x-text="reservation.reservation_time"></p>
                         </div>
 
-                        <!-- Meja & Tamu -->
+                        <!-- Meja & Tamu - PERUBAHAN UTAMA DI SINI -->
                         <div>
                             <p class="text-sm font-medium text-gray-500">Meja & Tamu</p>
-                            <p class="text-gray-800 font-semibold" 
-                               x-text="'Meja ' + reservation.table.number"></p>
-                            <p class="text-gray-600" x-text="reservation.guest_count + ' Tamu'"></p>
+                            <div>
+                                <!-- Menampilkan informasi meja -->
+                                <p class="text-gray-800 font-semibold mb-1">
+                                    <!-- Tampilkan dari table_numbers jika ada -->
+                                    <template x-if="reservation.table_numbers">
+                                        <span x-text="reservation.table_numbers"></span>
+                                    </template>
+                                    <!-- Atau tampilkan dari tabel jika ada -->
+                                    <template x-if="!reservation.table_numbers && reservation.tables && reservation.tables.length > 0">
+                                        <span x-text="getTableNumbers(reservation.tables)"></span>
+                                    </template>
+                                    <!-- Atau tampilkan default jika tidak ada -->
+                                    <template x-if="!reservation.table_numbers && (!reservation.tables || reservation.tables.length === 0)">
+                                        <span>-</span>
+                                    </template>
+                                </p>
+                                <p class="text-gray-600 text-sm" x-text="reservation.guest_count + ' Tamu'"></p>
+                                <!-- Tambahkan info jumlah meja jika multi-table -->
+                                <template x-if="reservation.total_tables && reservation.total_tables > 1">
+                                    <p class="text-xs text-gray-500" 
+                                       x-text="reservation.total_tables + ' meja'"></p>
+                                </template>
+                                <!-- Atau tampilkan dari tabel -->
+                                <template x-if="!reservation.total_tables && reservation.tables && reservation.tables.length > 1">
+                                    <p class="text-xs text-gray-500" 
+                                       x-text="reservation.tables.length + ' meja'"></p>
+                                </template>
+                            </div>
                         </div>
 
                         <!-- Pembayaran -->
                         <div>
                             <p class="text-sm font-medium text-gray-500">Pembayaran DP</p>
                             <p class="text-gray-800 font-semibold" 
-                            x-text="'Rp ' + formatCurrency(reservation.total_DP)"></p>
+                               x-text="'Rp ' + formatCurrency(reservation.total_DP)"></p>
                             <p class="text-sm font-medium" 
-                            :class="getPaymentStatusClass(reservation)">
+                               :class="getPaymentStatusClass(reservation)">
                                 <span x-text="getPaymentStatusText(reservation)"></span>
                             </p>
                         </div>
@@ -221,7 +246,7 @@
                             <p class="text-sm font-medium text-gray-500">Pre-order Menu</p>
                             <p class="text-gray-800 font-semibold" 
                                x-text="reservation.with_preorder ? 'Ya' : 'Tidak'"></p>
-                            <template x-if="reservation.orders.length > 0">
+                            <template x-if="reservation.orders && reservation.orders.length > 0">
                                 <p class="text-sm text-gray-600" 
                                    x-text="'Rp ' + formatCurrency(reservation.orders[0].total_price)"></p>
                             </template>
@@ -254,7 +279,7 @@
 
                             <!-- Buat Lagi Button (untuk completed/cancelled) -->
                             <template x-if="['completed', 'cancelled'].includes(reservation.status)">
-                                <a :href="'{{ route('reservation.index') }}?date=' + reservation.reservation_date + '&time=' + reservation.reservation_time + '&guests=' + reservation.guest_count + '&table=' + reservation.table.id" 
+                                <a href="{{ route('reservation.index') }}" 
                                    class="inline-flex items-center px-4 py-2 border border-yellow-300 text-sm font-medium rounded-md text-yellow-700 bg-white hover:bg-yellow-50 transition">
                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
@@ -382,7 +407,7 @@
                                             <span class="text-xl font-bold" 
                                                   :class="getCountdownTextClass(selectedReservation.payment_deadline)"
                                                   x-text="getTimeLeft(selectedReservation.payment_deadline).seconds.toString().padStart(2, '0')"></span>
-                                            <span class="text-xs text-orange-600 block">Detik</span>
+                                                <span class="text-xs text-orange-600 block">Detik</span>
                                         </div>
                                     </div>
                                 </div>
@@ -401,16 +426,46 @@
                                 <p class="font-medium text-gray-800" 
                                    x-text="selectedReservation.reservation_time"></p>
                             </div>
+                            
+                            <!-- Meja - PERUBAHAN UTAMA -->
                             <div>
                                 <p class="text-sm text-gray-500">Meja</p>
-                                <p class="font-medium text-gray-800" 
-                                   x-text="'Meja ' + selectedReservation.table.number"></p>
+                                <p class="font-medium text-gray-800">
+                                    <template x-if="selectedReservation.table_numbers">
+                                        <span x-text="selectedReservation.table_numbers"></span>
+                                    </template>
+                                    <template x-if="!selectedReservation.table_numbers && selectedReservation.tables && selectedReservation.tables.length > 0">
+                                        <span x-text="getTableNumbers(selectedReservation.tables)"></span>
+                                    </template>
+                                    <template x-if="!selectedReservation.table_numbers && (!selectedReservation.tables || selectedReservation.tables.length === 0)">
+                                        <span>-</span>
+                                    </template>
+                                </p>
                             </div>
+                            
                             <div>
                                 <p class="text-sm text-gray-500">Jumlah Tamu</p>
                                 <p class="font-medium text-gray-800" 
                                    x-text="selectedReservation.guest_count + ' Orang'"></p>
                             </div>
+                            
+                            <!-- Jumlah Meja (jika multi-table) -->
+                            <template x-if="selectedReservation.total_tables && selectedReservation.total_tables > 1">
+                                <div>
+                                    <p class="text-sm text-gray-500">Jumlah Meja</p>
+                                    <p class="font-medium text-gray-800" 
+                                       x-text="selectedReservation.total_tables + ' meja'"></p>
+                                </div>
+                            </template>
+                            
+                            <!-- Total Kapasitas (jika multi-table) -->
+                            <template x-if="selectedReservation.total_capacity && selectedReservation.total_capacity > 0">
+                                <div>
+                                    <p class="text-sm text-gray-500">Total Kapasitas</p>
+                                    <p class="font-medium text-gray-800" 
+                                       x-text="selectedReservation.total_capacity + ' orang'"></p>
+                                </div>
+                            </template>
                         </div>
 
                         <!-- Informasi Customer -->
@@ -450,7 +505,7 @@
                         </template>
 
                         <!-- Pre-order Menu -->
-                        <template x-if="selectedReservation.orders.length > 0">
+                        <template x-if="selectedReservation.orders && selectedReservation.orders.length > 0">
                             <div class="border-t pt-4">
                                 <p class="text-sm font-medium text-gray-700 mb-2">Pesanan Menu:</p>
                                 <div class="space-y-2">
@@ -480,81 +535,78 @@
                         </template>
 
                         <!-- Pembayaran -->
-                        <!-- Pembayaran -->
                         <div class="border-t pt-4">
                             <p class="text-sm font-medium text-gray-700 mb-2">Pembayaran DP:</p>
                             <div class="grid md:grid-cols-2 gap-4">
                                 <div>
                                     <p class="text-sm text-gray-500">Total DP</p>
                                     <p class="font-medium text-gray-800" 
-                                    x-text="'Rp ' + formatCurrency(selectedReservation.total_DP)"></p>
+                                       x-text="'Rp ' + formatCurrency(selectedReservation.total_DP)"></p>
                                 </div>
                                 <div>
                                     <p class="text-sm text-gray-500">Status Pembayaran</p>
                                     <span class="px-2 py-1 rounded-full text-xs font-medium" 
-                                        :class="getPaymentStatusClass(selectedReservation)"
-                                        x-text="getPaymentStatusText(selectedReservation)"></span>
+                                          :class="getPaymentStatusClass(selectedReservation)"
+                                          x-text="getPaymentStatusText(selectedReservation)"></span>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </template>
 
-                <!-- Di dalam MODAL DETAIL - Tambahkan setelah section Pembayaran -->
+                        <!-- Bukti Pembayaran -->
+                        <template x-if="selectedReservation.payments && selectedReservation.payments.length > 0">
+                            <div class="border-t pt-4">
+                                <p class="text-sm font-medium text-gray-700 mb-2">Bukti Pembayaran:</p>
+                                
+                                <!-- Sudah Upload Bukti -->
+                                <template x-if="selectedReservation.payments[0].payment_proof">
+                                    <div class="flex items-center justify-between bg-green-50 rounded-lg p-3 border border-green-200">
+                                        <div class="flex items-center space-x-3">
+                                            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                            </svg>
+                                            <span class="text-sm text-green-700">Bukti transfer tersedia</span>
+                                        </div>
+                                        <a :href="'/storage/' + selectedReservation.payments[0].payment_proof" 
+                                           target="_blank"
+                                           class="inline-flex items-center text-sm text-green-600 hover:text-green-800 font-medium transition">
+                                            Lihat
+                                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                            </svg>
+                                        </a>
+                                    </div>
+                                </template>
+                                
+                                <!-- Belum Upload Bukti (Waiting Payment) -->
+                                <template x-if="!selectedReservation.payments[0].payment_proof && selectedReservation.status === 'waiting_payment'">
+                                    <div class="flex items-center justify-between bg-orange-50 rounded-lg p-3 border border-orange-200">
+                                        <div class="flex items-center space-x-3">
+                                            <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                            <span class="text-sm text-orange-700">Belum upload bukti transfer</span>
+                                        </div>
+                                        <a :href="'/reservation/payment/' + selectedReservation.id" 
+                                           class="inline-flex items-center text-sm text-orange-600 hover:text-orange-800 font-medium transition">
+                                            Upload
+                                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                            </svg>
+                                        </a>
+                                    </div>
+                                </template>
 
-                <!-- Bukti Pembayaran - Versi Minimalis -->
-                <template x-if="selectedReservation.payments && selectedReservation.payments.length > 0">
-                    <div class="border-t pt-4 mt-4">
-                        <p class="text-sm font-medium text-gray-700 mb-2">Bukti Pembayaran:</p>
-                        
-                        <!-- Sudah Upload Bukti -->
-                        <template x-if="selectedReservation.payments[0].payment_proof">
-                            <div class="flex items-center justify-between bg-green-50 rounded-lg p-3 border border-green-200">
-                                <div class="flex items-center space-x-3">
-                                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                    </svg>
-                                    <span class="text-sm text-green-700">Bukti transfer tersedia</span>
-                                </div>
-                                <a :href="'/storage/' + selectedReservation.payments[0].payment_proof" 
-                                target="_blank"
-                                class="inline-flex items-center text-sm text-green-600 hover:text-green-800 font-medium transition">
-                                    Lihat
-                                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                                    </svg>
-                                </a>
-                            </div>
-                        </template>
-                        
-                        <!-- Belum Upload Bukti (Waiting Payment) -->
-                        <template x-if="!selectedReservation.payments[0].payment_proof && selectedReservation.status === 'waiting_payment'">
-                            <div class="flex items-center justify-between bg-orange-50 rounded-lg p-3 border border-orange-200">
-                                <div class="flex items-center space-x-3">
-                                    <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                    </svg>
-                                    <span class="text-sm text-orange-700">Belum upload bukti transfer</span>
-                                </div>
-                                <a :href="'/reservation/payment/' + selectedReservation.id" 
-                                class="inline-flex items-center text-sm text-orange-600 hover:text-orange-800 font-medium transition">
-                                    Upload
-                                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                                    </svg>
-                                </a>
-                            </div>
-                        </template>
-
-                        <!-- Tidak Perlu Upload (Status Lain) -->
-                        <template x-if="!selectedReservation.payments[0].payment_proof && selectedReservation.status !== 'waiting_payment'">
-                            <div class="flex items-center justify-between bg-gray-50 rounded-lg p-3 border border-gray-200">
-                                <div class="flex items-center space-x-3">
-                                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                    </svg>
-                                    <span class="text-sm text-gray-600">Tidak diperlukan bukti transfer</span>
-                                </div>
+                                <!-- Tidak Perlu Upload (Status Lain) -->
+                                <template x-if="!selectedReservation.payments[0].payment_proof && selectedReservation.status !== 'waiting_payment'">
+                                    <div class="flex items-center justify-between bg-gray-50 rounded-lg p-3 border border-gray-200">
+                                        <div class="flex items-center space-x-3">
+                                            <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                            <span class="text-sm text-gray-600">Tidak diperlukan bukti transfer</span>
+                                        </div>
+                                    </div>
+                                </template>
                             </div>
                         </template>
                     </div>
@@ -586,6 +638,7 @@ function reservationHistory() {
 
         init() {
             console.log('🟢 Reservations loaded:', this.reservations.length);
+            console.log('Sample reservation:', this.reservations[0]);
             
             // Debug: Check waiting payment reservations
             const waitingPayments = this.reservations.filter(r => r.status === 'waiting_payment');
@@ -623,6 +676,12 @@ function reservationHistory() {
                     }
                 }
             });
+        },
+
+        // Helper function untuk mengambil nomor meja
+        getTableNumbers(tables) {
+            if (!tables || tables.length === 0) return '-';
+            return tables.map(table => table.number).sort((a, b) => a - b).join(', ');
         },
 
         get filteredReservations() {
@@ -727,27 +786,6 @@ function reservationHistory() {
             return texts[status] || status;
         },
 
-        // getPaymentStatusClass(status) {
-        //     const classes = {
-        //         'verifying': 'text-yellow-600',
-        //         'verified': 'text-blue-600',
-        //         'paid': 'text-green-600',
-        //         'failed': 'text-red-600'
-        //     };
-        //     return classes[status] || 'text-gray-600';
-        // },
-
-        // getPaymentStatusText(status) {
-        //     const texts = {
-        //         'pending': 'Belum Bayar',
-        //         'verifying': 'Menunggu Verifikasi',
-        //         'verified': 'Terverifikasi',
-        //         'paid': 'Lunas',
-        //         'failed': 'Gagal'
-        //     };
-        //     return texts[status] || 'Belum Bayar';
-        // },
-
         getPaymentStatusText(reservation) {
             // ✅ PRIORITAS: Gunakan latest_payment_status dari backend
             if (reservation.latest_payment_status) {
@@ -755,7 +793,7 @@ function reservationHistory() {
                     'pending': 'Belum Bayar',
                     'verifying': 'Menunggu Verifikasi',
                     'verified': 'DP Terverifikasi', 
-                    'paid': 'Lunas', // ✅ INI YANG AKAN DITAMPILKAN
+                    'paid': 'Lunas',
                     'failed': 'Gagal'
                 };
                 return texts[reservation.latest_payment_status] || 'Belum Bayar';
@@ -767,12 +805,12 @@ function reservationHistory() {
             }
             
             // ✅ FALLBACK 2: Gunakan payment array lama
-            const paymentStatus = reservation.payments[0]?.status;
+            const paymentStatus = reservation.payments && reservation.payments[0] ? reservation.payments[0].status : 'pending';
             const texts = {
                 'pending': 'Belum Bayar',
                 'verifying': 'Menunggu Verifikasi',
                 'verified': 'DP Terverifikasi',
-                'paid': 'Lunas', // ✅ INI YANG AKAN DITAMPILKAN
+                'paid': 'Lunas',
                 'failed': 'Gagal'
             };
             return texts[paymentStatus] || 'Belum Bayar';
@@ -784,7 +822,7 @@ function reservationHistory() {
                 const classes = {
                     'verifying': 'text-yellow-600 font-medium',
                     'verified': 'text-blue-600 font-medium',
-                    'paid': 'text-green-600 font-medium', // ✅ HIJAU UNTUK LUNAS
+                    'paid': 'text-green-600 font-medium',
                     'failed': 'text-red-600 font-medium',
                     'pending': 'text-gray-600 font-medium'
                 };
@@ -797,11 +835,11 @@ function reservationHistory() {
             }
             
             // ✅ FALLBACK 2: Gunakan payment array lama
-            const paymentStatus = reservation.payments[0]?.status;
+            const paymentStatus = reservation.payments && reservation.payments[0] ? reservation.payments[0].status : 'pending';
             const classes = {
                 'verifying': 'text-yellow-600 font-medium',
                 'verified': 'text-blue-600 font-medium',
-                'paid': 'text-green-600 font-medium', // ✅ HIJAU UNTUK LUNAS
+                'paid': 'text-green-600 font-medium',
                 'failed': 'text-red-600 font-medium',
                 'pending': 'text-gray-600 font-medium'
             };

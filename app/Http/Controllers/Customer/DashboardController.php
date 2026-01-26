@@ -39,7 +39,7 @@ class DashboardController extends Controller
             })
             ->count();
         
-        // RESERVASI BULAN INI - GANTI POIN MEMBER
+        // RESERVASI BULAN INI
         $monthlyReservations = Reservation::where('user_id', $user->id)
             ->whereYear('reservation_date', now()->year)
             ->whereMonth('reservation_date', now()->month)
@@ -60,7 +60,7 @@ class DashboardController extends Controller
         // ========== RESERVASI MENDATANG ==========
         
         $upcomingReservations = Reservation::with([
-                'table', 
+                'tables', // ✅ PERUBAHAN: dari 'table' ke 'tables'
                 'orders.orderItems.menu'
             ])
             ->where('user_id', $user->id)
@@ -86,12 +86,18 @@ class DashboardController extends Controller
                 // Total harga dari orders (jika ada)
                 $reservation->total_order_price = $reservation->orders->sum('total_price');
                 
+                // ✅ DITAMBAH: Helper untuk menampilkan nomor meja
+                $reservation->display_table_numbers = $this->getTableNumbers($reservation);
+                
+                // ✅ DITAMBAH: Jumlah meja
+                $reservation->table_count = $reservation->tables->count();
+                
                 return $reservation;
             });
         
         // ========== RIWAYAT RESERVASI ==========
         
-        $recentReservations = Reservation::with(['table', 'orders'])
+        $recentReservations = Reservation::with(['tables', 'orders']) // ✅ PERUBAHAN: dari 'table' ke 'tables'
             ->where('user_id', $user->id)
             ->where(function($query) {
                 $query->where('reservation_date', '<', now()->toDateString())
@@ -110,6 +116,12 @@ class DashboardController extends Controller
                 
                 // Status badge HTML
                 $reservation->status_badge = $this->getStatusBadge($reservation->status);
+                
+                // ✅ DITAMBAH: Helper untuk menampilkan nomor meja
+                $reservation->display_table_numbers = $this->getTableNumbers($reservation);
+                
+                // ✅ DITAMBAH: Jumlah meja
+                $reservation->table_count = $reservation->tables->count();
                 
                 return $reservation;
             });
@@ -135,16 +147,16 @@ class DashboardController extends Controller
             });
 
         // ================================================
-        // TAMBAHKAN INI: Get available facilities
+        // Get available facilities
         // ================================================
         $facilities = Facility::where('is_available', true)
-            ->orderBy('icon') // Urutkan berdasarkan jenis
+            ->orderBy('icon')
             ->get();
 
         return view('customer.member-dashboard', compact(
             'totalReservations',
             'activeReservations',
-            'monthlyReservations', // GANTI: monthlyReservations bukan memberPoints
+            'monthlyReservations',
             'completedReservations',
             'totalSpent',
             'upcomingReservations',
@@ -211,6 +223,27 @@ class DashboardController extends Controller
     }
     
     /**
+     * Helper function untuk mendapatkan nomor meja (support multi-table)
+     *
+     * @param \App\Models\Reservation $reservation
+     * @return string
+     */
+    private function getTableNumbers($reservation)
+    {
+        // Prioritaskan table_numbers dari database
+        if ($reservation->table_numbers) {
+            return $reservation->table_numbers;
+        }
+        
+        // Jika tidak ada, ambil dari relationship tables
+        if ($reservation->tables && $reservation->tables->isNotEmpty()) {
+            return $reservation->tables->pluck('number')->sort()->implode(', ');
+        }
+        
+        return '-';
+    }
+    
+    /**
      * Get quick stats for API/AJAX requests
      *
      * @return \Illuminate\Http\JsonResponse
@@ -234,7 +267,7 @@ class DashboardController extends Controller
             'monthly_reservations' => Reservation::where('user_id', $user->id)
                 ->whereYear('reservation_date', now()->year)
                 ->whereMonth('reservation_date', now()->month)
-                ->count(), // GANTI: monthly_reservations bukan member_points
+                ->count(),
             'completed_reservations' => Reservation::where('user_id', $user->id)
                 ->where('status', 'completed')
                 ->count(),

@@ -18,7 +18,8 @@ class ReservationController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Reservation::with(['table', 'promo', 'orders.orderItems.menu']);
+        // ✅ PERUBAHAN: Load tables (many-to-many) bukan table (one-to-many)
+        $query = Reservation::with(['tables', 'promo', 'orders.orderItems.menu']);
 
         // Filter berdasarkan status
         if ($request->has('status') && $request->status != '') {
@@ -37,7 +38,8 @@ class ReservationController extends Controller
                 $q->where('customer_name', 'like', "%{$search}%")
                   ->orWhere('customer_email', 'like', "%{$search}%")
                   ->orWhere('customer_phone', 'like', "%{$search}%")
-                  ->orWhereHas('table', function($q) use ($search) {
+                  ->orWhere('table_numbers', 'like', "%{$search}%") // ✅ PERUBAHAN: Cari di table_numbers
+                  ->orWhereHas('tables', function($q) use ($search) {
                       $q->where('number', 'like', "%{$search}%");
                   });
             });
@@ -69,6 +71,7 @@ class ReservationController extends Controller
 
     public function create()
     {
+        // ✅ PERUBAHAN: Ambil semua meja yang available
         $tables = Table::where('status', 'available')->get();
         $menus = Menu::where('is_available', true)->get();
         
@@ -85,11 +88,13 @@ class ReservationController extends Controller
 
     public function store(Request $request)
     {
+        // ✅ PERUBAHAN: Validasi untuk array tables
         $validated = $request->validate([
             'customer_name' => 'required|string|max:255',
             'customer_phone' => 'required|string|max:20',
             'customer_email' => 'required|email|max:255',
-            'table_id' => 'required|exists:tables,id',
+            'table_ids' => 'required|array|min:1',
+            'table_ids.*' => 'exists:tables,id',
             'reservation_date' => 'required|date',
             'reservation_time' => 'required',
             'guest_count' => 'required|integer|min:1',
@@ -104,12 +109,17 @@ class ReservationController extends Controller
         ]);
 
         DB::transaction(function () use ($validated, $request) {
-            // 1. CREATE RESERVASI
+            // Ambil data meja
+            $tables = Table::whereIn('id', $validated['table_ids'])->get();
+            $tableNumbers = $tables->pluck('number')->sort()->implode(', ');
+            $totalCapacity = $tables->sum('capacity');
+            $totalTables = $tables->count();
+
+            // 1. CREATE RESERVASI (multi-table)
             $reservation = Reservation::create([
                 'customer_name' => $validated['customer_name'],
                 'customer_phone' => $validated['customer_phone'],
                 'customer_email' => $validated['customer_email'],
-                'table_id' => $validated['table_id'],
                 'reservation_date' => $validated['reservation_date'],
                 'reservation_time' => $validated['reservation_time'],
                 'guest_count' => $validated['guest_count'],
@@ -119,9 +129,15 @@ class ReservationController extends Controller
                 'status' => $validated['status'],
                 'user_id' => null,
                 'created_by' => 'admin',
+                'table_numbers' => $tableNumbers,
+                'total_tables' => $totalTables,
+                'total_capacity' => $totalCapacity,
             ]);
 
-            // 2. HANDLE PAYMENT PROOF UPLOAD
+            // 2. ATTACH TABLES (many-to-many relationship)
+            $reservation->tables()->attach($validated['table_ids']);
+
+            // 3. HANDLE PAYMENT PROOF UPLOAD
             if ($request->hasFile('payment_proof')) {
                 $paymentProofPath = $request->file('payment_proof')->store('payment-proofs', 'public');
                 
@@ -143,7 +159,7 @@ class ReservationController extends Controller
                 ]);
             }
 
-            // 3. HANDLE MENU ORDER JIKA ADA
+            // 4. HANDLE MENU ORDER JIKA ADA
             if (!empty($validated['menus'])) {
                 $totalPrice = 0;
                 foreach ($validated['menus'] as $menuItem) {
@@ -151,7 +167,7 @@ class ReservationController extends Controller
                     $totalPrice += $menu->price * $menuItem['quantity'];
                 }
 
-                // 4. APPLY PROMO JIKA ADA
+                // 5. APPLY PROMO JIKA ADA
                 $finalTotal = $totalPrice;
                 if (!empty($validated['promo_id'])) {
                     $promo = Promo::find($validated['promo_id']);
@@ -169,7 +185,7 @@ class ReservationController extends Controller
                     }
                 }
 
-                // 5. CREATE ORDER
+                // 6. CREATE ORDER
                 $order = Order::create([
                     'reservation_id' => $reservation->id,
                     'user_id' => null,
@@ -177,7 +193,7 @@ class ReservationController extends Controller
                     'notes' => $validated['notes'] ?? null,
                 ]);
 
-                // 6. CREATE ORDER ITEMS
+                // 7. CREATE ORDER ITEMS
                 foreach ($validated['menus'] as $menuItem) {
                     $menu = Menu::find($menuItem['menu_id']);
                     
@@ -190,9 +206,9 @@ class ReservationController extends Controller
                 }
             }
 
-            // 7. UPDATE TABLE STATUS JIKA RESERVASI CONFIRMED
+            // 8. UPDATE TABLE STATUS JIKA RESERVASI CONFIRMED
             if ($validated['status'] == 'confirmed') {
-                Table::where('id', $validated['table_id'])->update(['status' => 'reserved']);
+                Table::whereIn('id', $validated['table_ids'])->update(['status' => 'reserved']);
             }
         });
 
@@ -202,8 +218,9 @@ class ReservationController extends Controller
 
     public function show(Reservation $reservation)
     {
+        // ✅ PERUBAHAN: Load tables bukan table
         $reservation->load([
-            'table', 
+            'tables', 
             'promo', 
             'orders.orderItems.menu',
             'payments'
@@ -216,6 +233,7 @@ class ReservationController extends Controller
 
     public function edit(Reservation $reservation)
     {
+        // ✅ PERUBAHAN: Ambil meja yang available atau reserved
         $tables = Table::whereIn('status', ['available', 'reserved'])->get();
         $menus = Menu::where('is_available', true)->get();
         
@@ -227,18 +245,20 @@ class ReservationController extends Controller
                 ->orWhereNull('end_date');
         })->get();
         
-        $reservation->load(['table', 'promo', 'orders.orderItems.menu']);
+        $reservation->load(['tables', 'promo', 'orders.orderItems.menu']);
         
         return view('admin.reservations.edit', compact('reservation', 'tables', 'menus', 'promos'));
     }
 
     public function update(Request $request, Reservation $reservation)
     {
+        // ✅ PERUBAHAN: Validasi untuk array tables
         $validated = $request->validate([
             'customer_name' => 'required|string|max:255',
             'customer_phone' => 'required|string|max:20',
             'customer_email' => 'required|email|max:255',
-            'table_id' => 'required|exists:tables,id',
+            'table_ids' => 'required|array|min:1',
+            'table_ids.*' => 'exists:tables,id',
             'reservation_date' => 'required|date',
             'reservation_time' => 'required',
             'guest_count' => 'required|integer|min:1',
@@ -249,26 +269,43 @@ class ReservationController extends Controller
         ]);
 
         DB::transaction(function () use ($validated, $reservation) {
-            $oldTableId = $reservation->table_id;
+            $oldTableIds = $reservation->tables->pluck('id')->toArray();
             $oldStatus = $reservation->status;
-            $newTableId = $validated['table_id'];
+            $newTableIds = $validated['table_ids'];
             $newStatus = $validated['status'];
 
+            // Hitung data meja baru
+            $tables = Table::whereIn('id', $newTableIds)->get();
+            $tableNumbers = $tables->pluck('number')->sort()->implode(', ');
+            $totalCapacity = $tables->sum('capacity');
+            $totalTables = $tables->count();
+
             // Handle table changes
-            if ($oldTableId != $newTableId) {
-                Table::where('id', $oldTableId)->update(['status' => 'available']);
-                if ($newStatus == 'confirmed') {
-                    Table::where('id', $newTableId)->update(['status' => 'reserved']);
-                }
+            $tablesToUpdate = [];
+            
+            if ($oldStatus == 'confirmed') {
+                // Jika status lama confirmed, kembalikan meja lama ke available
+                $tablesToUpdate = array_merge($tablesToUpdate, $oldTableIds);
+            }
+
+            if ($newStatus == 'confirmed') {
+                // Jika status baru confirmed, set meja baru ke reserved
+                $tablesToUpdate = array_merge($tablesToUpdate, $newTableIds);
+            }
+
+            // Update table status
+            if (!empty($tablesToUpdate)) {
+                $statusToSet = ($newStatus == 'confirmed') ? 'reserved' : 'available';
+                Table::whereIn('id', $tablesToUpdate)->update(['status' => $statusToSet]);
             }
 
             // Handle status changes
             if ($oldStatus != $newStatus) {
                 if ($newStatus == 'confirmed') {
-                    Table::where('id', $newTableId)->update(['status' => 'reserved']);
+                    Table::whereIn('id', $newTableIds)->update(['status' => 'reserved']);
                 }
                 elseif ($oldStatus == 'confirmed' && in_array($newStatus, ['cancelled', 'completed', 'expired'])) {
-                    Table::where('id', $newTableId)->update(['status' => 'available']);
+                    Table::whereIn('id', $oldTableIds)->update(['status' => 'available']);
                 }
                 
                 $payment = $reservation->payments()->first();
@@ -299,8 +336,25 @@ class ReservationController extends Controller
                 }
             }
 
-            // Update reservation
-            $reservation->update($validated);
+            // Update reservation dengan data multi-table
+            $reservation->update([
+                'customer_name' => $validated['customer_name'],
+                'customer_phone' => $validated['customer_phone'],
+                'customer_email' => $validated['customer_email'],
+                'reservation_date' => $validated['reservation_date'],
+                'reservation_time' => $validated['reservation_time'],
+                'guest_count' => $validated['guest_count'],
+                'notes' => $validated['notes'] ?? null,
+                'promo_id' => $validated['promo_id'] ?? null,
+                'total_DP' => $validated['total_DP'],
+                'status' => $validated['status'],
+                'table_numbers' => $tableNumbers,
+                'total_tables' => $totalTables,
+                'total_capacity' => $totalCapacity,
+            ]);
+
+            // Sync tables (many-to-many)
+            $reservation->tables()->sync($newTableIds);
 
             // ✅ UPDATE ORDER TOTAL JIKA ADA PERUBAHAN PROMO
             if ($reservation->orders->count() > 0 && $reservation->wasChanged('promo_id')) {
@@ -317,8 +371,11 @@ class ReservationController extends Controller
     public function destroy(Reservation $reservation)
     {
         DB::transaction(function () use ($reservation) {
-            Table::where('id', $reservation->table_id)->update(['status' => 'available']);
+            // Kembalikan status meja ke available
+            Table::whereIn('id', $reservation->tables->pluck('id')->toArray())
+                ->update(['status' => 'available']);
             
+            // Hapus order items dan orders
             if ($reservation->orders->count() > 0) {
                 foreach ($reservation->orders as $order) {
                     $order->orderItems()->delete();
@@ -326,6 +383,10 @@ class ReservationController extends Controller
                 }
             }
             
+            // Detach tables
+            $reservation->tables()->detach();
+            
+            // Hapus reservation
             $reservation->delete();
         });
 
@@ -443,12 +504,16 @@ class ReservationController extends Controller
         DB::transaction(function () use ($reservation, $oldStatus, $newStatus) {
             if (in_array($newStatus, ['cancelled', 'completed', 'expired']) && 
                 !in_array($oldStatus, ['cancelled', 'completed', 'expired'])) {
-                Table::where('id', $reservation->table_id)->update(['status' => 'available']);
+                // Kembalikan semua meja ke available
+                Table::whereIn('id', $reservation->tables->pluck('id')->toArray())
+                    ->update(['status' => 'available']);
             }
 
             if (in_array($oldStatus, ['cancelled', 'completed', 'expired']) && 
                 in_array($newStatus, ['pending', 'confirmed'])) {
-                Table::where('id', $reservation->table_id)->update(['status' => 'reserved']);
+                // Set semua meja ke reserved
+                Table::whereIn('id', $reservation->tables->pluck('id')->toArray())
+                    ->update(['status' => 'reserved']);
             }
 
             $payment = $reservation->payments()->first();
@@ -486,7 +551,7 @@ class ReservationController extends Controller
 
     public function printInvoice(Reservation $reservation)
     {
-        $reservation->load(['table', 'promo', 'orders.orderItems.menu']);
+        $reservation->load(['tables', 'promo', 'orders.orderItems.menu']);
         
         return view('admin.reservations.invoice', compact('reservation'));
     }
@@ -510,7 +575,8 @@ class ReservationController extends Controller
                 'fully_paid_at' => now()
             ]);
 
-            $reservation->table()->update(['status' => 'available']);
+            // Kembalikan semua meja ke available
+            $reservation->tables()->update(['status' => 'available']);
         });
 
         return redirect()->back()->with('success', 'Pembayaran lunas berhasil dicatat! Meja telah dikosongkan.');

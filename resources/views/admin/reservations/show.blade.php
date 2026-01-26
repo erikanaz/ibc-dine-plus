@@ -92,21 +92,57 @@
                                 </div>
                             </div>
                             
+                            <!-- PERUBAHAN UTAMA: Bagian Meja Multi-table -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-500 mb-1">Meja</label>
-                                <div class="flex items-center space-x-2">
-                                    <i class="fas fa-chair text-green-500"></i>
-                                    <span class="font-medium text-gray-900">Meja {{ $reservation->table->number }}</span>
-                                    <span class="text-sm text-gray-500">({{ $reservation->table->capacity }} orang)</span>
+                                <div class="space-y-2">
+                                    <!-- Nomor Meja -->
+                                    <div class="flex items-center space-x-2">
+                                        <i class="fas fa-chair text-green-500"></i>
+                                        <span class="font-medium text-gray-900">
+                                            @if($reservation->table_numbers)
+                                                {{ $reservation->table_numbers }}
+                                            @elseif($reservation->tables->isNotEmpty())
+                                                {{ $reservation->tables->pluck('number')->sort()->implode(', ') }}
+                                            @else
+                                                -
+                                            @endif
+                                        </span>
+                                        @if($reservation->total_tables && $reservation->total_tables > 1)
+                                            <span class="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
+                                                {{ $reservation->total_tables }} meja
+                                            </span>
+                                        @endif
+                                    </div>
+                                    
+                                    <!-- Informasi Kapasitas -->
+                                    <div class="text-sm text-gray-600 ml-7">
+                                        @if($reservation->guest_count)
+                                            <span>{{ $reservation->guest_count }} tamu</span>
+                                            @if($reservation->total_capacity)
+                                                <span class="text-gray-400 mx-2">•</span>
+                                                <span>Kapasitas: {{ $reservation->total_capacity }} orang</span>
+                                            @endif
+                                        @endif
+                                    </div>
+                                    
+                                    <!-- Status Meja -->
+                                    @if($reservation->tables->isNotEmpty())
+                                        <div class="text-xs text-gray-500 ml-7 space-y-1">
+                                            @foreach($reservation->tables as $table)
+                                                <div class="flex items-center justify-between">
+                                                    <span>Meja {{ $table->number }}:</span>
+                                                    <span class="@if($table->status === 'available') text-green-600
+                                                                @elseif($table->status === 'occupied') text-yellow-600
+                                                                @elseif($table->status === 'reserved') text-blue-600
+                                                                @else text-gray-600 @endif px-2 py-0.5 rounded-full text-xs">
+                                                        {{ $table->status_label ?? $table->status }}
+                                                    </span>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    @endif
                                 </div>
-                                <p class="text-xs text-gray-500 mt-1 capitalize">{{ $reservation->table->location_label }}</p>
-                                <p class="text-xs 
-                                    @if($reservation->table->status === 'available') text-green-600
-                                    @elseif($reservation->table->status === 'occupied') text-yellow-600
-                                    @elseif($reservation->table->status === 'reserved') text-blue-600
-                                    @else text-gray-600 @endif">
-                                    Status: {{ $reservation->table->status_label ?? $reservation->table->status }}
-                                </p>
                             </div>
                         </div>
                         
@@ -637,7 +673,7 @@
                         @endif
 
                         <!-- Pembayaran Final Section -->
-                        {{-- @if(in_array($reservation->status, ['confirmed', 'pending']) && $reservation->remaining_payment > 0)
+                        @if(in_array($reservation->status, ['confirmed', 'pending']) && $remaining > 0 && !$reservation->is_fully_paid)
                         <div class="border-t border-gray-200 pt-4 mt-4">
                             <h4 class="font-bold mb-3 flex items-center text-gray-800">
                                 <i class="fas fa-cash-register text-green-500 mr-2"></i>
@@ -646,35 +682,7 @@
                             
                             <form action="{{ route('admin.reservations.record-full-payment', $reservation->id) }}" 
                                 method="POST" 
-                                onsubmit="return confirm('Konfirmasi: Reservasi #{{ $reservation->id }} sudah bayar lunas?\n\nMeja {{ $reservation->table->number }} akan dikosongkan.\nTotal: Rp {{ number_format($reservation->remaining_payment, 0, ',', '.') }}')">
-                                @csrf
-                                <button type="submit" 
-                                        class="w-full bg-green-100 text-green-700 py-3 rounded-lg font-medium hover:bg-green-200 transition-colors flex items-center justify-center mb-2">
-                                    <i class="fas fa-check-circle mr-2"></i>
-                                    Tandai Sudah Bayar Lunas
-                                </button>
-                            </form>
-                            
-                            <div class="text-center text-xs text-gray-500 bg-gray-50 rounded-lg p-2">
-                                <div class="font-medium">Detail Pembayaran:</div>
-                                <div>DP: Rp {{ number_format($reservation->total_DP, 0, ',', '.') }}</div>
-                                <div>Sisa: Rp {{ number_format($reservation->remaining_payment, 0, ',', '.') }}</div>
-                                <div class="font-bold mt-1">Total: Rp {{ number_format($totalAfterDiscount, 0, ',', '.') }}</div>
-                            </div>
-                        </div>
-                        @endif --}}
-
-                        <!-- Pembayaran Final Section -->
-                        @if(in_array($reservation->status, ['confirmed', 'pending']) && $reservation->remaining_payment > 0 && !$reservation->is_fully_paid)
-                        <div class="border-t border-gray-200 pt-4 mt-4">
-                            <h4 class="font-bold mb-3 flex items-center text-gray-800">
-                                <i class="fas fa-cash-register text-green-500 mr-2"></i>
-                                Pembayaran Final
-                            </h4>
-                            
-                            <form action="{{ route('admin.reservations.record-full-payment', $reservation->id) }}" 
-                                method="POST" 
-                                onsubmit="return confirm('Konfirmasi: Reservasi #{{ $reservation->id }} sudah bayar lunas?')">
+                                onsubmit="return confirm('Konfirmasi: Reservasi #{{ $reservation->id }} sudah bayar lunas?\n\nTotal: Rp {{ number_format($remaining, 0, ',', '.') }}')">
                                 @csrf
                                 <button type="submit" 
                                         class="w-full bg-green-100 text-green-700 py-3 rounded-lg font-medium hover:bg-green-200 transition-colors flex items-center justify-center mb-2">
@@ -698,44 +706,6 @@
                         </div>
                         @endif
 
-                        {{-- @if($reservation->is_fully_paid)
-                        <div class="border-t border-gray-200 pt-4 mt-4">
-                            <div class="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
-                                <i class="fas fa-check-circle text-green-500 text-2xl mb-2"></i>
-                                <p class="font-bold text-green-800 text-lg">LUNAS</p>
-                                <p class="text-sm text-green-600 mt-1">
-                                    <i class="fas fa-calendar mr-1"></i>
-                                    Dibayar pada: {{ $reservation->fully_paid_at->format('d M Y H:i') }}
-                                </p>
-                                <p class="text-xs text-green-500 mt-2">
-                                    <i class="fas fa-table mr-1"></i>
-                                    Meja {{ $reservation->table->number }} sudah dikosongkan
-                                </p>
-                            </div>
-                        </div>
-                        @endif --}}
-
-                        <!-- Status Lunas/Belum - VERSI SIMPLE -->
-                        @if($reservation->is_fully_paid)
-                            <div class="bg-green-50 border border-green-200 rounded-lg p-3 mt-2 text-center">
-                                <p class="text-sm text-green-700">
-                                    <i class="fas fa-check-circle mr-1"></i>
-                                    <strong>LUNAS</strong>
-                                    @if($reservation->fully_paid_at)
-                                        - Dibayar pada: {{ $reservation->fully_paid_at->format('d M Y H:i') }}
-                                    @endif
-                                </p>
-                            </div>
-                        @else
-                            <!-- Tampilkan sisa pembayaran hanya jika belum lunas -->
-                            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-2 text-center">
-                                <p class="text-sm text-yellow-700">
-                                    <i class="fas fa-exclamation-triangle mr-1"></i>
-                                    Belum lunas. Sisa bayar: <strong>Rp {{ number_format($reservation->remaining_payment, 0, ',', '.') }}</strong>
-                                </p>
-                            </div>
-                        @endif
-                        
                         <!-- Hapus Reservasi -->
                         <form action="{{ route('admin.reservations.destroy', $reservation->id) }}" method="POST" class="w-full"
                               onsubmit="return confirm('Yakin ingin menghapus reservasi #{{ $reservation->id }}? Tindakan ini tidak dapat dibatalkan.')">

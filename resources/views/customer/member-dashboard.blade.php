@@ -109,20 +109,48 @@
                                 <svg class="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
                                 </svg>
-                                Meja {{ $reservation->table->number }}
+                                <!-- SUPPORT MULTI-TABLE -->
+                                @if($reservation->display_table_numbers)
+                                    {{ $reservation->display_table_numbers }}
+                                    @if($reservation->table_count > 1)
+                                        <span class="ml-1 text-xs bg-blue-100 text-blue-800 px-1 py-0.5 rounded">
+                                            {{ $reservation->table_count }} meja
+                                        </span>
+                                    @endif
+                                @else
+                                    -
+                                @endif
                             </div>
                         </div>
+
+                        <!-- Informasi tambahan jika ada -->
+                        @if($reservation->notes)
+                        <div class="mb-3 p-2 bg-yellow-50 rounded border border-yellow-200">
+                            <p class="text-xs text-yellow-700">
+                                <i class="fas fa-sticky-note mr-1"></i>
+                                {{ Str::limit($reservation->notes, 50) }}
+                            </p>
+                        </div>
+                        @endif
 
                         <div class="flex items-center justify-between pt-3 border-t border-gray-200">
                             <span class="text-sm font-semibold text-gray-700">
                                 DP: <span class="gold-text">Rp {{ number_format($reservation->total_DP, 0, ',', '.') }}</span>
                             </span>
-                            <a href="{{ route('reservation.history', $reservation->id) }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center">
-                                Detail
-                                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                                </svg>
-                            </a>
+                            <div class="flex items-center space-x-2">
+                                @if($reservation->status === 'waiting_payment' && $reservation->payment_deadline)
+                                <span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">
+                                    <i class="fas fa-clock mr-1"></i>
+                                    Bayar sebelum: {{ $reservation->payment_deadline->format('H:i') }}
+                                </span>
+                                @endif
+                                <a href="{{ route('reservation.history') }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center">
+                                    Detail
+                                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                    </svg>
+                                </a>
+                            </div>
                         </div>
                     </div>
                     @empty
@@ -146,27 +174,47 @@
                         <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
-                        Riwayat Reservasi
+                        Riwayat Reservasi Terakhir
                     </h2>
-                    <a href="{{ route('reservation.index') }}" class="text-white text-sm hover:underline">
+                    <a href="{{ route('reservation.history') }}" class="text-white text-sm hover:underline">
                         Lihat Semua →
                     </a>
                 </div>
                 <div class="p-6">
                     @forelse($recentReservations as $reservation)
-                    <div class="flex items-center justify-between py-4 border-b border-gray-100 last:border-0">
+                    <div class="flex items-center justify-between py-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 rounded-lg px-3 transition-colors">
                         <div class="flex-1">
                             <p class="font-semibold text-gray-800">{{ $reservation->reservation_date->format('d M Y') }}</p>
-                            <p class="text-sm text-gray-600">{{ $reservation->formatted_time }} • {{ $reservation->guest_count }} Orang</p>
+                            <p class="text-sm text-gray-600">
+                                {{ $reservation->formatted_time }} • {{ $reservation->guest_count }} Orang
+                            </p>
+                            <!-- SUPPORT MULTI-TABLE -->
+                            <p class="text-xs text-gray-500 mt-1">
+                                <i class="fas fa-chair mr-1"></i>
+                                @if($reservation->display_table_numbers)
+                                    {{ $reservation->display_table_numbers }}
+                                    @if($reservation->table_count > 1)
+                                        <span class="text-blue-600"> ({{ $reservation->table_count }} meja)</span>
+                                    @endif
+                                @else
+                                    -
+                                @endif
+                            </p>
                         </div>
                         <div class="text-right">
                             {!! $reservation->status_badge !!}
-                            <p class="text-xs text-gray-500 mt-1">Meja {{ $reservation->table->number }}</p>
+                            <p class="text-xs text-gray-500 mt-1">
+                                DP: Rp {{ number_format($reservation->total_DP, 0, ',', '.') }}
+                            </p>
                         </div>
                     </div>
                     @empty
                     <div class="text-center py-8 text-gray-500">
-                        Belum ada riwayat reservasi
+                        <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <p class="text-gray-400">Belum ada riwayat reservasi</p>
+                        <p class="text-sm text-gray-500 mt-1">Setelah membuat reservasi, riwayat akan muncul di sini</p>
                     </div>
                     @endforelse
                 </div>
@@ -184,15 +232,18 @@
                     Menu Cepat
                 </h3>
                 <div class="space-y-3">
-                    <a href="{{ route('reservation.index') }}" class="block w-full gold-bg text-white px-4 py-3 rounded-lg hover:shadow-lg transition-all text-center font-semibold">
-                        🍽️ Buat Reservasi Baru
+                    <a href="{{ route('reservation.index') }}" class="block w-full gold-bg text-white px-4 py-3 rounded-lg hover:shadow-lg transition-all text-center font-semibold flex items-center justify-center">
+                        <i class="fas fa-plus-circle mr-2"></i>
+                        Buat Reservasi Baru
                     </a>
-                    <a href="{{ route('reservation.history') }}" class="block w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-all text-center font-semibold">
-                        📋 Lihat Semua Reservasi
+                    <a href="{{ route('reservation.history') }}" class="block w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-all text-center font-semibold flex items-center justify-center">
+                        <i class="fas fa-history mr-2"></i>
+                        Lihat Semua Reservasi
                     </a>
-                    <a href="#" class="block w-full bg-gray-600 text-white px-4 py-3 rounded-lg hover:bg-gray-700 transition-all text-center font-semibold">
-                        👤 Edit Profil
-                    </a>
+                    {{-- <a href="{{ route('profile.edit') }}" class="block w-full bg-gray-600 text-white px-4 py-3 rounded-lg hover:bg-gray-700 transition-all text-center font-semibold flex items-center justify-center">
+                        <i class="fas fa-user-edit mr-2"></i>
+                        Edit Profil
+                    </a> --}}
                 </div>
             </div>
 
@@ -208,11 +259,12 @@
                 </div>
                 <div class="p-4">
                     @forelse($activePromos ?? [] as $promo)
-                    <div class="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-4 mb-3 border-l-4 border-amber-400 hover:shadow-md transition-all cursor-pointer">
+                    <div class="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-4 mb-3 border-l-4 border-amber-400 hover:shadow-md transition-all cursor-pointer" onclick="window.location.href='{{ route('reservation.index') }}'">
                         <div class="flex items-start justify-between mb-2">
                             <div class="flex-1">
                                 <div class="flex items-center gap-2 mb-1">
                                     <span class="font-mono text-xs font-bold text-amber-700 bg-amber-200 px-2 py-0.5 rounded">{{ $promo->promo_code }}</span>
+                                    <span class="text-xs font-bold text-amber-600">{{ $promo->name }}</span>
                                 </div>
                                 <p class="text-xs text-gray-600 mt-1 line-clamp-2">{{ $promo->description }}</p>
                             </div>
@@ -243,50 +295,11 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"></path>
                         </svg>
                         <p class="text-gray-500 text-sm">Belum ada promo aktif</p>
+                        <p class="text-xs text-gray-400 mt-1">Nantikan promo menarik lainnya</p>
                     </div>
                     @endforelse
                 </div>
             </div>
-
-            <!-- Informasi Kontak -->
-            {{-- <div class="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl shadow-lg p-6 border border-amber-200">
-                <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                    <svg class="w-5 h-5 mr-2 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    Hubungi Kami
-                </h3>
-                <div class="space-y-3">
-                    <div class="flex items-start">
-                        <svg class="w-5 h-5 text-amber-600 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
-                        </svg>
-                        <div>
-                            <p class="text-sm font-medium text-gray-700">Telepon</p>
-                            <p class="text-sm text-gray-600">+62 812-3456-7890</p>
-                        </div>
-                    </div>
-                    <div class="flex items-start">
-                        <svg class="w-5 h-5 text-amber-600 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        </svg>
-                        <div>
-                            <p class="text-sm font-medium text-gray-700">Alamat</p>
-                            <p class="text-sm text-gray-600">Jl. Raya Cianjur No. 123</p>
-                        </div>
-                    </div>
-                    <div class="flex items-start">
-                        <svg class="w-5 h-5 text-amber-600 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        <div>
-                            <p class="text-sm font-medium text-gray-700">Jam Operasional</p>
-                            <p class="text-sm text-gray-600">10:00 - 22:00 WIB</p>
-                        </div>
-                    </div>
-                </div>
-            </div> --}}
 
             <!-- Tips & Info -->
             <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl shadow-lg p-6 border border-blue-200">
@@ -314,14 +327,23 @@
                         <span>Pembatalan max 6 jam sebelumnya</span>
                     </li>
                 </ul>
+                
+                <!-- Info Penting -->
+                <div class="mt-4 p-3 bg-blue-100 rounded-lg border border-blue-300">
+                    <p class="text-xs text-blue-800 font-medium">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Sistem multi-table memungkinkan Anda memesan beberapa meja sekaligus
+                    </p>
+                </div>
             </div>
+
+            
         </div>
     </div>
-    <!-- ====================================================== -->
-    <!-- FACILITIES SECTION - TAMBAHKAN DI SINI -->
-    <!-- ====================================================== -->
+    
+    <!-- FACILITIES SECTION -->
     @if($facilities->isNotEmpty())
-    <div class="mb-12">
+    <div class="mb-12" id="facilities-section">
         <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-6">
             <div class="bg-gradient-to-r from-emerald-600 to-teal-700 px-6 py-4 flex justify-between items-center">
                 <h2 class="text-xl font-bold text-white flex items-center">
@@ -335,20 +357,20 @@
             <div class="p-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     @foreach($facilities as $facility)
-                    <div class="bg-gray-50 rounded-xl border border-gray-200 hover:shadow-md transition-all duration-300 overflow-hidden hover:{{ $facility->icon_border_class }} group">
+                    <div class="bg-gray-50 rounded-xl border border-gray-200 hover:shadow-md transition-all duration-300 overflow-hidden hover:border-{{ $facility->color }}-400 group">
                         <div class="p-5">
                             <!-- Header dengan icon dan status -->
                             <div class="flex justify-between items-start mb-4">
-                                <div class="p-3 rounded-lg {{ $facility->icon_color_class }} group-hover:scale-110 transition-transform duration-300">
-                                    <i class="{{ $facility->icon_class }} text-lg"></i>
+                                <div class="p-3 rounded-lg bg-{{ $facility->color }}-100 group-hover:scale-110 transition-transform duration-300">
+                                    <i class="{{ $facility->icon }} text-{{ $facility->color }}-600 text-lg"></i>
                                 </div>
-                                <span class="status-badge {{ $facility->status_badge_class }} text-xs">
-                                    {{ $facility->status_text }}
+                                <span class="status-badge bg-{{ $facility->is_available ? 'green' : 'red' }}-100 text-{{ $facility->is_available ? 'green' : 'red' }}-800 text-xs">
+                                    {{ $facility->is_available ? 'Tersedia' : 'Tidak Tersedia' }}
                                 </span>
                             </div>
                             
                             <!-- Nama dan deskripsi -->
-                            <h3 class="font-bold text-gray-800 mb-2 group-hover:{{ str_replace('text-', 'hover:', $facility->icon_text_class) }} transition-colors">
+                            <h3 class="font-bold text-gray-800 mb-2 group-hover:text-{{ $facility->color }}-600 transition-colors">
                                 {{ $facility->name }}
                             </h3>
                             <p class="text-sm text-gray-600 mb-3 line-clamp-2">
@@ -362,6 +384,14 @@
                                 <span>{{ $facility->location }}</span>
                             </div>
                             @endif
+                            
+                            <!-- Kapasitas (jika ada) -->
+                            @if($facility->capacity)
+                            <div class="flex items-center text-gray-500 text-sm mt-2">
+                                <i class="fas fa-users mr-2 text-gray-400"></i>
+                                <span>Kapasitas: {{ $facility->capacity }} orang</span>
+                            </div>
+                            @endif
                         </div>
                     </div>
                     @endforeach
@@ -370,10 +400,30 @@
         </div>
     </div>
     @endif
-    <!-- ====================================================== -->
 </div>
+
 <style>
-    /* CSS tambahan untuk fasilitas */
+    /* Custom Styles */
+    .hero-section {
+        background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+    }
+    
+    .gold-text {
+        color: #fbbf24;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .gold-bg {
+        background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+        box-shadow: 0 4px 15px rgba(251, 191, 36, 0.3);
+    }
+    
+    .gold-bg:hover {
+        background: linear-gradient(135deg, #fbbf24 0%, #b45309 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(251, 191, 36, 0.4);
+    }
+    
     .status-badge {
         padding: 0.25rem 0.5rem;
         border-radius: 0.375rem;
@@ -389,31 +439,41 @@
         overflow: hidden;
     }
     
-    /* Warna untuk icon */
-    .text-blue-600 { color: #2563eb; }
-    .bg-blue-100 { background-color: #dbeafe; }
-    .text-yellow-600 { color: #d97706; }
-    .bg-yellow-100 { background-color: #fef3c7; }
-    .text-pink-600 { color: #db2777; }
-    .bg-pink-100 { background-color: #fce7f3; }
-    .text-cyan-600 { color: #0891b2; }
-    .bg-cyan-100 { background-color: #cffafe; }
-    .text-purple-600 { color: #9333ea; }
-    .bg-purple-100 { background-color: #f3e8ff; }
-    .text-orange-600 { color: #ea580c; }
-    .bg-orange-100 { background-color: #ffedd5; }
-    .text-gray-600 { color: #4b5563; }
-    .bg-gray-100 { background-color: #f3f4f6; }
+    /* Animation for cards */
+    .hover-lift:hover {
+        transform: translateY(-5px);
+        transition: transform 0.3s ease;
+    }
+    
+    /* Gradient borders */
+    .border-gradient {
+        border: 2px solid transparent;
+        background: linear-gradient(white, white) padding-box,
+                    linear-gradient(135deg, #6366f1, #8b5cf6) border-box;
+    }
 </style>
 @endsection
 
 @push('scripts')
 <script>
-    // Add any interactive features here if needed
-    // console.log('Customer Dashboard Loaded');
-    // Add any interactive features here if needed
     console.log('Customer Dashboard Loaded');
     
+    // Auto refresh stats every 60 seconds
+    setInterval(() => {
+        fetch('/customer/dashboard/stats')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update stats counters
+                    document.querySelector('[data-stat="total"]').textContent = data.data.total_reservations;
+                    document.querySelector('[data-stat="active"]').textContent = data.data.active_reservations;
+                    document.querySelector('[data-stat="monthly"]').textContent = data.data.monthly_reservations;
+                    document.querySelector('[data-stat="completed"]').textContent = data.data.completed_reservations;
+                }
+            })
+            .catch(error => console.error('Error fetching stats:', error));
+    }, 60000);
+
     // Smooth scroll to facilities section
     document.querySelectorAll('a[href="#facilities-section"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
@@ -421,10 +481,139 @@
             const facilitiesSection = document.getElementById('facilities-section');
             if (facilitiesSection) {
                 facilitiesSection.scrollIntoView({ 
-                    behavior: 'smooth' 
+                    behavior: 'smooth',
+                    block: 'start'
                 });
             }
         });
     });
+
+    // Add hover effect to reservation cards
+    document.addEventListener('DOMContentLoaded', function() {
+        const reservationCards = document.querySelectorAll('.bg-gray-50.rounded-lg');
+        reservationCards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.classList.add('shadow-lg', 'border-blue-300');
+            });
+            card.addEventListener('mouseleave', function() {
+                this.classList.remove('shadow-lg', 'border-blue-300');
+            });
+        });
+
+        // Add click effect to promo cards
+        const promoCards = document.querySelectorAll('.bg-gradient-to-r.from-amber-50');
+        promoCards.forEach(card => {
+            card.addEventListener('click', function() {
+                window.location.href = '{{ route("reservation.index") }}';
+            });
+        });
+    });
+
+    // Show notification if there are upcoming reservations with payment deadline
+    @if($upcomingReservations->isNotEmpty())
+        const upcomingWithDeadline = @json($upcomingReservations->filter(fn($r) => $r->status === 'waiting_payment' && $r->payment_deadline));
+        if (upcomingWithDeadline.length > 0) {
+            setTimeout(() => {
+                const notification = document.createElement('div');
+                notification.className = 'fixed bottom-4 right-4 bg-orange-100 border-l-4 border-orange-500 text-orange-700 p-4 rounded-lg shadow-lg z-50 max-w-sm animate-fade-in-up';
+                notification.innerHTML = `
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <svg class="h-6 w-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium">Ada reservasi menunggu pembayaran!</p>
+                            <p class="text-xs mt-1">Segera selesaikan pembayaran DP sebelum batas waktu.</p>
+                        </div>
+                        <button type="button" class="ml-auto -mx-1.5 -my-1.5 text-orange-500 hover:text-orange-700 rounded-lg p-1.5 inline-flex">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                `;
+                
+                notification.querySelector('button').addEventListener('click', function() {
+                    notification.remove();
+                });
+                
+                document.body.appendChild(notification);
+                
+                // Auto remove after 10 seconds
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 10000);
+            }, 2000);
+        }
+    @endif
+
+    // Animation for stats cards
+    const observerOptions = {
+        threshold: 0.1
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('animate-fade-in-up');
+            }
+        });
+    }, observerOptions);
+
+    // Observe stats cards
+    document.querySelectorAll('.bg-white.rounded-xl').forEach(card => {
+        observer.observe(card);
+    });
 </script>
+
+<style>
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .animate-fade-in-up {
+        animation: fadeInUp 0.6s ease-out forwards;
+    }
+    
+    /* Stagger animations */
+    .bg-white.rounded-xl:nth-child(1) { animation-delay: 0.1s; }
+    .bg-white.rounded-xl:nth-child(2) { animation-delay: 0.2s; }
+    .bg-white.rounded-xl:nth-child(3) { animation-delay: 0.3s; }
+    
+    /* Hover animations */
+    .hover-scale:hover {
+        transform: scale(1.02);
+        transition: transform 0.3s ease;
+    }
+    
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: #a1a1a1;
+    }
+</style>
 @endpush

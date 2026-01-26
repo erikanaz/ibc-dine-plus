@@ -22,24 +22,6 @@
 
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-6">
-        <!-- Total Reservations -->
-        {{-- <div class="dashboard-card bg-white rounded-xl shadow p-6 border-l-4 border-primary transition-all">
-            <div class="flex justify-between items-start">
-                <div>
-                    <p class="text-gray-500">Total Reservasi</p>
-                    <p class="text-3xl font-bold mt-2">{{ $totalAllReservations }}</p>
-                    @if(request('search') || request('status'))
-                        <p class="text-xs text-gray-500 mt-1">
-                            Ditampilkan: {{ $reservations->total() }}
-                        </p>
-                    @endif
-                </div>
-                <div class="bg-primary/10 p-3 rounded-lg">
-                    <i class="fas fa-calendar-alt text-primary text-2xl"></i>
-                </div>
-            </div>
-        </div> --}}
-        
         <!-- Waiting Payment -->
         <div class="dashboard-card bg-white rounded-xl shadow p-6 border-l-4 border-blue-500 transition-all">
             <div class="flex justify-between items-start">
@@ -208,14 +190,37 @@
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900">
-                                    Meja {{ $reservation->table->number }}
-                                </div>
-                                <div class="text-sm text-gray-600">
-                                    {{ $reservation->guest_count }} orang
-                                </div>
-                                <div class="text-xs text-gray-500 capitalize">
-                                    {{ $reservation->table->location_label }}
+                                <!-- PERUBAHAN UTAMA DI SINI: Support multi-table -->
+                                <div class="space-y-1">
+                                    <div class="flex items-center">
+                                        <div class="text-sm font-medium text-gray-900">
+                                            @if($reservation->table_numbers)
+                                                {{ $reservation->table_numbers }}
+                                            @elseif($reservation->tables->isNotEmpty())
+                                                {{ $reservation->tables->pluck('number')->sort()->implode(', ') }}
+                                            @else
+                                                -
+                                            @endif
+                                        </div>
+                                        @if($reservation->total_tables && $reservation->total_tables > 1)
+                                            <span class="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
+                                                {{ $reservation->total_tables }} meja
+                                            </span>
+                                        @endif
+                                    </div>
+                                    <div class="text-sm text-gray-600">
+                                        {{ $reservation->guest_count }} orang
+                                    </div>
+                                    <div class="text-xs text-gray-500">
+                                        @if($reservation->tables->isNotEmpty())
+                                            <!-- Tampilkan kapasitas total atau location dari meja pertama -->
+                                            @if($reservation->total_capacity)
+                                                Kapasitas: {{ $reservation->total_capacity }} orang
+                                            @else
+                                                Kapasitas: {{ $reservation->tables->sum('capacity') }} orang
+                                            @endif
+                                        @endif
+                                    </div>
                                 </div>
                             </td>
                             <td class="px-6 py-4">
@@ -247,10 +252,6 @@
                                 @else
                                     <div class="text-center py-2">
                                         <div class="text-sm text-gray-500">Tidak ada pesanan</div>
-                                        {{-- <a href="{{ route('admin.reservations.show', $reservation->id) }}" 
-                                           class="text-xs text-primary hover:underline">
-                                            Tambah pesanan
-                                        </a> --}}
                                     </div>
                                 @endif
                             </td>
@@ -292,12 +293,6 @@
                                         <i class="fas fa-edit"></i>
                                     </a> --}}
                                     @endif
-                                    {{-- <a href="{{ route('admin.reservations.invoice', $reservation->id) }}" 
-                                       target="_blank"
-                                       class="text-green-600 hover:text-green-800 transition-colors p-2 rounded-lg hover:bg-green-50"
-                                       title="Cetak Invoice">
-                                        <i class="fas fa-print"></i>
-                                    </a> --}}
                                     {{-- @if($reservation->can_cancel) --}}
                                     <form action="{{ route('admin.reservations.destroy', $reservation->id) }}" 
                                           method="POST" 
@@ -412,12 +407,12 @@
                 reservationRows.forEach(row => {
                     const customerName = row.querySelector('td:first-child .text-sm.font-medium').textContent.toLowerCase();
                     const customerEmail = row.querySelector('td:first-child .text-sm.text-gray-600').textContent.toLowerCase();
-                    const tableNumber = row.querySelector('td:nth-child(3) .text-sm.font-medium').textContent.toLowerCase();
+                    const tableInfo = row.querySelector('td:nth-child(3) .text-sm.font-medium').textContent.toLowerCase();
                     const status = row.getAttribute('data-status');
 
                     const matchesSearch = customerName.includes(searchTerm) || 
                                         customerEmail.includes(searchTerm) || 
-                                        tableNumber.includes(searchTerm);
+                                        tableInfo.includes(searchTerm);
                     
                     // Handle cancelled filter (include expired)
                     let matchesStatus = !statusValue || status === statusValue;

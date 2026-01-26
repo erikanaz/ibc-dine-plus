@@ -31,7 +31,11 @@
                         <div>
                             <p class="text-sm font-semibold text-orange-800">Batas Waktu Pembayaran</p>
                             <p class="text-sm text-orange-600">
-                                {{ $reservation->payment_deadline ? $reservation->payment_deadline->translatedFormat('l, d F Y H:i') : 'Tidak ada batas waktu' }}
+                                @if($reservation->payment_deadline)
+                                    {{ $reservation->payment_deadline->translatedFormat('l, d F Y H:i') }}
+                                @else
+                                    Tidak ada batas waktu
+                                @endif
                             </p>
                         </div>
                     </div>
@@ -53,19 +57,57 @@
                             <div class="space-y-2 text-sm">
                                 <div class="flex justify-between">
                                     <span class="text-gray-600">Tanggal</span>
-                                    <span class="font-medium">{{ $reservation->reservation_date->translatedFormat('l, d F Y') }}</span>
+                                    <span class="font-medium">
+                                        @if($reservation->reservation_date)
+                                            {{ $reservation->reservation_date->translatedFormat('l, d F Y') }}
+                                        @else
+                                            -
+                                        @endif
+                                    </span>
                                 </div>
                                 <div class="flex justify-between">
                                     <span class="text-gray-600">Waktu</span>
-                                    <span class="font-medium">{{ $reservation->reservation_time }}</span>
+                                    <span class="font-medium">{{ $reservation->reservation_time ?? '-' }}</span>
                                 </div>
                                 <div class="flex justify-between">
                                     <span class="text-gray-600">Meja</span>
-                                    <span class="font-medium">Meja {{ $reservation->table->number }}</span>
+                                    <span class="font-medium text-right">
+                                        @if($reservation->table_numbers)
+                                            {{ $reservation->table_numbers }}
+                                        @elseif($reservation->tables && $reservation->tables->count() > 0)
+                                            {{ $reservation->tables->pluck('number')->implode(', ') }}
+                                        @else
+                                            -
+                                        @endif
+                                    </span>
                                 </div>
                                 <div class="flex justify-between">
                                     <span class="text-gray-600">Jumlah Tamu</span>
-                                    <span class="font-medium">{{ $reservation->guest_count }} Orang</span>
+                                    <span class="font-medium">{{ $reservation->guest_count ?? 0 }} Orang</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Jumlah Meja</span>
+                                    <span class="font-medium">
+                                        @if($reservation->total_tables)
+                                            {{ $reservation->total_tables }} meja
+                                        @elseif($reservation->tables)
+                                            {{ $reservation->tables->count() }} meja
+                                        @else
+                                            -
+                                        @endif
+                                    </span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Total Kapasitas</span>
+                                    <span class="font-medium">
+                                        @if($reservation->total_capacity)
+                                            {{ $reservation->total_capacity }} orang
+                                        @elseif($reservation->tables)
+                                            {{ $reservation->tables->sum('capacity') }} orang
+                                        @else
+                                            -
+                                        @endif
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -130,7 +172,6 @@
                                         <button type="button" @click="file = null; previewUrl = null; $refs.fileInput.value = null" class="text-sm text-red-600 hover:text-red-800 bg-red-50 px-3 py-1 rounded-md">
                                             Hapus
                                         </button>
-                                        <!-- <span class="text-xs text-gray-500 ml-2" x-text="file ? file.name : ''"></span> -->
                                     </div>
                                 </div>
 
@@ -222,123 +263,126 @@ document.addEventListener('DOMContentLoaded', function() {
     const loadingText = document.getElementById('loading-text');
     const paymentForm = document.getElementById('payment-form');
     
-    // Debug info
     console.log('🟢 Payment Page Loaded');
-    console.log('Server deadline:', '{{ $reservation->payment_deadline }}');
-    console.log('Server deadline ISO:', '{{ $reservation->payment_deadline->toISOString() }}');
     
-    // ✅ PERBAIKAN: Gunakan langsung datetime dari server tanpa konversi timestamp
-    // Karena Laravel sudah mengembalikan waktu dalam timezone yang benar
-    const serverDeadline = new Date('{{ $reservation->payment_deadline->toISOString() }}');
-    
-    console.log('Parsed deadline:', serverDeadline);
-    console.log('Local time:', new Date());
-    console.log('Timezone offset:', serverDeadline.getTimezoneOffset());
-    
-    // Countdown function
-    function updateCountdown() {
-        const now = new Date();
-        const distance = serverDeadline - now;
+    // Cek jika payment deadline ada
+    @if($reservation->payment_deadline)
+        const serverDeadline = new Date('{{ $reservation->payment_deadline->toISOString() }}');
+        console.log('Parsed deadline:', serverDeadline);
         
-        console.log('Countdown - Now:', now);
-        console.log('Countdown - Deadline:', serverDeadline);
-        console.log('Countdown - Distance:', distance);
-        
-        if (distance < 0) {
-            // Waktu habis
-            countdownElement.innerHTML = "WAKTU HABIS";
-            countdownElement.className = "text-lg font-bold text-red-600 animate-pulse";
-            if (expiredWarning) {
-                expiredWarning.classList.remove('hidden');
-            }
-            if (submitBtn) {
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<span>Waktu Habis</span>';
-            }
-            return;
-        }
-        
-        // Hitung waktu tersisa
-        const hours = Math.floor(distance / (1000 * 60 * 60));
-        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-        
-        // Format tampilan
-        let countdownText = '';
-        if (hours > 0) {
-            countdownText = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        } else {
-            countdownText = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        }
-        
-        // Update warna berdasarkan waktu tersisa
-        if (hours === 0 && minutes < 30) {
-            countdownElement.className = "text-lg font-bold text-red-600 animate-pulse";
-        } else if (hours === 0) {
-            countdownElement.className = "text-lg font-bold text-orange-500";
-        } else {
-            countdownElement.className = "text-lg font-bold text-orange-600";
-        }
-        
-        countdownElement.innerHTML = countdownText;
-        
-        // Update button status
-        if (submitBtn && distance < 0) {
-            submitBtn.disabled = true;
-            submitBtn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
-            submitBtn.classList.add('bg-gray-400');
-        }
-    }
-    
-    // Update countdown setiap detik
-    updateCountdown();
-    const countdownInterval = setInterval(updateCountdown, 1000);
-    
-    // Form submission handler
-    if (paymentForm) {
-        paymentForm.addEventListener('submit', function(e) {
-            const fileInput = document.getElementById('bukti_transfer');
+        // Countdown function
+        function updateCountdown() {
             const now = new Date();
             const distance = serverDeadline - now;
             
-            // Validasi waktu (jika waktu sudah habis)
+            console.log('Countdown - Now:', now);
+            console.log('Countdown - Distance:', distance);
+            
             if (distance < 0) {
-                e.preventDefault();
-                alert('Batas waktu pembayaran telah habis. Reservasi akan otomatis dibatalkan.');
+                // Waktu habis
+                countdownElement.innerHTML = "WAKTU HABIS";
+                countdownElement.className = "text-lg font-bold text-red-600 animate-pulse";
+                if (expiredWarning) {
+                    expiredWarning.classList.remove('hidden');
+                }
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span>Waktu Habis</span>';
+                }
                 return;
             }
             
-            // Validasi file
-            if (!fileInput || !fileInput.files.length) {
-                e.preventDefault();
-                alert('Silakan pilih bukti transfer terlebih dahulu.');
-                return;
+            // Hitung waktu tersisa
+            const hours = Math.floor(distance / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            
+            // Format tampilan
+            let countdownText = '';
+            if (hours > 0) {
+                countdownText = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            } else {
+                countdownText = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
             }
             
-            // Validasi ukuran file (max 2MB)
-            const file = fileInput.files[0];
-            if (file.size > 2 * 1024 * 1024) {
-                e.preventDefault();
-                alert('Ukuran file maksimal 2MB.');
-                return;
+            // Update warna berdasarkan waktu tersisa
+            if (hours === 0 && minutes < 30) {
+                countdownElement.className = "text-lg font-bold text-red-600 animate-pulse";
+            } else if (hours === 0) {
+                countdownElement.className = "text-lg font-bold text-orange-500";
+            } else {
+                countdownElement.className = "text-lg font-bold text-orange-600";
             }
             
-            // Validasi tipe file
-            const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-            if (!validTypes.includes(file.type)) {
-                e.preventDefault();
-                alert('Hanya file JPG, JPEG, dan PNG yang diizinkan.');
-                return;
-            }
+            countdownElement.innerHTML = countdownText;
             
-            // Show loading state
-            if (submitText && loadingText && submitBtn) {
-                submitText.classList.add('hidden');
-                loadingText.classList.remove('hidden');
+            // Update button status
+            if (submitBtn && distance < 0) {
                 submitBtn.disabled = true;
+                submitBtn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+                submitBtn.classList.add('bg-gray-400');
             }
+        }
+        
+        // Update countdown setiap detik
+        updateCountdown();
+        const countdownInterval = setInterval(updateCountdown, 1000);
+        
+        // Form submission handler untuk validasi waktu
+        if (paymentForm) {
+            paymentForm.addEventListener('submit', function(e) {
+                const now = new Date();
+                const distance = serverDeadline - now;
+                
+                // Validasi waktu (jika waktu sudah habis)
+                if (distance < 0) {
+                    e.preventDefault();
+                    alert('Batas waktu pembayaran telah habis. Reservasi akan otomatis dibatalkan.');
+                    return;
+                }
+                
+                // Validasi file
+                const fileInput = document.getElementById('bukti_transfer');
+                if (!fileInput || !fileInput.files.length) {
+                    e.preventDefault();
+                    alert('Silakan pilih bukti transfer terlebih dahulu.');
+                    return;
+                }
+                
+                // Validasi ukuran file (max 2MB)
+                const file = fileInput.files[0];
+                if (file.size > 2 * 1024 * 1024) {
+                    e.preventDefault();
+                    alert('Ukuran file maksimal 2MB.');
+                    return;
+                }
+                
+                // Validasi tipe file
+                const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+                if (!validTypes.includes(file.type)) {
+                    e.preventDefault();
+                    alert('Hanya file JPG, JPEG, dan PNG yang diizinkan.');
+                    return;
+                }
+                
+                // Show loading state
+                if (submitText && loadingText && submitBtn) {
+                    submitText.classList.add('hidden');
+                    loadingText.classList.remove('hidden');
+                    submitBtn.disabled = true;
+                }
+            });
+        }
+        
+        // Cleanup interval ketika halaman ditutup
+        window.addEventListener('beforeunload', function() {
+            clearInterval(countdownInterval);
         });
-    }
+    @else
+        // Jika tidak ada payment deadline
+        countdownElement.innerHTML = "Tidak ada batas waktu";
+        countdownElement.className = "text-lg font-bold text-gray-600";
+    @endif
     
     // Drag and drop functionality
     const dropArea = document.querySelector('[x-show="!previewUrl"]');
@@ -385,27 +429,19 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     }
-    
-    // Cleanup interval ketika halaman ditutup
-    window.addEventListener('beforeunload', function() {
-        clearInterval(countdownInterval);
-    });
 });
 </script>
 
 <style>
-/* Custom styles untuk drag and drop */
 .border-dashed:hover {
     border-color: #f59e0b;
     background-color: #fffbeb;
 }
 
-/* Smooth transition untuk countdown */
 #countdown-timer {
     transition: all 0.3s ease;
 }
 
-/* Animation untuk pulse */
 .animate-pulse {
     animation: pulse 1s infinite;
 }

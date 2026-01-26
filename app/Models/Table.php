@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Table extends Model
 {
@@ -31,6 +32,18 @@ class Table extends Model
     // Location constants
     const LOCATION_INDOOR = 'indoor';
     const LOCATION_OUTDOOR = 'outdoor';
+
+    protected $appends = [
+        'status_label',
+        'location_label',
+        'status_color',
+        'is_available',
+        'status_badge_class',
+        'status_text',
+        'capacity_label',
+        'reservation_count', // ✅ DITAMBAH
+        'current_reservations' // ✅ DITAMBAH
+    ];
 
     public function getStatusLabelAttribute()
     {
@@ -93,6 +106,27 @@ class Table extends Model
     }
 
     /**
+     * ✅ ACCESSOR BARU: Jumlah reservasi untuk meja ini
+     */
+    public function getReservationCountAttribute()
+    {
+        return $this->reservations()->count();
+    }
+
+    /**
+     * ✅ ACCESSOR BARU: Reservasi aktif untuk meja ini
+     */
+    public function getCurrentReservationsAttribute()
+    {
+        return $this->reservations()
+            ->where('reservation_date', '>=', today())
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->orderBy('reservation_date')
+            ->orderBy('reservation_time')
+            ->get();
+    }
+
+    /**
      * Scope untuk meja yang tersedia
      */
     public function scopeAvailable($query)
@@ -100,10 +134,69 @@ class Table extends Model
         return $query->where('status', 'available');
     }
 
-    public function reservations()
+    // public function reservations()
+    // {
+    //     return $this->hasMany(Reservation::class);
+    // }
+
+    // ✅ RELASI BARU: Many-to-Many dengan Reservation melalui ReservationTable
+    public function reservations(): BelongsToMany
     {
-        return $this->hasMany(Reservation::class);
+        return $this->belongsToMany(Reservation::class, 'reservation_tables')
+            ->withTimestamps()
+            ->withPivot(['id', 'created_at', 'updated_at']);
     }
 
+    /**
+     * ✅ METHOD BARU: Cek apakah meja tersedia pada tanggal dan waktu tertentu
+     */
+    public function isAvailableForDateTime($date, $time)
+    {
+        // Cek status meja
+        if ($this->status !== self::STATUS_AVAILABLE) {
+            return false;
+        }
+
+        // Cek apakah ada reservasi pada waktu tersebut
+        $conflictingReservations = $this->reservations()
+            ->where('reservation_date', $date)
+            ->where('reservation_time', $time)
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->count();
+
+        return $conflictingReservations === 0;
+    }
+
+    /**
+     * ✅ METHOD BARU: Dapatkan reservasi pada tanggal tertentu
+     */
+    public function getReservationsForDate($date)
+    {
+        return $this->reservations()
+            ->where('reservation_date', $date)
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->orderBy('reservation_time')
+            ->get();
+    }
+
+    /**
+     * ✅ METHOD BARU: Update status meja berdasarkan reservasi
+     */
+    public function updateStatusBasedOnReservations()
+    {
+        $today = today()->toDateString();
+        
+        // Cek apakah ada reservasi aktif hari ini
+        $activeReservationToday = $this->reservations()
+            ->where('reservation_date', $today)
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->exists();
+
+        if ($activeReservationToday) {
+            $this->update(['status' => self::STATUS_RESERVED]);
+        } elseif ($this->status === self::STATUS_RESERVED) {
+            $this->update(['status' => self::STATUS_AVAILABLE]);
+        }
+    }
     
 }

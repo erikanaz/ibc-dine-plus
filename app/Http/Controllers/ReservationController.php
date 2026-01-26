@@ -19,14 +19,18 @@ class ReservationController extends Controller
 {
     public function index()
     {
-        $tables = Table::where('status', 'available')->get();
+        // Ambil semua meja yang tersedia
+        $tables = Table::where('status', 'available')
+            ->orderBy('location')
+            ->orderBy('number')
+            ->get();
+
         $menus = Menu::where('is_available', true)
                 ->orderBy('category')
                 ->orderBy('name')
                 ->get()
                 ->groupBy('category');
 
-        // Gunakan scope active untuk promos
         $promos = Promo::active()->get();
 
         return view('customer.reservation.index', compact('tables', 'menus', 'promos'));
@@ -44,46 +48,199 @@ class ReservationController extends Controller
         $waktu = $request->waktu;
         $jumlahTamu = $request->jumlah_tamu;
 
-        // Cari meja yang sudah direservasi pada tanggal dan waktu tertentu
-        $reservedTableIds = Reservation::where('reservation_date', $tanggal)
-            ->where('reservation_time', $waktu)
-            ->whereIn('status', ['pending', 'confirmed'])
-            ->pluck('table_id')
+        // ✅ DIUBAH: Cari meja yang sudah direservasi
+        $reservedTableIds = DB::table('reservation_tables')
+            ->join('reservations', 'reservation_tables.reservation_id', '=', 'reservations.id')
+            ->where('reservations.reservation_date', $tanggal)
+            ->where('reservations.reservation_time', $waktu)
+            ->whereIn('reservations.status', ['pending', 'confirmed'])
+            ->pluck('reservation_tables.table_id')
             ->toArray();
 
-        // Ambil semua meja dengan tambahan info ketersediaan
-        $allTables = Table::all()->map(function ($table) use ($reservedTableIds, $jumlahTamu) {
+        // ✅ DIUBAH: Hapus validasi kapasitas per meja
+        $allTables = Table::all()->map(function ($table) use ($reservedTableIds) {
             $hasReservation = in_array($table->id, $reservedTableIds);
-            $isCapacitySufficient = $table->capacity >= $jumlahTamu;
             
             // Tentukan status efektif untuk UI
             $effectiveStatus = $table->status;
             if ($hasReservation) {
-                $effectiveStatus = 'reserved_slot'; // Reserved untuk waktu ini
+                $effectiveStatus = 'reserved_slot';
             }
             
-            // Meja tersedia jika: status available, tidak ada reservasi, dan kapasitas cukup
-            $isAvailable = $table->status === 'available' && 
-                           !$hasReservation && 
-                           $isCapacitySufficient;
+            // Meja tersedia jika: status available dan tidak ada reservasi
+            $isAvailable = $table->status === 'available' && !$hasReservation;
             
             return [
                 'id' => $table->id,
                 'number' => $table->number,
                 'capacity' => $table->capacity,
-                'status' => $table->status, // Status asli dari database
-                'effective_status' => $effectiveStatus, // Status untuk ditampilkan
+                'status' => $table->status,
+                'effective_status' => $effectiveStatus,
                 'has_reservation' => $hasReservation,
-                'is_available' => $isAvailable,
-                'is_capacity_insufficient' => !$isCapacitySufficient,
+                'is_available' => $isAvailable, // ❌ TIDAK ADA LAGI validasi kapasitas
+                'location' => $table->location,
+                'location_label' => $table->location_label,
             ];
         });
+
+        // ✅ TAMBAH: Cari kombinasi meja yang bisa memenuhi kapasitas
+        $suggestedCombinations = $this->findOptimalTableCombinations($allTables, $jumlahTamu);
 
         return response()->json([
             'success' => true,
             'all_tables' => $allTables,
-            'guest_count' => $jumlahTamu
+            'guest_count' => $jumlahTamu,
+            'suggested_combinations' => $suggestedCombinations
         ]);
+    }
+
+    /**
+     * ✅ METHOD BARU: Cari kombinasi meja optimal untuk kapasitas tertentu
+     */
+    private function findOptimalTableCombinations($tables, $requiredCapacity)
+    {
+        $availableTables = $tables->where('is_available', true)->values();
+        
+        if ($availableTables->isEmpty()) {
+            return [];
+        }
+
+        $combinations = [];
+        
+        // 1. Cari meja tunggal yang cukup besar (jika ada)
+        foreach ($availableTables as $table) {
+            if ($table['capacity'] >= $requiredCapacity) {
+                $combinations[] = [
+                    'tables' => [$table['id']],
+                    'total_capacity' => $table['capacity'],
+                    'table_count' => 1,
+                    'table_numbers' => $table['number'],
+                    'is_single_table' => true,
+                    'efficiency_score' => $table['capacity'] - $requiredCapacity // Semakin kecil semakin efisien
+                ];
+            }
+        }
+
+        // 2. Cari kombinasi 2 meja
+        for ($i = 0; $i < count($availableTables); $i++) {
+            for ($j = $i + 1; $j < count($availableTables); $j++) {
+                $table1 = $availableTables[$i];
+                $table2 = $availableTables[$j];
+                $totalCapacity = $table1['capacity'] + $table2['capacity'];
+                
+                if ($totalCapacity >= $requiredCapacity) {
+                    $efficiencyScore = $totalCapacity - $requiredCapacity;
+                    
+                    $combinations[] = [
+                        'tables' => [$table1['id'], $table2['id']],
+                        'total_capacity' => $totalCapacity,
+                        'table_count' => 2,
+                        'table_numbers' => $table1['number'] . ', ' . $table2['number'],
+                        'is_single_table' => false,
+                        'efficiency_score' => $efficiencyScore
+                    ];
+                }
+            }
+        }
+
+        // 3. Cari kombinasi 3 meja (jika diperlukan)
+        for ($i = 0; $i < count($availableTables); $i++) {
+            for ($j = $i + 1; $j < count($availableTables); $j++) {
+                for ($k = $j + 1; $k < count($availableTables); $k++) {
+                    $table1 = $availableTables[$i];
+                    $table2 = $availableTables[$j];
+                    $table3 = $availableTables[$k];
+                    $totalCapacity = $table1['capacity'] + $table2['capacity'] + $table3['capacity'];
+                    
+                    if ($totalCapacity >= $requiredCapacity) {
+                        $efficiencyScore = $totalCapacity - $requiredCapacity;
+                        
+                        $combinations[] = [
+                            'tables' => [$table1['id'], $table2['id'], $table3['id']],
+                            'total_capacity' => $totalCapacity,
+                            'table_count' => 3,
+                            'table_numbers' => $table1['number'] . ', ' . $table2['number'] . ', ' . $table3['number'],
+                            'is_single_table' => false,
+                            'efficiency_score' => $efficiencyScore
+                        ];
+                    }
+                }
+            }
+        }
+
+        // Urutkan berdasarkan: 
+        // 1. Single table dulu (jika ada)
+        // 2. Efficiency score terbaik (kapasitas minimal melebihi kebutuhan)
+        // 3. Jumlah meja sedikit
+        usort($combinations, function($a, $b) {
+            // Prioritas single table
+            if ($a['is_single_table'] && !$b['is_single_table']) return -1;
+            if (!$a['is_single_table'] && $b['is_single_table']) return 1;
+            
+            // Kemudian efficiency score
+            if ($a['efficiency_score'] !== $b['efficiency_score']) {
+                return $a['efficiency_score'] <=> $b['efficiency_score'];
+            }
+            
+            // Terakhir jumlah meja
+            return $a['table_count'] <=> $b['table_count'];
+        });
+
+        return array_slice($combinations, 0, 5); // Ambil 5 kombinasi terbaik
+    }
+
+    /**
+     * ✅ METHOD BARU: Cari kombinasi meja untuk memenuhi kapasitas
+     */
+    private function findTableCombinations($tables, $requiredCapacity)
+    {
+        $availableTables = $tables->where('is_available', true)->values();
+        
+        if ($availableTables->isEmpty()) {
+            return [];
+        }
+
+        $combinations = [];
+        
+        // Cari meja tunggal yang cukup besar
+        foreach ($availableTables as $table) {
+            if ($table['capacity'] >= $requiredCapacity) {
+                $combinations[] = [
+                    'tables' => [$table['id']],
+                    'total_capacity' => $table['capacity'],
+                    'table_count' => 1,
+                    'table_numbers' => $table['number']
+                ];
+            }
+        }
+
+        // Cari kombinasi 2 meja
+        for ($i = 0; $i < count($availableTables); $i++) {
+            for ($j = $i + 1; $j < count($availableTables); $j++) {
+                $table1 = $availableTables[$i];
+                $table2 = $availableTables[$j];
+                $totalCapacity = $table1['capacity'] + $table2['capacity'];
+                
+                if ($totalCapacity >= $requiredCapacity) {
+                    $combinations[] = [
+                        'tables' => [$table1['id'], $table2['id']],
+                        'total_capacity' => $totalCapacity,
+                        'table_count' => 2,
+                        'table_numbers' => $table1['number'] . ', ' . $table2['number']
+                    ];
+                }
+            }
+        }
+
+        // Urutkan berdasarkan: jumlah meja sedikit -> kapasitas sedikit
+        usort($combinations, function($a, $b) {
+            if ($a['table_count'] === $b['table_count']) {
+                return $a['total_capacity'] <=> $b['total_capacity'];
+            }
+            return $a['table_count'] <=> $b['table_count'];
+        });
+
+        return array_slice($combinations, 0, 5); // Ambil 5 kombinasi terbaik
     }
 
     public function applyPromo(Request $request)
@@ -93,9 +250,6 @@ class ReservationController extends Controller
         ]);
 
         $kode = strtoupper(trim($request->kode_promo));
-        // $today = now();
-
-        // Gunakan scope active yang sudah dibuat di model
         $promo = Promo::where('promo_code', $kode)->available()->first();
 
         if (!$promo) {
@@ -105,7 +259,6 @@ class ReservationController extends Controller
             ]);
         }
 
-        // Gunakan method can_be_used dari model untuk validasi tambahan
         if (!$promo->can_be_used) {
             return response()->json([
                 'success' => false,
@@ -119,8 +272,8 @@ class ReservationController extends Controller
                 'id' => $promo->id,
                 'nama' => $promo->promo_code,
                 'deskripsi' => $promo->description,
-                'discount' => (float) $promo->discount, // Convert ke float
-                'diskon_text' => $promo->discount_formatted, // Menggunakan accessor
+                'discount' => (float) $promo->discount,
+                'diskon_text' => $promo->discount_formatted,
                 'start_date' => $promo->start_date?->format('d/m/Y'),
                 'end_date' => $promo->end_date?->format('d/m/Y'),
                 'usage_limit' => $promo->usage_limit,
@@ -138,23 +291,29 @@ class ReservationController extends Controller
             'pesan_menu' => 'required|boolean',
             'menu_items' => 'nullable|array',
             'promo_id' => 'nullable|exists:promos,id',
-            'promo_discount' => 'nullable|numeric'
+            'promo_discount' => 'nullable|numeric',
+            'table_ids' => 'required|array|min:1', // ✅ DITAMBAH: untuk multi-table
+            'table_ids.*' => 'exists:tables,id'    // ✅ DITAMBAH
         ]);
 
         $pesanMenu = $request->pesan_menu;
         $menuItems = $request->menu_items ?? [];
+        $tableIds = $request->table_ids ?? [];
 
         $promo = null;
         if ($request->promo_id) {
             $promo = Promo::where('id', $request->promo_id)
-                ->active() // Gunakan scope active
+                ->active()
                 ->first();
 
-            // Validasi tambahan menggunakan method dari model
             if (!$promo || !$promo->can_be_used) {
                 $promo = null;
             }
         }
+
+        // ✅ DITAMBAH: Hitung total kapasitas dari meja yang dipilih
+        $selectedTables = Table::whereIn('id', $tableIds)->get();
+        $totalCapacity = $selectedTables->sum('capacity');
 
         // Hitung subtotal pesanan menu
         $subtotalPesanan = 0;
@@ -174,10 +333,8 @@ class ReservationController extends Controller
         $diskonPromo = 0;
         if ($promo) {
             if ($pesanMenu) {
-                // ✅ DISKON DITERAPKAN KE SUBTOTAL PESANAN
                 $diskonPromo = $subtotalPesanan * ($promo->discount / 100);
             } else {
-                // ✅ DISKON DITERAPKAN KE DP FIXED
                 $diskonPromo = 300000 * ($promo->discount / 100);
             }
         }
@@ -207,7 +364,9 @@ class ReservationController extends Controller
                 'total_pesanan' => $totalPesanan,
                 'dp' => $dp,
                 'diskon_dp' => $diskonDP,
-                'total_dp' => $totalDP
+                'total_dp' => $totalDP,
+                'total_capacity' => $totalCapacity, // ✅ DITAMBAH
+                'table_count' => count($tableIds), // ✅ DITAMBAH
             ],
             'promo_valid' => $promo ? true : false,
             'promo_info' => $promo ? [
@@ -215,7 +374,16 @@ class ReservationController extends Controller
                 'nama' => $promo->promo_code,
                 'discount' => (float) $promo->discount,
                 'status' => $promo->status
-            ] : null
+            ] : null,
+            'selected_tables' => $selectedTables->map(function ($table) { // ✅ DITAMBAH
+                return [
+                    'id' => $table->id,
+                    'number' => $table->number,
+                    'capacity' => $table->capacity,
+                    'location' => $table->location,
+                    'location_label' => $table->location_label
+                ];
+            })
         ]);
     }
 
@@ -228,7 +396,8 @@ class ReservationController extends Controller
             'reservation_date' => 'required|date',
             'reservation_time' => 'required',
             'guest_count' => 'required|integer|min:1',
-            'table_id' => 'required|exists:tables,id',
+            'table_ids' => 'required|array|min:1', // ✅ DIUBAH: dari table_id ke table_ids
+            'table_ids.*' => 'exists:tables,id',
             'notes' => 'nullable|string',
             'with_preorder' => 'required|boolean',
             'down_payment' => 'required|numeric|min:0',
@@ -241,14 +410,13 @@ class ReservationController extends Controller
         DB::beginTransaction();
 
         try {
-            // Validasi promo menggunakan scope dan method dari model
+            // Validasi promo
             $promo = null;
             if ($validated['promo_id']) {
                 $promo = Promo::where('id', $validated['promo_id'])
-                    ->active() // Gunakan scope active
+                    ->active()
                     ->first();
 
-                // Validasi tambahan menggunakan method dari model
                 if (!$promo || !$promo->can_be_used) {
                     return response()->json([
                         'success' => false,
@@ -256,6 +424,32 @@ class ReservationController extends Controller
                     ]);
                 }
             }
+
+            // ✅ DITAMBAH: Validasi ketersediaan semua meja
+            foreach ($validated['table_ids'] as $tableId) {
+                $table = Table::find($tableId);
+                if (!$table->isAvailableForDateTime($validated['reservation_date'], $validated['reservation_time'])) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Meja {$table->number} tidak tersedia pada waktu yang dipilih"
+                    ]);
+                }
+            }
+
+            // ✅ DITAMBAH: Hitung total kapasitas meja yang dipilih
+            $selectedTables = Table::whereIn('id', $validated['table_ids'])->get();
+            $totalCapacity = $selectedTables->sum('capacity');
+            
+            // ✅ DITAMBAH: Validasi apakah kapasitas meja cukup
+            if ($totalCapacity < $validated['guest_count']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Kapasitas meja tidak mencukupi. Total kapasitas: {$totalCapacity}, Jumlah tamu: {$validated['guest_count']}"
+                ]);
+            }
+
+            // ✅ DITAMBAH: Generate table numbers string
+            $tableNumbers = $selectedTables->sortBy('number')->pluck('number')->implode(', ');
 
             // Hitung DP awal (untuk validasi)
             $dpAwal = 0;
@@ -304,17 +498,17 @@ class ReservationController extends Controller
                 'customer_name' => $validated['name'],
                 'customer_email' => $validated['email'],
                 'customer_phone' => $validated['phone'],
-                'table_id' => $validated['table_id'],
+                // 'table_id' => $validated['table_id'], // ❌ DIHAPUS
                 'reservation_date' => $validated['reservation_date'],
                 'reservation_time' => $validated['reservation_time'],
                 'guest_count' => $validated['guest_count'],
                 'notes' => $validated['notes'] ?? null,
-                // 'promo_id' => $validated['promo_id'] ?? null,
-                'promo_id' => $promo ? $promo->id : null, // Gunakan $promo yang sudah divalidasi
+                'promo_id' => $promo ? $promo->id : null,
                 'total_DP' => $validated['down_payment'],
                 'status' => 'waiting_payment',
                 'payment_deadline' => $paymentDeadline,
                 'created_by' => 'customer',
+                'table_numbers' => $tableNumbers, // ✅ DITAMBAH
             ];
 
             Log::info('Reservation Data:', $reservationData);
@@ -322,13 +516,16 @@ class ReservationController extends Controller
             // Buat reservasi
             $reservation = Reservation::create($reservationData);
 
-            // Update usage limit promo menggunakan method dari model
+            // ✅ DITAMBAH: Attach semua meja ke reservasi
+            $reservation->tables()->attach($validated['table_ids']);
+
+            // Update usage limit promo
             if ($promo && $promo->usage_limit !== null) {
                 $promo->decrement('usage_limit');
                 Log::info('Promo usage decremented', [
                     'promo_id' => $promo->id,
                     'new_usage_limit' => $promo->usage_limit,
-                    'can_still_be_used' => $promo->fresh()->can_be_used // Cek status setelah update
+                    'can_still_be_used' => $promo->fresh()->can_be_used
                 ]);
             }
 
@@ -347,11 +544,10 @@ class ReservationController extends Controller
             Log::info('Payment created with pending status', [
                 'payment_id' => $payment->id,
                 'amount' => $payment->amount,
-                // 'status' => $payment->status
             ]);
 
-            // Meja tetap available untuk customer reservation
-            Table::where('id', $validated['table_id'])->update(['status' => 'available']);
+            // ❌ DIHAPUS: Tidak perlu update status meja ke 'available'
+            // Table::where('id', $validated['table_id'])->update(['status' => 'available']);
 
             // Jika ada pre-order menu, buat order
             if ($validated['with_preorder'] && isset($validated['menu_items']) && !empty($validated['menu_items'])) {
@@ -368,7 +564,6 @@ class ReservationController extends Controller
                 }
 
                 $totalPriceAfterDiscount = $totalPriceBeforeDiscount;
-                // PERBAIKAN: Gunakan $promo yang sudah divalidasi, bukan cari ulang
                 if ($promo) {
                     $totalPriceAfterDiscount = $totalPriceBeforeDiscount * (1 - ($promo->discount / 100));
                     Log::info('Promo applied to order', [
@@ -429,11 +624,11 @@ class ReservationController extends Controller
                 ->with('error', 'Reservasi tidak ditemukan');
         }
 
-        // Load relationships yang diperlukan untuk perhitungan
+        // ✅ DIUBAH: Load tables (many-to-many)
         $reservation = Reservation::with([
-            'table', 
+            'tables', // ✅ DIUBAH: dari 'table' ke 'tables'
             'promo', 
-            'payments', // ✅ Pastikan payments di-load
+            'payments',
             'orders.orderItems.menu'
         ])->find($id);
 
@@ -452,34 +647,32 @@ class ReservationController extends Controller
             Log::info("Reservation #{$reservation->id} auto-cancelled in success page");
         }
 
-        // ✅ PERBAIKAN: Ambil payment terbaru untuk status
         $latestPayment = $reservation->payments->sortByDesc('created_at')->first();
-        
-        // ✅ TAMBAHKAN DATA PAYMENT KE VIEW
         $paymentStatus = $latestPayment ? $latestPayment->status : 'pending';
-
         $paymentDeadline = $reservation->payment_deadline ?? $reservation->created_at->addHours(24);
         
         return view('customer.reservation.success', compact(
             'reservation', 
             'paymentDeadline',
-            'paymentStatus' // ✅ KIRIM STATUS PAYMENT KE VIEW
+            'paymentStatus'
         ));
     }
 
     public function history()
     {
+        // ✅ DIUBAH: Load tables (many-to-many)
         $reservations = Reservation::where('user_id', Auth::id())
             ->with([
-                'table', 
+                'tables', // ✅ DIUBAH: dari 'table' ke 'tables'
                 'orders.orderItems.menu', 
                 'promo', 
-                'payments' // ✅ Sudah include payments
+                'payments'
             ])
             ->orderBy('created_at', 'desc')
             ->get();
 
         // Check dan update status expired
+        $updatedReservations = [];
         foreach ($reservations as $reservation) {
             if ($reservation->status === 'waiting_payment' && 
                 $reservation->payment_deadline && 
@@ -487,15 +680,21 @@ class ReservationController extends Controller
                 
                 $reservation->update(['status' => 'cancelled']);
                 Log::info("Reservation #{$reservation->id} auto-cancelled in history page");
+                $updatedReservations[] = $reservation->id;
             }
         }
 
-        // Refresh data setelah update
-        $reservations = $reservations->fresh();
+        // Hanya refresh jika ada yang di-update
+        if (!empty($updatedReservations)) {
+            $reservations = $reservations->fresh();
+        }
 
         $formattedReservations = $reservations->map(function ($reservation) {
-            // ✅ PERBAIKAN: Ambil payment TERBARU untuk status
             $latestPayment = $reservation->payments->sortByDesc('created_at')->first();
+            
+            // ✅ DITAMBAH: Helper untuk menghitung jumlah meja dan kapasitas
+            $totalTables = $reservation->tables->count();
+            $totalCapacity = $reservation->tables->sum('capacity');
             
             return [
                 'id' => $reservation->id,
@@ -508,14 +707,22 @@ class ReservationController extends Controller
                 'notes' => $reservation->notes,
                 'status' => $reservation->status,
                 'total_DP' => $reservation->total_DP,
+                'table_numbers' => $reservation->table_numbers, // ✅ DITAMBAH
+                'total_tables' => $totalTables, // ✅ DITAMBAH (lebih konsisten)
+                'total_capacity' => $totalCapacity, // ✅ DITAMBAH
                 'payment_deadline' => $reservation->payment_deadline ? $reservation->payment_deadline->toISOString() : null,
                 'created_at' => $reservation->created_at->toISOString(),
                 'with_preorder' => $reservation->orders->count() > 0,
-                'table' => [
-                    'id' => $reservation->table->id,
-                    'number' => $reservation->table->number,
-                    'capacity' => $reservation->table->capacity,
-                ],
+                // ✅ DIUBAH: dari 'table' ke 'tables' (array)
+                'tables' => $reservation->tables->map(function ($table) {
+                    return [
+                        'id' => $table->id,
+                        'number' => $table->number,
+                        'capacity' => $table->capacity,
+                        'location' => $table->location,
+                        'location_label' => $table->location_label,
+                    ];
+                })->toArray(), // ✅ DITAMBAH: Convert ke array
                 'orders' => $reservation->orders->map(function ($order) {
                     return [
                         'id' => $order->id,
@@ -525,28 +732,27 @@ class ReservationController extends Controller
                                 'id' => $item->id,
                                 'qty' => $item->qty,
                                 'price' => $item->price,
-                                'menu' => [
+                                'menu' => $item->menu ? [
                                     'id' => $item->menu->id,
                                     'name' => $item->menu->name,
                                     'price' => $item->menu->price,
-                                ]
+                                ] : null // ✅ DITAMBAH: Null safety
                             ];
-                        })
+                        })->toArray()
                     ];
-                }),
+                })->toArray(), // ✅ DITAMBAH: Convert ke array
                 'payments' => $reservation->payments->map(function ($payment) {
                     return [
                         'id' => $payment->id,
                         'amount' => $payment->amount,
                         'status' => $payment->status,
                         'payment_proof' => $payment->payment_proof,
-                        'payment_type' => $payment->payment_type, // ✅ TAMBAHKAN
-                        'verified_at' => $payment->verified_at ? $payment->verified_at->toISOString() : null, // ✅ TAMBAHKAN
-                        'verified_by' => $payment->verified_by, // ✅ TAMBAHKAN
-                        'created_at' => $payment->created_at->toISOString(), // ✅ TAMBAHKAN
+                        'payment_type' => $payment->payment_type,
+                        'verified_at' => $payment->verified_at ? $payment->verified_at->toISOString() : null,
+                        'verified_by' => $payment->verified_by,
+                        'created_at' => $payment->created_at->toISOString(),
                     ];
-                }),
-                // ✅ TAMBAHKAN FIELD BARU: latest_payment_status
+                })->toArray(), // ✅ DITAMBAH: Convert ke array
                 'latest_payment_status' => $latestPayment ? $latestPayment->status : 'pending'
             ];
         });
@@ -649,11 +855,9 @@ class ReservationController extends Controller
             $filePath = $file->storeAs('bukti_transfer', $filename, 'public');
         }
 
-        // ✅ PERBAIKAN: UPDATE payment yang sudah ada, jangan buat baru
         $payment = $reservation->payments()->first();
 
         if (!$payment) {
-            // Fallback: kalau tidak ada payment, buat baru (shouldn't happen)
             $payment = Payment::create([
                 'reservation_id' => $reservation->id,
                 'amount' => $reservation->total_DP,
@@ -665,7 +869,6 @@ class ReservationController extends Controller
                 'notes' => 'Down Payment (DP) Reservasi - Menunggu Verifikasi',
             ]);
         } else {
-            // ✅ UPDATE payment yang sudah ada
             $payment->update([
                 'status' => 'verifying',
                 'payment_proof' => $filePath,
@@ -687,5 +890,76 @@ class ReservationController extends Controller
 
         return redirect()->route('reservation.history')
             ->with('success', 'Bukti pembayaran berhasil diupload. Menunggu verifikasi admin.');
+    }
+
+    /**
+     * ✅ METHOD BARU: Update tables untuk reservasi yang sudah ada
+     */
+    public function updateTables(Request $request, $id)
+    {
+        $reservation = Reservation::where('user_id', Auth::id())->findOrFail($id);
+
+        // Cek apakah reservasi bisa di-edit
+        if (!$reservation->can_edit) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Reservasi tidak dapat diubah'
+            ]);
+        }
+
+        $request->validate([
+            'table_ids' => 'required|array|min:1',
+            'table_ids.*' => 'exists:tables,id',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            // Validasi ketersediaan semua meja baru
+            foreach ($request->table_ids as $tableId) {
+                $table = Table::find($tableId);
+                if (!$table->isAvailableForDateTime($reservation->reservation_date, $reservation->reservation_time)) {
+                    // Cek apakah meja ini sudah ter-attach ke reservasi ini
+                    $alreadyAttached = $reservation->tables()->where('table_id', $tableId)->exists();
+                    if (!$alreadyAttached) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => "Meja {$table->number} tidak tersedia"
+                        ]);
+                    }
+                }
+            }
+
+            // Validasi kapasitas
+            $selectedTables = Table::whereIn('id', $request->table_ids)->get();
+            $totalCapacity = $selectedTables->sum('capacity');
+            
+            if ($totalCapacity < $reservation->guest_count) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Kapasitas meja tidak mencukupi"
+                ]);
+            }
+
+            // Sync tables
+            $reservation->syncTables($request->table_ids);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Meja berhasil diperbarui'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            Log::error('Update Tables Error: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }
