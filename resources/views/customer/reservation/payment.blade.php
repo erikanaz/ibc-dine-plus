@@ -97,7 +97,7 @@
                                         @endif
                                     </span>
                                 </div>
-                                <div class="flex justify-between">
+                                {{-- <div class="flex justify-between">
                                     <span class="text-gray-600">Total Kapasitas</span>
                                     <span class="font-medium">
                                         @if($reservation->total_capacity)
@@ -108,7 +108,7 @@
                                             -
                                         @endif
                                     </span>
-                                </div>
+                                </div> --}}
                             </div>
                         </div>
 

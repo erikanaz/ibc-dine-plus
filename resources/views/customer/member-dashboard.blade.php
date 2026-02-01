@@ -318,10 +318,10 @@
                         <span class="gold-text mr-2">✓</span>
                         <span>Konfirmasi 2 jam sebelumnya</span>
                     </li>
-                    <li class="flex items-start">
+                    {{-- <li class="flex items-start">
                         <span class="gold-text mr-2">✓</span>
                         <span>Dapatkan poin setiap reservasi</span>
-                    </li>
+                    </li> --}}
                     <li class="flex items-start">
                         <span class="gold-text mr-2">✓</span>
                         <span>Pembatalan max 6 jam sebelumnya</span>
@@ -404,11 +404,11 @@
 
 <style>
     /* Custom Styles */
-    .hero-section {
+    /* .hero-section {
         background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
-    }
+    } */
     
-    .gold-text {
+    /* .gold-text {
         color: #fbbf24;
         text-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
@@ -422,7 +422,7 @@
         background: linear-gradient(135deg, #fbbf24 0%, #b45309 100%);
         transform: translateY(-2px);
         box-shadow: 0 6px 20px rgba(251, 191, 36, 0.4);
-    }
+    } */
     
     .status-badge {
         padding: 0.25rem 0.5rem;

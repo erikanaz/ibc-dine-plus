@@ -69,7 +69,7 @@
             <div class="pt-2">
                 <button type="submit"
                         class="w-full bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md font-medium transition">
-                    Cek Ketersediaan Meja
+                    Pilih Meja
                 </button>
             </div>
         </form>
@@ -332,7 +332,7 @@
             <button @click="validateAndProceed()" 
                     class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-1.5 rounded-md font-medium transition disabled:opacity-50 flex items-center gap-2"
                     :disabled="!canProceedToStep3">
-                <span>Lanjut ke Detail</span>
+                <span>Lanjut</span>
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path>
                 </svg>
@@ -611,13 +611,13 @@
                     Simpan Menu
                 </button>
                 
-                <button type="button" @click="step = 5" 
+                {{-- <button type="button" @click="step = 5" 
                         class="border border-gray-300 text-gray-700 px-4 py-1.5 rounded-md hover:bg-gray-50 transition flex items-center gap-2">
                     Lewati
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path>
                     </svg>
-                </button>
+                </button> --}}
             </div>
         </div>
     </div>
