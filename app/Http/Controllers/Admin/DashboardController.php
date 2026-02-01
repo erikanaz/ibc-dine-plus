@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Reservation;
 use App\Models\Table;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -28,28 +27,22 @@ class DashboardController extends Controller
 
         // Monthly Reservations Count
         $monthlyReservations = Reservation::whereYear('created_at', now()->year)
-        ->whereMonth('created_at', now()->month)
-        ->count();
+            ->whereMonth('created_at', now()->month)
+            ->count();
 
-        // atau dengan status tertentu
-        $monthlyConfirmedReservations = Reservation::whereYear('created_at', now()->year)
-        ->whereMonth('created_at', now()->month)
-        ->where('status', 'confirmed')
-        ->count();
-        
         // Table Availability
         $totalTables = Table::count();
         $availableTables = Table::where('status', 'available')->count();
         
-        // Today's Reservations with details
-        $todaysReservationsList = Reservation::with(['user', 'table'])
+        // Today's Reservations with details - PERBAIKAN: Gunakan relasi tables (plural)
+        $todaysReservationsList = Reservation::with(['user', 'tables']) // PERUBAHAN: tables bukan table
             ->whereDate('reservation_date', today())
             ->orderBy('reservation_time', 'asc')
             ->limit(5)
             ->get();
         
-        // Upcoming Reservations (next 3 days)
-        $upcomingReservations = Reservation::with(['user', 'table'])
+        // Upcoming Reservations (next 3 days) - PERBAIKAN: Gunakan relasi tables
+        $upcomingReservations = Reservation::with(['user', 'tables']) // PERUBAHAN: tables bukan table
             ->where('reservation_date', '>=', today())
             ->where('reservation_date', '<=', today()->addDays(3))
             ->whereIn('status', ['pending', 'confirmed'])
@@ -84,8 +77,7 @@ class DashboardController extends Controller
             'upcomingReservations',
             'revenueData',
             'tableStatus',
-            'monthlyReservations',
-            'monthlyConfirmedReservations'
+            'monthlyReservations'
         ));
     }
 }

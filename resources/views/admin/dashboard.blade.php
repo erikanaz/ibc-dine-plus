@@ -37,19 +37,6 @@
             </div>
         </div>
         
-        {{-- <!-- Monthly Revenue Card -->
-        <div class="dashboard-card bg-white rounded-xl shadow p-6 border-l-4 border-success transition-all">
-            <div class="flex justify-between items-start">
-                <div>
-                    <p class="text-gray-500">Pendapatan Bulan Ini</p>
-                    <p class="text-3xl font-bold mt-2">Rp {{ number_format($monthlyRevenue, 0, ',', '.') }}</p>
-                </div>
-                <div class="bg-success/10 p-3 rounded-lg">
-                    <i class="fas fa-wallet text-success text-2xl"></i>
-                </div>
-            </div>
-        </div> --}}
-
         <!-- Reservasi Bulan Ini Card -->
         <div class="bg-white rounded-xl shadow p-6 border-l-4 border-purple-500">
             <div class="flex justify-between items-start">
@@ -60,12 +47,6 @@
                 <div class="p-3 bg-purple-50 rounded-lg">
                     <i class="fas fa-calendar-alt text-purple-600 text-xl"></i>
                 </div>
-            </div>
-            <div class="mt-4 flex items-center text-sm">
-                {{-- <span class="text-green-600 font-medium">
-                    <i class="fas fa-arrow-up mr-1"></i>+12%
-                </span> --}}
-                {{-- <span class="text-gray-500 ml-2">dari bulan lalu</span> --}}
             </div>
         </div>
         
@@ -135,7 +116,13 @@
                                     <div class="text-sm text-gray-500">{{ $reservation->reservation_date->format('d M Y') }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    Meja {{ $reservation->table->number }}
+                                    @if($reservation->tables && $reservation->tables->count() > 0)
+                                        Meja {{ $reservation->tables->pluck('number')->implode(', ') }}
+                                    @elseif($reservation->table_numbers)
+                                        {{ $reservation->table_numbers }}
+                                    @else
+                                        Belum ada meja
+                                    @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span class="status-badge 
@@ -227,49 +214,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Revenue Chart -->
-            {{-- <div class="bg-white rounded-xl shadow">
-                <div class="px-6 py-4 border-b">
-                    <h3 class="font-bold text-lg flex items-center">
-                        <i class="fas fa-chart-line text-primary mr-2"></i>
-                        Pendapatan 7 Hari Terakhir (DP Reservasi)
-                    </h3>
-                </div>
-                <div class="p-6">
-                    <div class="flex items-end h-64 space-x-2 justify-center">
-                        @php
-                            $maxRevenue = $revenueData->max('revenue') ?: 1;
-                            $days = [];
-                            for ($i = 6; $i >= 0; $i--) {
-                                $days[] = now()->subDays($i)->format('Y-m-d');
-                            }
-                        @endphp
-                        
-                        @foreach($days as $day)
-                            @php
-                                $revenue = $revenueData->firstWhere('date', $day);
-                                $amount = $revenue ? $revenue->revenue : 0;
-                                $height = ($amount / $maxRevenue) * 80;
-                                $dayName = \Carbon\Carbon::parse($day)->translatedFormat('D');
-                                $dayDate = \Carbon\Carbon::parse($day)->format('d/m');
-                            @endphp
-                            <div class="flex-1 flex flex-col items-center justify-end">
-                                <div 
-                                    class="bg-primary w-8 rounded-t-lg transition-all duration-300 hover:bg-primary-dark cursor-pointer" 
-                                    style="height: {{ max($height, 10) }}%"
-                                    title="Rp {{ number_format($amount, 0, ',', '.') }}"
-                                ></div>
-                                <p class="mt-2 text-sm text-gray-600">{{ $dayName }}</p>
-                                <p class="text-xs text-gray-500 mt-1">{{ $dayDate }}</p>
-                            </div>
-                        @endforeach
-                    </div>
-                    <div class="mt-4 text-center text-sm text-gray-600">
-                        Total: Rp {{ number_format($revenueData->sum('revenue'), 0, ',', '.') }}
-                    </div>
-                </div>
-            </div> --}}
         </div>
 
         <!-- Right Column (1/3 width) -->
@@ -313,7 +257,15 @@
                             <i class="fas fa-users mr-2"></i>
                             <span class="mr-4">{{ $reservation->guest_count }} Orang</span>
                             <i class="fas fa-chair mr-2"></i>
-                            <span>Meja {{ $reservation->table->number }}</span>
+                            <span>
+                                @if($reservation->tables && $reservation->tables->count() > 0)
+                                    Meja {{ $reservation->tables->pluck('number')->implode(', ') }}
+                                @elseif($reservation->table_numbers)
+                                    {{ $reservation->table_numbers }}
+                                @else
+                                    Belum ada meja
+                                @endif
+                            </span>
                         </div>
                         <div class="mt-3 flex items-center text-sm text-gray-600">
                             <i class="fas fa-money-bill-wave mr-2"></i>
@@ -342,61 +294,6 @@
                     @endforelse
                 </div>
             </div>
-
-            <!-- Table Status -->
-            {{-- <div class="bg-white rounded-xl shadow">
-                <div class="px-6 py-4 border-b">
-                    <h3 class="font-bold text-lg flex items-center">
-                        <i class="fas fa-chair text-secondary mr-2"></i>
-                        Status Meja
-                    </h3>
-                </div>
-                <div class="p-4">
-                    <div class="grid grid-cols-2 gap-3 mb-4">
-                        @php
-                            $statusColors = [
-                                'available' => ['bg' => 'success', 'text' => 'success', 'label' => 'Tersedia'],
-                                'occupied' => ['bg' => 'primary', 'text' => 'primary', 'label' => 'Terisi'],
-                                'reserved' => ['bg' => 'warning', 'text' => 'warning', 'label' => 'Reservasi'],
-                                'maintenance' => ['bg' => 'gray-400', 'text' => 'gray-500', 'label' => 'Perbaikan']
-                            ];
-                        @endphp
-                        
-                        @foreach($tableStatus as $status)
-                            @php
-                                $colorConfig = $statusColors[$status->status] ?? ['bg' => 'gray', 'text' => 'gray', 'label' => $status->status];
-                            @endphp
-                            <div class="bg-{{ $colorConfig['bg'] }}/10 border border-{{ $colorConfig['bg'] }} rounded-lg p-3 text-center">
-                                <div class="text-2xl font-bold text-{{ $colorConfig['text'] }}">{{ $status->count }}</div>
-                                <div class="text-sm text-{{ $colorConfig['text'] }}">{{ $colorConfig['label'] }}</div>
-                            </div>
-                        @endforeach
-                    </div>
-                    
-                    <div class="mt-6">
-                        <h4 class="font-medium mb-3 text-gray-800">Legenda Status</h4>
-                        <div class="space-y-2">
-                            @foreach($statusColors as $status => $color)
-                            <div class="flex items-center">
-                                <div class="w-4 h-4 bg-{{ $color['bg'] }} rounded-full mr-2"></div>
-                                <span class="text-sm text-gray-700">{{ $color['label'] }}</span>
-                            </div>
-                            @endforeach
-                        </div>
-                    </div>
-                    
-                    <div class="mt-4 pt-4 border-t">
-                        <div class="flex justify-between items-center text-sm">
-                            <span class="text-gray-600">Total Meja:</span>
-                            <span class="font-bold text-gray-800">{{ $totalTables }}</span>
-                        </div>
-                        <div class="flex justify-between items-center text-sm mt-1">
-                            <span class="text-gray-600">Tersedia:</span>
-                            <span class="font-bold text-success">{{ $availableTables }}</span>
-                        </div>
-                    </div>
-                </div>
-            </div> --}}
         </div>
     </div>
 @endsection
